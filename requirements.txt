@@ -1,0 +1,16 @@
+# Core dependencies
+openai>=1.0.0       # For LLM integration
+rich>=13.0.0        # For beautiful terminal output
+pyyaml>=6.0.0       # For parsing YAML frontmatter in markdown files
+
+# Document processing
+python-docx>=0.8.11  # For reading DOCX files
+PyPDF2>=3.0.0        # For reading PDF files
+
+# URL content extraction
+requests>=2.31.0     # For fetching web content
+beautifulsoup4>=4.12.0  # For parsing HTML content
+
+# Optional but recommended
+python-dotenv>=1.0.0  # For loading .env files with API keys
+tenacity>=8.2.0      # For retry logic in batch embedding processing (handles rate limits gracefully) 

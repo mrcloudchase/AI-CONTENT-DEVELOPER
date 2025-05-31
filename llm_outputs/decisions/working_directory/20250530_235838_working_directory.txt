@@ -1,0 +1,638 @@
+=== WORKING_DIRECTORY ===
+2025-05-30T23:58:38.307524
+==================================================
+
+Directory Selection Analysis Task:
+
+CONTENT GOAL: guidance on using cilium with aks
+SERVICE AREA: aks
+
+REPOSITORY: /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-aks-docs
+
+REPOSITORY STRUCTURE:
+├── articles/
+│   ├── aks/
+│   │   ├── automatic/
+│   │   │   ├── quick-automatic-custom-network.md
+│   │   │   ├── quick-automatic-from-code.md
+│   │   │   ├── quick-automatic-managed-network.md
+│   │   │   └── quick-automatic-private-custom-network.md
+│   │   ├── breadcrumb/
+│   │   │   └── TOC.yml
+│   │   ├── context/
+│   │   │   └── aks-context.yml
+│   │   ├── includes/
+│   │   │   ├── aliasminorversion/
+│   │   │   ├── azd/
+│   │   │   ├── jakartaee/
+│   │   │   ├── keda/
+│   │   │   ├── service-connector/
+│   │   │   ├── servicemesh/
+│   │   │   └── open-source-disclaimer.md
+│   │   ├── learn/
+│   │   │   ├── media/
+│   │   │   ├── quick-kubernetes-deploy-azd.md
+│   │   │   ├── quick-kubernetes-deploy-bicep-kubernetes-extension.md
+│   │   │   ├── quick-kubernetes-deploy-bicep.md
+│   │   │   ├── quick-kubernetes-deploy-cli.md
+│   │   │   ├── quick-kubernetes-deploy-portal.md
+│   │   │   ├── quick-kubernetes-deploy-powershell.md
+│   │   │   ├── quick-kubernetes-deploy-rm-template.md
+│   │   │   ├── quick-kubernetes-deploy-terraform.md
+│   │   │   ├── quick-windows-container-deploy-cli.md
+│   │   │   ├── quick-windows-container-deploy-portal.md
+│   │   │   ├── quick-windows-container-deploy-powershell.md
+│   │   │   └── quick-windows-container-deploy-terraform.md
+│   │   ├── media/
+│   │   │   ├── access-private-cluster/
+│   │   │   ├── advanced-container-networking-services/
+│   │   │   ├── ai-toolchain-operator/
+│   │   │   ├── ai-walkthrough/
+│   │   │   ├── airflow-overview/
+│   │   │   ├── aks-extension/
+│   │   │   ├── aks-istio-addon/
+│   │   │   ├── api-server-authorized-ip-ranges/
+│   │   │   ├── app-routing/
+│   │   │   ├── auto-upgrade-cluster/
+│   │   │   ├── auto-upgrade-node-os-image/
+│   │   │   ├── automated-deployments/
+│   │   │   ├── automatic/
+│   │   │   ├── autoscale-gpu/
+│   │   │   ├── availability-zones/
+│   │   │   ├── azure-ad-rbac/
+│   │   │   ├── azure-app-configuration/
+│   │   │   ├── azure-cni-overlay/
+│   │   │   ├── azure-linux-aks-partner-solutions/
+│   │   │   ├── cluster-autoscaler/
+│   │   │   ├── cluster-configuration/
+│   │   │   ├── concepts-clusters-workloads/
+│   │   │   ├── concepts-diagnostics/
+│   │   │   ├── concepts-identity/
+│   │   │   ├── concepts-network/
+│   │   │   ├── concepts-scale/
+│   │   │   ├── concepts-storage/
+│   │   │   ├── configure-azure-cni/
+│   │   │   ├── configure-azure-cni-dynamic-ip-allocation/
+│   │   │   ├── container-insights-live-data/
+│   │   │   ├── container-service-kubernetes-tutorials/
+│   │   │   ├── container-service-serverless/
+│   │   │   ├── create-k8s-cluster-with-aks-application-gateway-ingress/
+│   │   │   ├── csi-migrate-in-tree-volumes/
+│   │   │   ├── deploy-application-template/
+│   │   │   ├── deploy-marketplace/
+│   │   │   ├── deploy-postgresql-ha/
+│   │   │   ├── deploy-ray/
+│   │   │   ├── developer-best-practices-pod-security/
+│   │   │   ├── developer-best-practices-resource-management/
+│   │   │   ├── draft-devx-extension-aks/
+│   │   │   ├── egress-outboundtype/
+│   │   │   ├── eks-edw-deploy/
+│   │   │   ├── eks-edw-rearchitect/
+│   │   │   ├── eks-web-rearchitect/
+│   │   │   ├── enable-fips-nodes/
+│   │   │   ├── enable-keda-existing-cluster/
+│   │   │   ├── events/
+│   │   │   ├── extended-zones/
+│   │   │   ├── faq/
+│   │   │   ├── howto-deploy-java-liberty-app/
+│   │   │   ├── howto-deploy-java-quarkus-app/
+│   │   │   ├── howto-deploy-java-wls-app/
+│   │   │   ├── image-cleaner/
+│   │   │   ├── image-integrity/
+│   │   │   ├── istio/
+│   │   │   ├── kafka/
+│   │   │   ├── keda/
+│   │   │   ├── kubernetes-portal/
+│   │   │   ├── limit-egress-traffic/
+│   │   │   ├── logos/
+│   │   │   ├── managed-aad/
+│   │   │   ├── mongodb-overview/
+│   │   │   ├── monitor-aks/
+│   │   │   ├── monitor-aks-mongodb/
+│   │   │   ├── monitor-control-plane-metrics/
+│   │   │   ├── monitor-gpu-metrics/
+│   │   │   ├── network-isolated-cluster/
+│   │   │   ├── network-observability-overview/
+│   │   │   ├── networking-overview/
+│   │   │   ├── node-updates-kured/
+│   │   │   ├── node-upgrade-github-actions/
+│   │   │   ├── operate-cost-optimized-at-scale/
+│   │   │   ├── operator-best-practices-bc-dr/
+│   │   │   ├── operator-best-practices-cluster-isolation/
+│   │   │   ├── operator-best-practices-cluster-security/
+│   │   │   ├── operator-best-practices-container-security/
+│   │   │   ├── operator-best-practices-identity/
+│   │   │   ├── operator-best-practices-network/
+│   │   │   ├── optimize-aks-costs/
+│   │   │   ├── planned-maintenance/
+│   │   │   ├── postgresql-ha-overview/
+│   │   │   ├── private-clusters/
+│   │   │   ├── quickstart-dapr/
+│   │   │   ├── quotas-skus-regions/
+│   │   │   ├── rdp/
+│   │   │   ├── release-tracker/
+│   │   │   ├── resiliency-mongodb-cluster/
+│   │   │   ├── resize-node-pool/
+│   │   │   ├── stateful-workloads-overview/
+│   │   │   ├── supported-kubernetes-versions/
+│   │   │   ├── tutorial-kubernetes-upgrade-cluster/
+│   │   │   ├── upgrade-cluster/
+│   │   │   ├── upgrade-mongodb-cluster/
+│   │   │   ├── use-kubenet/
+│   │   │   ├── validate-mongodb-cluster/
+│   │   │   ├── valkey-stateful-workload/
+│   │   │   ├── virtual-nodes-portal/
+│   │   │   ├── what-is-aks/
+│   │   │   ├── windows-aks-customer-stories/
+│   │   │   ├── windows-aks-partner-solutions/
+│   │   │   └── workload-identity-overview/
+│   │   ├── security-bulletins/
+│   │   │   └── overview.md
+│   │   ├── ~/
+│   │   │   └── reusable-content/
+│   │   ├── TOC.yml
+│   │   ├── access-control-managed-azure-ad.md
+│   │   ├── access-private-cluster.md
+│   │   ├── active-active-solution.md
+│   │   ├── active-passive-solution.md
+│   │   ├── advanced-container-networking-services-overview.md
+│   │   ├── ai-ml-overview.md
+│   │   ├── ai-toolchain-operator-fine-tune.md
+│   │   ├── ai-toolchain-operator-monitoring.md
+│   │   ├── ai-toolchain-operator.md
+│   │   ├── airflow-create-infrastructure.md
+│   │   ├── airflow-deploy.md
+│   │   ├── airflow-overview.md
+│   │   ├── aks-communication-manager.md
+│   │   ├── aks-diagnostics.md
+│   │   ├── aks-extension-attach-azure-container-registry.md
+│   │   ├── aks-extension-draft-deployment.md
+│   │   ├── aks-extension-draft-dockerfile.md
+│   │   ├── aks-extension-draft-github-workflow.md
+│   │   ├── aks-extension-ghcopilot-plugins.md
+│   │   ├── aks-extension-kaito.md
+│   │   ├── aks-extension-vs-code.md
+│   │   ├── aks-migration.md
+│   │   ├── aks-support-help.md
+│   │   ├── aks-zone-resiliency.md
+│   │   ├── api-server-authorized-ip-ranges.md
+│   │   ├── api-server-vnet-integration.md
+│   │   ├── app-routing-dns-ssl.md
+│   │   ├── app-routing-migration.md
+│   │   ├── app-routing-nginx-configuration.md
+│   │   ├── app-routing-nginx-prometheus.md
+│   │   ├── app-routing.md
+│   │   ├── artifact-streaming.md
+│   │   ├── auto-upgrade-cluster.md
+│   │   ├── auto-upgrade-node-os-image.md
+│   │   ├── automated-deployments.md
+│   │   ├── autoscale-gpu-workloads-with-keda.md
+│   │   ├── availability-sets-on-aks.md
+│   │   ├── availability-zones-overview.md
+│   │   ├── azure-ad-integration-cli.md
+│   │   ├── azure-ad-rbac.md
+│   │   ├── azure-app-configuration-quickstart.md
+│   │   ├── azure-app-configuration-settings.md
+│   │   ├── azure-app-configuration.md
+│   │   ├── azure-blob-csi.md
+│   │   ├── azure-cni-overlay.md
+│   │   ├── azure-cni-overview.md
+│   │   ├── azure-cni-powered-by-cilium.md
+│   │   ├── azure-csi-blob-storage-provision.md
+│   │   ├── azure-csi-disk-storage-provision.md
+│   │   ├── azure-csi-files-storage-provision.md
+│   │   ├── azure-disk-csi.md
+│   │   ├── azure-disk-customer-managed-keys.md
+│   │   ├── azure-files-csi.md
+│   │   ├── azure-hpc-cache.md
+│   │   ├── azure-hybrid-benefit.md
+│   │   ├── azure-linux-aks-partner-solutions.md
+│   │   ├── azure-netapp-files-dual-protocol.md
+│   │   ├── azure-netapp-files-nfs.md
+│   │   ├── azure-netapp-files-smb.md
+│   │   ├── azure-netapp-files.md
+│   │   ├── azure-nfs-volume.md
+│   │   ├── best-practices-app-cluster-reliability.md
+│   │   ├── best-practices-cost.md
+│   │   ├── best-practices-ml-ops.md
+│   │   ├── best-practices-monitoring-proactive.md
+│   │   ├── best-practices-performance-scale-large.md
+│   │   ├── best-practices-performance-scale.md
+│   │   ├── best-practices.md
+│   │   ├── certificate-rotation.md
+│   │   ├── cis-azure-linux.md
+│   │   ├── cis-kubernetes.md
+│   │   ├── cis-ubuntu.md
+│   │   ├── cis-windows.md
+│   │   ├── cluster-autoscaler-overview.md
+│   │   ├── cluster-autoscaler.md
+│   │   ├── cluster-container-registry-integration.md
+│   │   ├── cluster-extensions.md
+│   │   ├── concepts-ai-ml-language-models.md
+│   │   ├── concepts-fine-tune-language-models.md
+│   │   ├── concepts-identity.md
+│   │   ├── concepts-machine-learning-ops.md
+│   │   ├── concepts-network-azure-cni-overlay.md
+│   │   ├── concepts-network-azure-cni-pod-subnet.md
+│   │   ├── concepts-network-cni-overview.md
+│   │   ├── concepts-network-ingress.md
+│   │   ├── concepts-network-ip-address-planning.md
+│   │   ├── concepts-network-isolated.md
+│   │   ├── concepts-network-legacy-cni.md
+│   │   ├── concepts-network-services.md
+│   │   ├── concepts-network.md
+│   │   ├── concepts-preview-api-life-cycle.md
+│   │   ├── concepts-scale.md
+│   │   ├── concepts-security.md
+│   │   ├── concepts-storage.md
+│   │   ├── concepts-sustainable-software-engineering.md
+│   │   ├── concepts-vulnerability-management.md
+│   │   ├── confidential-containers-overview.md
+│   │   ├── configure-azure-cni-dynamic-ip-allocation.md
+│   │   ├── configure-azure-cni-static-block-allocation.md
+│   │   ├── configure-azure-cni.md
+│   │   ├── configure-dual-stack.md
+│   │   ├── configure-kube-proxy.md
+│   │   ├── configure-kubenet.md
+│   │   ├── configure-static-egress-gateway.md
+│   │   ├── container-network-observability-concepts.md
+│   │   ├── container-network-observability-guide.md
+│   │   ├── container-network-observability-how-to.md
+│   │   ├── container-network-security-fqdn-filtering-concepts.md
+│   │   ├── container-network-security-l7-policy-concepts.md
+│   │   ├── control-kubeconfig-access.md
+│   │   ├── control-plane-metrics-monitor.md
+│   │   ├── core-aks-concepts.md
+│   │   ├── coredns-custom.md
+│   │   ├── cost-advisors.md
+│   │   ├── cost-analysis-idle-costs.md
+│   │   ├── cost-analysis.md
+│   │   ├── create-mongodb-infrastructure.md
+│   │   ├── create-nginx-ingress-private-controller.md
+│   │   ├── create-node-pools.md
+│   │   ├── create-postgresql-ha.md
+│   │   ├── create-valkey-infrastructure.md
+│   │   ├── csi-disk-move-subscriptions.md
+│   │   ├── csi-migrate-in-tree-volumes.md
+│   │   ├── csi-secrets-store-configuration-options.md
+│   │   ├── csi-secrets-store-driver.md
+│   │   ├── csi-secrets-store-identity-access.md
+│   │   ├── csi-secrets-store-nginx-tls.md
+│   │   ├── csi-storage-drivers.md
+│   │   ├── custom-certificate-authority.md
+│   │   ├── custom-node-configuration.md
+│   │   ├── dapr-migration.md
+│   │   ├── dapr-overview.md
+│   │   ├── dapr-settings.md
+│   │   ├── dapr-workflow.md
+│   │   ├── dapr.md
+│   │   ├── delete-cluster.md
+│   │   ├── delete-node-pool.md
+│   │   ├── deploy-application-az-cli.md
+│   │   ├── deploy-application-template.md
+│   │   ├── deploy-confidential-containers-default-policy.md
+│   │   ├── deploy-extensions-az-cli.md
+│   │   ├── deploy-marketplace.md
+│   │   ├── deploy-mongodb-cluster.md
+│   │   ├── deploy-postgresql-ha.md
+│   │   ├── deploy-ray.md
+│   │   ├── deploy-spinkube.md
+│   │   ├── deploy-valkey-cluster.md
+│   │   ├── deployment-safeguards.md
+│   │   ├── developer-best-practices-pod-security.md
+│   │   ├── developer-best-practices-resource-management.md
+│   │   ├── devops-pipeline.md
+│   │   ├── draft.md
+│   │   ├── egress-outboundtype.md
+│   │   ├── egress-udr.md
+│   │   ├── eks-edw-deploy.md
+│   │   ├── eks-edw-overview.md
+│   │   ├── eks-edw-prepare.md
+│   │   ├── eks-edw-rearchitect.md
+│   │   ├── eks-edw-refactor.md
+│   │   ├── eks-edw-understand.md
+│   │   ├── eks-web-deploy.md
+│   │   ├── eks-web-overview.md
+│   │   ├── eks-web-prepare.md
+│   │   ├── eks-web-rearchitect.md
+│   │   ├── eks-web-refactor.md
+│   │   ├── eks-web-understand.md
+│   │   ├── enable-authentication-microsoft-entra-id.md
+│   │   ├── enable-fips-nodes.md
+│   │   ├── enable-host-encryption.md
+│   │   ├── enable-keda-existing-cluster.md
+│   │   ├── events.md
+│   │   ├── extended-zones.md
+│   │   ├── faq.yml
+│   │   ├── free-standard-pricing-tiers.md
+│   │   ├── generation-2-vm.md
+│   │   ├── gpu-cluster.md
+│   │   ├── gpu-multi-instance.md
+│   │   ├── ha-dr-overview.md
+│   │   ├── how-to-apply-fqdn-filtering-policies.md
+│   │   ├── how-to-apply-l7-policies.md
+│   │   ├── howto-deploy-java-liberty-app.md
+│   │   ├── howto-deploy-java-quarkus-app.md
+│   │   ├── howto-deploy-java-wls-app.md
+│   │   ├── http-proxy.md
+│   │   ├── image-cleaner.md
+│   │   ├── image-integrity.md
+│   │   ├── imds-restriction.md
+│   │   ├── improve-network-fault-tolerance-in-aks-using-tcp-keepalive.md
+│   │   ├── index.yml
+│   │   ├── integrations.md
+│   │   ├── internal-lb.md
+│   │   ├── intro-aks-automatic.md
+│   │   ├── istio-about.md
+│   │   ├── istio-deploy-addon.md
+│   │   ├── istio-deploy-egress.md
+│   │   ├── istio-deploy-ingress.md
+│   │   ├── istio-latency.md
+│   │   ├── istio-meshconfig.md
+│   │   ├── istio-metrics-managed-prometheus.md
+│   │   ├── istio-native-sidecar.md
+│   │   ├── istio-plugin-ca.md
+│   │   ├── istio-scale.md
+│   │   ├── istio-secure-gateway.md
+│   │   ├── istio-support-policy.md
+│   │   ├── istio-telemetry.md
+│   │   ├── istio-uninstall-addon.md
+│   │   ├── istio-upgrade.md
+│   │   ├── kafka-configure.md
+│   │   ├── kafka-deploy.md
+│   │   ├── kafka-infrastructure.md
+│   │   ├── kafka-overview.md
+│   │   ├── kaito-custom-inference-model.md
+│   │   ├── keda-about.md
+│   │   ├── keda-deploy-add-on-arm.md
+│   │   ├── keda-deploy-add-on-cli.md
+│   │   ├── keda-integrations.md
+│   │   ├── keda-workload-identity.md
+│   │   ├── kubelet-logs.md
+│   │   ├── kubelogin-authentication.md
+│   │   ├── kubernetes-action.md
+│   │   ├── kubernetes-helm.md
+│   │   ├── kubernetes-portal.md
+│   │   ├── kubernetes-service-principal.md
+│   │   ├── limit-egress-traffic.md
+│   │   ├── load-balancer-standard.md
+│   │   ├── long-term-support.md
+│   │   ├── manage-abort-operations.md
+│   │   ├── manage-azure-rbac.md
+│   │   ├── manage-local-accounts-managed-azure-ad.md
+│   │   ├── manage-node-pools.md
+│   │   ├── manage-ssh-node-access.md
+│   │   ├── mongodb-overview.md
+│   │   ├── monitor-aks-mongodb.md
+│   │   ├── monitor-aks-reference.md
+│   │   ├── monitor-aks.md
+│   │   ├── monitor-gpu-metrics.md
+│   │   ├── nat-gateway.md
+│   │   ├── network-isolated.md
+│   │   ├── network-policy-best-practices.md
+│   │   ├── node-access.md
+│   │   ├── node-auto-drain.md
+│   │   ├── node-auto-repair.md
+│   │   ├── node-autoprovision.md
+│   │   ├── node-image-upgrade.md
+│   │   ├── node-images.md
+│   │   ├── node-pool-snapshot.md
+│   │   ├── node-problem-detector.md
+│   │   ├── node-resource-group-lockdown.md
+│   │   ├── node-resource-reservations.md
+│   │   ├── node-updates-kured.md
+│   │   ├── node-upgrade-github-actions.md
+│   │   ├── nvidia-gpu-operator.md
+│   │   ├── open-ai-quickstart.md
+│   │   ├── open-ai-secure-access-quickstart.md
+│   │   ├── open-service-mesh-about.md
+│   │   ├── open-service-mesh-binary.md
+│   │   ├── open-service-mesh-deploy-addon-az-cli.md
+│   │   ├── open-service-mesh-deploy-addon-bicep.md
+│   │   ├── open-service-mesh-integrations.md
+│   │   ├── open-service-mesh-istio-migration-guidance.md
+│   │   ├── open-service-mesh-troubleshoot.md
+│   │   ├── open-service-mesh-uninstall-add-on.md
+│   │   ├── openfaas.md
+│   │   ├── operate-cost-optimized-scale.md
+│   │   ├── operator-best-practices-advanced-scheduler.md
+│   │   ├── operator-best-practices-cluster-isolation.md
+│   │   ├── operator-best-practices-cluster-security.md
+│   │   ├── operator-best-practices-container-image-management.md
+│   │   ├── operator-best-practices-identity.md
+│   │   ├── operator-best-practices-network.md
+│   │   ├── operator-best-practices-scheduler.md
+│   │   ├── operator-best-practices-storage.md
+│   │   ├── optimize-aks-costs.md
+│   │   ├── outbound-rules-control-egress.md
+│   │   ├── passive-cold-solution.md
+│   │   ├── planned-maintenance.md
+│   │   ├── policy-reference.md
+│   │   ├── postgresql-ha-overview.md
+│   │   ├── private-apiserver-vnet-integration-cluster.md
+│   │   ├── private-clusters.md
+│   │   ├── privileged-identity-management.md
+│   │   ├── quickstart-dapr.md
+│   │   ├── quickstart-event-grid.md
+│   │   ├── quickstart-helm.md
+│   │   ├── quotas-skus-regions.md
+│   │   ├── ray-overview.md
+│   │   ├── rdp.md
+│   │   ├── reduce-latency-ppg.md
+│   │   ├── release-tracker.md
+│   │   ├── resiliency-mongodb-cluster.md
+│   │   ├── resize-cluster.md
+│   │   ├── resize-node-pool.md
+│   │   ├── scale-cluster.md
+│   │   ├── scale-down-mode.md
+│   │   ├── secure-container-access.md
+│   │   ├── security-controls-policy.md
+│   │   ├── servicemesh-about.md
+│   │   ├── spot-node-pool.md
+│   │   ├── start-stop-cluster.md
+│   │   ├── start-stop-nodepools.md
+│   │   ├── stateful-workloads-overview.md
+│   │   ├── static-ip.md
+│   │   ├── stop-cluster-upgrade-api-breaking-changes.md
+│   │   ├── support-policies.md
+│   │   ├── supported-kubernetes-versions.md
+│   │   ├── troubleshoot-udp-packet-drops.md
+│   │   ├── trusted-access-feature.md
+│   │   ├── tutorial-kubernetes-deploy-application.md
+│   │   ├── tutorial-kubernetes-deploy-azure-container-storage.md
+│   │   ├── tutorial-kubernetes-deploy-cluster.md
+│   │   ├── tutorial-kubernetes-paas-services.md
+│   │   ├── tutorial-kubernetes-prepare-acr.md
+│   │   ├── tutorial-kubernetes-prepare-app.md
+│   │   ├── tutorial-kubernetes-scale.md
+│   │   ├── tutorial-kubernetes-upgrade-cluster.md
+│   │   ├── understand-aks-costs.md
+│   │   ├── update-credentials.md
+│   │   ├── upgrade-aks-cluster.md
+│   │   ├── upgrade-azure-cni.md
+│   │   ├── upgrade-cluster.md
+│   │   ├── upgrade-mongodb-cluster.md
+│   │   ├── upgrade-valkey-aks-nodepool.md
+│   │   ├── upgrade-windows-os.md
+│   │   ├── upgrade.md
+│   │   ├── use-arm64-vms.md
+│   │   ├── use-azure-ad-pod-identity.md
+│   │   ├── use-azure-dedicated-hosts.md
+│   │   ├── use-azure-linux.md
+│   │   ├── use-azure-policy.md
+│   │   ├── use-byo-cni.md
+│   │   ├── use-cvm.md
+│   │   ├── use-etags.md
+│   │   ├── use-flyte.md
+│   │   ├── use-group-managed-service-accounts.md
+│   │   ├── use-kms-etcd-encryption.md
+│   │   ├── use-labels.md
+│   │   ├── use-managed-identity.md
+│   │   ├── use-metrics-server-vertical-pod-autoscaler.md
+│   │   ├── use-network-policies.md
+│   │   ├── use-node-public-ips.md
+│   │   ├── use-node-taints.md
+│   │   ├── use-oidc-issuer.md
+│   │   ├── use-pod-sandboxing.md
+│   │   ├── use-pod-security-policies.md
+│   │   ├── use-premium-v2-disks.md
+│   │   ├── use-psa.md
+│   │   ├── use-system-pools.md
+│   │   ├── use-tags.md
+│   │   ├── use-telepresence-aks.md
+│   │   ├── use-trusted-launch.md
+│   │   ├── use-ultra-disks.md
+│   │   ├── use-vertical-pod-autoscaler.md
+│   │   ├── use-wasi-node-pools.md
+│   │   ├── use-windows-gpu.md
+│   │   ├── use-windows-hpc.md
+│   │   ├── validate-mongodb-cluster.md
+│   │   ├── validate-postgresql-ha.md
+│   │   ├── validate-valkey-cluster.md
+│   │   ├── valkey-overview.md
+│   │   ├── vertical-pod-autoscaler-api-reference.md
+│   │   ├── vertical-pod-autoscaler.md
+│   │   ├── virtual-machines-node-pools.md
+│   │   ├── virtual-nodes-cli.md
+│   │   ├── virtual-nodes-portal.md
+│   │   ├── virtual-nodes.md
+│   │   ├── wasmcloud.md
+│   │   ├── what-is-aks.md
+│   │   ├── windows-aks-customer-stories.md
+│   │   ├── windows-aks-migration-modernization-solutions.md
+│   │   ├── windows-aks-partner-solutions.md
+│   │   ├── windows-annual-channel.md
+│   │   ├── windows-best-practices.md
+│   │   ├── windows-faq.yml
+│   │   ├── windows-vs-linux-containers.md
+│   │   ├── workload-identity-cross-tenant.md
+│   │   ├── workload-identity-deploy-cluster.md
+│   │   ├── workload-identity-migrate-from-pod-identity.md
+│   │   └── workload-identity-overview.md
+│   └── kubernetes-fleet/
+│       ├── includes/
+│       │   └── preview/
+│       ├── media/
+│       │   ├── auto-upgrade/
+│       │   ├── automated-deployments/
+│       │   ├── cluster-resource-override/
+│       │   ├── concepts-dns-load-balancing/
+│       │   ├── concepts-fleet/
+│       │   ├── concepts-resource-placement/
+│       │   ├── concepts-scheduler-scheduling-framework/
+│       │   ├── create-update-strategy/
+│       │   ├── howto-dns-load-balancing/
+│       │   ├── monitor-update-runs/
+│       │   ├── quickstart-create-fleet-and-members-portal/
+│       │   ├── quickstart-resource-propagation/
+│       │   ├── update-orchestration/
+│       ├── access-fleet-hub-cluster-kubernetes-api.md
+│       ├── cluster-resource-override.md
+│       ├── concepts-automated-deployments.md
+│       ├── concepts-choosing-fleet.md
+│       ├── concepts-dns-load-balancing.md
+│       ├── concepts-eviction-disruption.md
+│       ├── concepts-fleet.md
+│       ├── concepts-l4-load-balancing.md
+│       ├── concepts-lifecycle.md
+│       ├── concepts-placement-drift.md
+│       ├── concepts-placement-snapshots.md
+│       ├── concepts-placement-takeover.md
+│       ├── concepts-preview-api-lifecycle.md
+│       ├── concepts-rbac.md
+│       ├── concepts-resource-propagation.md
+│       ├── concepts-rollout-strategy.md
+│       ├── concepts-scheduler-scheduling-framework.md
+│       ├── concepts-update-orchestration.md
+│       ├── faq.md
+│       ├── howto-automated-deployments.md
+│       ├── howto-dns-load-balancing.md
+│       ├── howto-migrate-preview-to-ga-fleets.md
+│       ├── howto-monitor-update-runs.md
+│       ├── index.yml
+│       ├── intelligent-resource-placement.md
+│       ├── l4-load-balancing.md
+│       ├── overview.md
+│       ├── quickstart-create-fleet-and-members-portal.md
+│       ├── quickstart-create-fleet-and-members.md
+│       ├── quickstart-envelope-reserved-resources.md
+│       ├── quickstart-resource-propagation.md
+│       ├── resource-override.md
+│       ├── toc.yml
+│       ├── update-automation.md
+│       ├── update-create-update-strategy.md
+│       ├── update-orchestration.md
+│       ├── upgrade-hub-cluster-type.md
+│       └── use-taints-tolerations.md
+├── breadcrumb/
+│   └── azure-aks/
+│       └── toc.yml
+├── zone-pivots/
+│   └── zone-pivot-groups.yml
+├── README.md
+├── SECURITY.md
+├── ThirdPartyNotices.md
+
+MATERIALS CONTEXT:
+• ./inputs/aks-prd-02.docx: CiliumEndpointSlices Integration in AKS
+  Summary: This Product Requirement Document outlines the integration of CiliumEndpointSlices with Azure CNI in Azure Kubernetes Service (AKS). The primary goal is to enhance networking capabilities through dynamic endpoint management and advanced network policy enforcement. It details business objectives such as improved security, operational efficiency, and competitive differentiation. The document specifies functional and non-functional requirements, user stories, and assumptions, ensuring a comprehensive understanding of the feature's implementation. Future considerations include enhanced analytics and multi-cloud integration, aiming to position AKS as a leader in managed Kubernetes solutions.
+  Technologies: Azure CNI, Cilium, Kubernetes, CiliumEndpointSlices, Azure Monitor, Log Analytics
+  Key Concepts: dynamic endpoint management, network policy enforcement, observability, service discovery, operational efficiency, scalability, security
+  Products: Azure Kubernetes Service, Azure Monitor
+• https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium: Azure CNI Cilium Configuration
+  Summary: This document serves as a comprehensive guide for configuring Azure CNI Powered by Cilium in Azure Kubernetes Service (AKS). It outlines the integration of Azure CNI's control plane with Cilium's data plane to enhance networking performance and security. The guide details the benefits of using eBPF for improved observability and network policy enforcement, as well as methods for assigning pod IPs. It also addresses limitations, prerequisites, and provides command-line examples for deploying AKS clusters with Cilium. This resource is essential for users aiming to leverage advanced networking features in their Kubernetes environments on Azure.
+  Technologies: Azure CNI, Cilium, Kubernetes, eBPF, Azure CLI, Azure Virtual Network
+  Key Concepts: network policies, IP address management, observability, overlay network, virtual network, CiliumEndpointSlices
+  Products: Azure Kubernetes Service, Azure CLI, Azure Virtual Network
+
+TASK: Select the optimal directory for content placement based on comprehensive analysis.
+
+MANDATORY PLANNING PROCESS:
+1. ANALYZE: Systematically examine the repository structure to understand organizational patterns
+2. CONTEXTUALIZE: Review materials context to identify key technologies, concepts, and products  
+3. MATCH: Identify 2-3 candidate directories that align with content goal and service area
+4. VERIFY: Ensure selected directory exists exactly as written in the provided structure
+5. DECIDE: Select EXACTLY ONE directory with detailed justification
+6. ASSESS: Evaluate confidence based on alignment quality and materials relevance
+
+CRITICAL SELECTION REQUIREMENTS:
+- working_directory MUST be exact path from repository structure (no modifications)
+- justification MUST explain WHY this directory is optimal (minimum 50 characters)
+- thinking MUST document complete analysis process showing all evaluation steps
+- confidence MUST be float between 0.0-1.0 reflecting selection certainty
+
+EXAMPLE OUTPUT FORMAT:
+{
+  "thinking": "I analyzed the repository structure and identified the content goal focuses on automatic AKS configurations. Reviewing the materials about Cilium networking and Azure CNI integration, I examined candidate directories: 'articles/aks/networking/', 'articles/aks/automatic/', and 'articles/azure/virtual-network/'. The 'articles/aks/automatic/' directory specifically targets automatic configurations in AKS, which perfectly aligns with the Cilium automatic networking setup described in the materials. This directory exists in the structure and is the most relevant for automatic networking content.",
+  "working_directory": "articles/aks/automatic",
+  "justification": "The automatic directory under AKS is specifically designed for automatic configuration content, directly matching the Cilium automatic networking setup detailed in the materials.",
+  "confidence": 0.90
+}
+
+STRICT VALIDATION REQUIREMENTS:
+- working_directory MUST exist exactly in provided repository structure
+- Path format MUST match structure exactly (no leading/trailing slashes unless shown)
+- confidence MUST reflect genuine assessment of alignment quality
+- justification MUST specifically reference materials context and directory purpose
+
+YOU MUST RETURN EXACTLY THIS JSON FORMAT. NO DEVIATIONS ALLOWED.

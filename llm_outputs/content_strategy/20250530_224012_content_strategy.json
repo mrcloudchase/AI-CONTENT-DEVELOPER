@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "timestamp": "2025-05-30T22:40:12.537562",
+    "operation": "content_strategy"
+  },
+  "data": {
+    "thinking": "The existing content, 'azure-cni-powered-by-cilium.md', is a How-To Guide with high coverage (0.86), addressing most concepts related to configuring Azure CNI with Cilium in AKS. However, the user materials indicate a need for more detailed guidance on using Cilium specifically with AKS, which is not fully covered in the existing documentation. The PRD on CiliumEndpointSlices suggests additional integration details that are not present in the current How-To Guide. Thus, the strategy involves updating the existing guide to include these missing details.",
+    "decisions": [
+      {
+        "action": "UPDATE",
+        "filename": "azure-cni-powered-by-cilium.md",
+        "current_content_type": "How-To Guide",
+        "ms_topic": "how-to",
+        "change_description": "Add sections on 'CiliumEndpointSlices Integration' and 'Advanced Network Policy Configuration' after 'Network Policy Enforcement'.",
+        "specific_sections": [
+          "CiliumEndpointSlices Integration",
+          "Advanced Network Policy Configuration"
+        ],
+        "reason": "The existing guide lacks detailed instructions on integrating CiliumEndpointSlices and configuring advanced network policies, which are crucial for users leveraging Cilium with AKS.",
+        "priority": "high",
+        "relevant_chunks": [
+          {
+            "chunk_id": "chunk_001",
+            "file": "azure-cni-powered-by-cilium.md",
+            "section": "Configure Azure CNI Powered by Cilium in Azure Kubernetes Service (AKS) > Network Policy Enforcement",
+            "relevance_score": 0.82,
+            "usefulness": "Shows where additional content on network policy configuration can be expanded",
+            "relationship": "target_location"
+          },
+          {
+            "chunk_id": "chunk_002",
+            "file": "azure-cni-powered-by-cilium.md",
+            "section": "Configure Azure CNI Powered by Cilium in Azure Kubernetes Service (AKS) > Considerations",
+            "relevance_score": 0.75,
+            "usefulness": "Provides context for adding considerations related to CiliumEndpointSlices",
+            "relationship": "contextual_reference"
+          }
+        ]
+      }
+    ],
+    "confidence": 0.85,
+    "summary": "The strategy focuses on updating the existing How-To Guide to include missing integration details and advanced configurations for Cilium in AKS, ensuring comprehensive coverage of user needs."
+  }
+}
