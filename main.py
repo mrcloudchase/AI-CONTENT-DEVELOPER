@@ -7,17 +7,30 @@ A tool for analyzing repositories and generating documentation based on support 
 import argparse
 import sys
 from pathlib import Path
+import logging
 
 from content_developer.models import Config
 from content_developer.orchestrator import ContentDeveloperOrchestrator
 from content_developer.display import display_results
+from content_developer.display.console_display import ConsoleDisplay
+from content_developer.utils.logging_config import setup_dual_logging, get_console
 from content_developer.constants import MAX_PHASES
 
 
 def main():
     """Main entry point"""
+    # Set up argument parser first
     parser = create_argument_parser()
     args = parser.parse_args()
+    
+    # Set up dual logging before any other operations
+    # Use INFO level for console if verbose, otherwise WARNING
+    console_level = "INFO" if hasattr(args, 'verbose') and args.verbose else "WARNING"
+    setup_dual_logging(console_level=console_level)
+    
+    # Create console display
+    console = get_console()
+    console_display = ConsoleDisplay(console)
     
     # Validate arguments
     validate_arguments(parser, args)
@@ -25,8 +38,8 @@ def main():
     # Create configuration
     config = create_config_from_args(args)
     
-    # Execute workflow
-    execute_workflow(config)
+    # Execute workflow with console display
+    execute_workflow(config, console_display)
 
 
 def create_argument_parser() -> argparse.ArgumentParser:
@@ -89,6 +102,7 @@ def add_optional_arguments(parser: argparse.ArgumentParser):
     parser.add_argument("--debug-similarity", action="store_true", help="Show similarity scoring details")
     parser.add_argument("--apply-changes", action="store_true", help="Apply generated content to repository")
     parser.add_argument("--skip-toc", action="store_true", help="Skip TOC management (Phase 4) if TOC.yml is invalid")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed console output (INFO level)")
 
 
 def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace):
@@ -118,28 +132,37 @@ def create_config_from_args(args: argparse.Namespace) -> Config:
     )
 
 
-def execute_workflow(config: Config):
+def execute_workflow(config: Config, console_display: ConsoleDisplay):
     """Execute the content development workflow"""
     try:
-        orchestrator = ContentDeveloperOrchestrator(config)
+        # Show header
+        repo_name = config.repo_url.split('/')[-1].replace('.git', '')
+        console_display.show_header(repo_name, config.content_goal, config.service_area)
+        
+        # Create orchestrator with console display
+        orchestrator = ContentDeveloperOrchestrator(config, console_display)
         result = orchestrator.execute()
+        
+        # Display final results
+        console_display.print_separator()
         display_results(result)
         
     except KeyboardInterrupt:
-        handle_keyboard_interrupt()
+        handle_keyboard_interrupt(console_display)
     except Exception as e:
-        handle_error(e)
+        handle_error(e, console_display)
 
 
-def handle_keyboard_interrupt():
+def handle_keyboard_interrupt(console_display: ConsoleDisplay):
     """Handle user cancellation"""
-    print("\n\n⚠️  Operation cancelled by user")
+    console_display.show_error("Operation cancelled by user", "Cancelled")
     sys.exit(1)
 
 
-def handle_error(error: Exception):
+def handle_error(error: Exception, console_display: ConsoleDisplay):
     """Handle general errors"""
-    print(f"\n\n❌ Error: {error}")
+    console_display.show_error(str(error), "Error")
+    logging.exception("Fatal error occurred")
     sys.exit(1)
 
 

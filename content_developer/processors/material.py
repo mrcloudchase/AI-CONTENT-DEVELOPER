@@ -22,9 +22,16 @@ class MaterialProcessor(SmartProcessor):
     def _process(self, materials: List[str], repo_path: Path) -> List[Dict]:
         """Process list of materials and return summaries"""
         logger.info(f"MaterialProcessor._process called with {len(materials)} materials: {materials}")
+        
+        if self.console_display:
+            self.console_display.show_operation(f"Processing {len(materials)} support materials")
+        
         summaries = []
-        for material in materials:
+        for i, material in enumerate(materials, 1):
             if content := self.extractor.extract(material, repo_path):
+                if self.console_display:
+                    self.console_display.show_operation(f"Analyzing material {i}/{len(materials)}: {Path(material).name}")
+                
                 if summary := self._summarize(content, material):
                     summaries.append(summary)
         
@@ -37,7 +44,10 @@ class MaterialProcessor(SmartProcessor):
         system = MATERIAL_SUMMARY_SYSTEM
         
         try:
-            result = self.llm_call(system, prompt)
+            # Extract just the filename for cleaner display
+            source_name = Path(source).name
+            result = self.llm_call(system, prompt, operation_name=f"Material Analysis: {source_name}")
+            
             self.save_interaction(
                 prompt, 
                 result, 

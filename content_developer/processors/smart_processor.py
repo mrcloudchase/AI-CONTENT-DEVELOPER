@@ -13,10 +13,11 @@ from ..utils import write, save_json, mkdir
 class SmartProcessor:
     """Base class for all content processors"""
     
-    def __init__(self, client, config):
+    def __init__(self, client, config, console_display=None):
         """Initialize processor with OpenAI client and config"""
         self.client = client
         self.config = config
+        self.console_display = console_display
     
     def process(self, *args, **kwargs):
         """Public process method"""
@@ -26,8 +27,13 @@ class SmartProcessor:
         """Abstract method to be implemented by subclasses"""
         raise NotImplementedError
     
-    def llm_call(self, system: str, user: str, model: str = None) -> Dict:
+    def llm_call(self, system: str, user: str, model: str = None, 
+                 operation_name: str = None) -> Dict:
         """Make LLM API call with JSON response format"""
+        # Show operation if console display available
+        if self.console_display and operation_name:
+            self.console_display.show_operation(f"Calling LLM for {operation_name}")
+        
         # Use configured completion model if not specified
         if model is None:
             model = self.config.completion_model
@@ -41,15 +47,26 @@ class SmartProcessor:
             temperature=self.config.temperature,
             response_format={"type": "json_object"}
         )
-        return json.loads(response.choices[0].message.content)
+        
+        result = json.loads(response.choices[0].message.content)
+        
+        # Extract and display thinking if present
+        self._display_thinking(result, operation_name)
+        
+        return result
     
     def _call_llm(self, messages: List[Dict[str, str]], 
                   model: str = None, 
-                  response_format: Optional[str] = None) -> Dict:
+                  response_format: Optional[str] = None,
+                  operation_name: str = None) -> Dict:
         """Make LLM API call with messages format
         
         Used by generation processors for more control over conversation
         """
+        # Show operation if console display available
+        if self.console_display and operation_name:
+            self.console_display.show_operation(f"Calling LLM for {operation_name}")
+        
         # Use configured model if not specified
         if model is None:
             model = self.config.completion_model
@@ -57,7 +74,37 @@ class SmartProcessor:
         kwargs = self._build_llm_kwargs(messages, model, response_format)
         response = self.client.chat.completions.create(**kwargs)
         
-        return self._parse_llm_response(response, response_format)
+        result = self._parse_llm_response(response, response_format)
+        
+        # Extract and display thinking if present
+        self._display_thinking(result, operation_name)
+        
+        return result
+    
+    def _display_thinking(self, result: Dict, operation_name: str = None) -> None:
+        """Extract and display thinking from LLM response"""
+        if not self.console_display:
+            return
+            
+        # Look for thinking in various places it might appear
+        thinking = None
+        
+        # Check direct thinking field
+        if isinstance(result, dict):
+            thinking = result.get('thinking') or result.get('reasoning') or result.get('analysis')
+            
+            # Check for thinking in nested structures
+            if not thinking and 'data' in result:
+                data = result['data']
+                if isinstance(data, dict):
+                    thinking = data.get('thinking') or data.get('reasoning')
+        
+        # Display thinking if found
+        if thinking:
+            title = f"🤔 AI Thinking"
+            if operation_name:
+                title += f" - {operation_name}"
+            self.console_display.show_thinking(thinking, title)
     
     def _build_llm_kwargs(self, messages: List[Dict[str, str]], model: str, 
                          response_format: Optional[str]) -> Dict:

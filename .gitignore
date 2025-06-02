@@ -156,4 +156,8 @@ cython_debug/
 *.log
 
 # Test artifacts
-test_imports.py 
+test_imports.py
+
+# Logs
+logs/
+*.log 

@@ -18,6 +18,11 @@ logger = logging.getLogger(__name__)
 class ContentGenerator(SmartProcessor):
     """Main orchestrator for Phase 3 content generation"""
     
+    def __init__(self, *args, **kwargs):
+        """Initialize content generator"""
+        super().__init__(*args, **kwargs)
+        self.progress_callback = None  # For progress updates
+    
     def _process(self, strategy: ContentStrategy, materials: List[Dict], 
                  working_dir_path: Path, repo_name: str, working_directory: str) -> Dict:
         """Process all content generation actions from the strategy"""
@@ -29,9 +34,13 @@ class ContentGenerator(SmartProcessor):
             return validation_result
         
         # Load existing chunks for reference
+        if self.console_display:
+            self.console_display.show_operation("Loading existing content chunks")
         chunks = self._load_existing_chunks(working_dir_path, repo_name, working_directory)
         
         # Load material content
+        if self.console_display:
+            self.console_display.show_operation("Loading support material content")
         materials_content = self._load_material_content(materials, strategy)
         if not materials_content:
             return materials_content  # Error result
@@ -61,13 +70,16 @@ class ContentGenerator(SmartProcessor):
     def _load_existing_chunks(self, working_dir_path: Path, repo_name: str, 
                              working_directory: str) -> List[DocumentChunk]:
         """Load existing chunks from the working directory"""
-        return ContentDiscoveryProcessor(self.client, self.config).process(
+        # Pass console_display to child processor
+        processor = ContentDiscoveryProcessor(self.client, self.config, self.console_display)
+        return processor.process(
             working_dir_path, repo_name, working_directory
         )
     
     def _load_material_content(self, materials: List[Dict], strategy: ContentStrategy) -> Dict[str, str]:
         """Load content from materials"""
-        material_loader = MaterialContentLoader(self.client, self.config)
+        # Pass console_display to child processor
+        material_loader = MaterialContentLoader(self.client, self.config, self.console_display)
         materials_content = material_loader.process(materials)
         
         if not materials_content:
@@ -120,11 +132,17 @@ class ContentGenerator(SmartProcessor):
                                materials_content: Dict[str, str], chunks: List[DocumentChunk],
                                repo_name: str, working_directory: str) -> List[Dict]:
         """Process all CREATE actions"""
-        create_processor = CreateContentProcessor(self.client, self.config)
+        # Pass console_display to child processor
+        create_processor = CreateContentProcessor(self.client, self.config, self.console_display)
         results = []
         
         for action in create_actions:
-            logger.info(f"Generating new content: {action.get('filename')}")
+            filename = action.get('filename', 'unknown')
+            logger.info(f"Generating new content: {filename}")
+            
+            # Update progress if callback provided
+            if self.progress_callback:
+                self.progress_callback(f"Creating: {filename}")
             
             # Prepare chunk data for this action
             relevant_chunks, chunks_with_context = self._prepare_chunk_data(
@@ -147,11 +165,17 @@ class ContentGenerator(SmartProcessor):
                                working_dir_path: Path, repo_name: str, 
                                working_directory: str) -> List[Dict]:
         """Process all UPDATE actions"""
-        update_processor = UpdateContentProcessor(self.client, self.config)
+        # Pass console_display to child processor
+        update_processor = UpdateContentProcessor(self.client, self.config, self.console_display)
         results = []
         
         for action in update_actions:
-            logger.info(f"Updating existing content: {action.get('filename')}")
+            filename = action.get('filename', 'unknown')
+            logger.info(f"Updating existing content: {filename}")
+            
+            # Update progress if callback provided
+            if self.progress_callback:
+                self.progress_callback(f"Updating: {filename}")
             
             # Prepare chunk data for this action
             relevant_chunks, chunks_with_context = self._prepare_chunk_data(

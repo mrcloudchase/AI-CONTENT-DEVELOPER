@@ -13133,5 +13133,12 @@
       "type": "intent",
       "text_preview": "Goal: document cilium for aks | Service: aks | Topics: CiliumEndpointSlices in AKS Networking, Azure"
     }
+  },
+  "ca12ae528d791b383cee0a267d8be7c2bb48f7036872ad5cea587408c90f72d8": {
+    "timestamp": "2025-06-02T10:29:11.580996",
+    "meta": {
+      "type": "intent",
+      "text_preview": "Goal: document cilium for aks | Service: aks | Topics: CiliumEndpointSlices in AKS with Azure CNI, A"
+    }
   }
 }

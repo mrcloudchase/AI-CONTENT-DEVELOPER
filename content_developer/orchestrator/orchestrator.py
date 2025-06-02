@@ -26,8 +26,9 @@ logger = logging.getLogger(__name__)
 class ContentDeveloperOrchestrator:
     """Main orchestrator for content development workflow"""
     
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, console_display=None):
         self.config = config
+        self.console_display = console_display
         
         # Initialize Azure OpenAI client with Entra ID authentication
         token_provider = get_bearer_token_provider(
@@ -68,6 +69,8 @@ class ContentDeveloperOrchestrator:
         if max_phase >= 4 and result.generation_ready and not self.config.skip_toc:
             self._execute_phase4(result)
         elif max_phase >= 4 and self.config.skip_toc:
+            if self.console_display:
+                self.console_display.show_status("TOC management skipped (--skip-toc flag)", "info")
             logger.info("=== Phase 4: TOC Management (SKIPPED) ===")
             logger.info("TOC management skipped due to --skip-toc flag")
         
@@ -90,19 +93,38 @@ class ContentDeveloperOrchestrator:
         """Execute Phase 1: Repository Analysis & Directory Selection"""
         logger.info("=== Phase 1: Repository Analysis ===")
         
-        # Clone/update repository
-        repo_path = self.repo_manager.clone_or_update(self.config.repo_url, self.config.work_dir)
-        
-        # Process materials
-        materials = MaterialProcessor(self.client, self.config).process(
-            self.config.support_materials, repo_path
-        )
-        
-        # Get repository structure
-        structure = self.repo_manager.get_structure(repo_path, self.config.max_repo_depth)
-        
-        # Detect working directory with LLM
-        llm_result, llm_failed, error = self._detect_directory(repo_path, structure, materials)
+        if self.console_display:
+            with self.console_display.phase_progress("1: Repository Analysis", 4) as progress:
+                # Clone/update repository
+                progress.update_func(description="Cloning repository")
+                repo_path = self.repo_manager.clone_or_update(self.config.repo_url, self.config.work_dir)
+                progress.update_func(1)
+                
+                # Process materials
+                progress.update_func(description="Processing materials")
+                material_processor = MaterialProcessor(self.client, self.config, self.console_display)
+                materials = material_processor.process(
+                    self.config.support_materials, repo_path
+                )
+                progress.update_func(1)
+                
+                # Get repository structure
+                progress.update_func(description="Analyzing structure")
+                structure = self.repo_manager.get_structure(repo_path, self.config.max_repo_depth)
+                progress.update_func(1)
+                
+                # Detect working directory with LLM
+                progress.update_func(description="Selecting directory")
+                llm_result, llm_failed, error = self._detect_directory(repo_path, structure, materials)
+                progress.update_func(1)
+        else:
+            # Original flow without console display
+            repo_path = self.repo_manager.clone_or_update(self.config.repo_url, self.config.work_dir)
+            materials = MaterialProcessor(self.client, self.config).process(
+                self.config.support_materials, repo_path
+            )
+            structure = self.repo_manager.get_structure(repo_path, self.config.max_repo_depth)
+            llm_result, llm_failed, error = self._detect_directory(repo_path, structure, materials)
         
         # In auto-confirm mode, check if the selection is valid
         if self.config.auto_confirm:
@@ -127,6 +149,15 @@ class ContentDeveloperOrchestrator:
         # Setup directory
         setup_result = self._setup_directory(repo_path, confirmed['working_directory'])
         
+        # Show phase summary
+        if self.console_display:
+            self.console_display.show_phase_summary("1: Repository Analysis", {
+                "Selected Directory": confirmed['working_directory'],
+                "Confidence": f"{confirmed['confidence']:.1%}",
+                "Materials Processed": len(materials),
+                "Markdown Files": setup_result.get('markdown_count', 0)
+            })
+        
         # Create and return result
         return self._create_phase1_result(confirmed, setup_result, repo_path, materials)
     
@@ -134,7 +165,8 @@ class ContentDeveloperOrchestrator:
                          materials: list) -> Tuple[Optional[Dict], bool, str]:
         """Detect working directory using LLM"""
         try:
-            llm_result = DirectoryDetector(self.client, self.config).process(
+            detector = DirectoryDetector(self.client, self.config, self.console_display)
+            llm_result = detector.process(
                 repo_path, structure, materials
             )
             return llm_result, False, ""
@@ -167,19 +199,59 @@ class ContentDeveloperOrchestrator:
             # Get working directory path
             working_dir_path = Path(result.working_directory_full_path)
             
-            # Discover content chunks
-            chunks = self._discover_content(working_dir_path, result.working_directory)
-            
-            # Generate content strategy
-            strategy = self._generate_strategy(chunks, result.material_summaries, 
-                                             result.working_directory)
-            
-            # Confirm strategy
-            confirmed_strategy = self.strategy_confirmator.confirm(strategy)
+            if self.console_display:
+                with self.console_display.phase_progress("2: Content Strategy", 3) as progress:
+                    # Discover content chunks
+                    progress.update_func(description="Discovering content")
+                    discovery_processor = ContentDiscoveryProcessor(self.client, self.config, self.console_display)
+                    chunks = discovery_processor.process(
+                        working_dir_path,
+                        self.repo_manager.extract_name(self.config.repo_url),
+                        result.working_directory
+                    )
+                    progress.update_func(1)
+                    
+                    # Generate content strategy
+                    progress.update_func(description="Analyzing gaps")
+                    strategy_processor = ContentStrategyProcessor(self.client, self.config, self.console_display)
+                    strategy = strategy_processor.process(
+                        chunks, result.material_summaries, self.config,
+                        self.repo_manager.extract_name(self.config.repo_url),
+                        result.working_directory
+                    )
+                    progress.update_func(1)
+                    
+                    # Confirm strategy
+                    progress.update_func(description="Confirming strategy")
+                    confirmed_strategy = self.strategy_confirmator.confirm(strategy)
+                    progress.update_func(1)
+                    
+                    # Show decisions
+                    self.console_display.show_status(f"Generated {len(confirmed_strategy.decisions)} content decisions", "success")
+                    for decision in confirmed_strategy.decisions[:5]:  # Show first 5
+                        self.console_display.show_decision(decision)
+                    if len(confirmed_strategy.decisions) > 5:
+                        self.console_display.show_status(f"... and {len(confirmed_strategy.decisions) - 5} more", "info")
+            else:
+                # Original flow
+                chunks = self._discover_content(working_dir_path, result.working_directory)
+                strategy = self._generate_strategy(chunks, result.material_summaries, result.working_directory)
+                confirmed_strategy = self.strategy_confirmator.confirm(strategy)
             
             # Update result
             result.content_strategy = confirmed_strategy
             result.strategy_ready = confirmed_strategy.confidence > 0
+            
+            # Show phase summary
+            if self.console_display:
+                create_count = sum(1 for d in confirmed_strategy.decisions if d.get('action') == 'CREATE')
+                update_count = sum(1 for d in confirmed_strategy.decisions if d.get('action') == 'UPDATE')
+                self.console_display.show_phase_summary("2: Content Strategy", {
+                    "Content Chunks Analyzed": len(chunks),
+                    "Files to Create": create_count,
+                    "Files to Update": update_count,
+                    "Strategy Confidence": f"{confirmed_strategy.confidence:.1%}"
+                })
             
             logger.info(f"Phase 2 completed: {confirmed_strategy.summary}")
             
@@ -188,7 +260,8 @@ class ContentDeveloperOrchestrator:
     
     def _discover_content(self, working_dir_path: Path, working_directory: str) -> list:
         """Discover and chunk content in the working directory"""
-        chunks = ContentDiscoveryProcessor(self.client, self.config).process(
+        processor = ContentDiscoveryProcessor(self.client, self.config, self.console_display)
+        chunks = processor.process(
             working_dir_path,
             self.repo_manager.extract_name(self.config.repo_url),
             working_directory
@@ -199,7 +272,8 @@ class ContentDeveloperOrchestrator:
     def _generate_strategy(self, chunks: list, materials: list, 
                           working_directory: str) -> 'ContentStrategy':
         """Generate content strategy based on discovered chunks"""
-        strategy = ContentStrategyProcessor(self.client, self.config).process(
+        processor = ContentStrategyProcessor(self.client, self.config, self.console_display)
+        strategy = processor.process(
             chunks, materials, self.config,
             self.repo_manager.extract_name(self.config.repo_url),
             working_directory
@@ -213,6 +287,9 @@ class ContentDeveloperOrchestrator:
         logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
         logger.error(f"Traceback:\n{traceback.format_exc()}")
         
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
         error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
         result.content_strategy = error_strategy
         result.strategy_ready = False
@@ -225,10 +302,30 @@ class ContentDeveloperOrchestrator:
             # Get working directory path
             working_dir_path = Path(result.working_directory_full_path)
             
-            # Generate content
-            generation_results = self._generate_content(
-                result, working_dir_path, result.working_directory
-            )
+            if self.console_display:
+                total_actions = len(result.content_strategy.decisions)
+                with self.console_display.phase_progress("3: Content Generation", total_actions) as progress:
+                    # Generate content with progress updates
+                    generator = ContentGenerator(self.client, self.config, self.console_display)
+                    
+                    # Set up progress callback
+                    def update_progress(action_name: str):
+                        progress.update_func(1, description=f"Processing: {action_name}")
+                    
+                    generator.progress_callback = update_progress
+                    
+                    generation_results = generator.process(
+                        result.content_strategy,
+                        result.material_summaries,
+                        working_dir_path,
+                        self.repo_manager.extract_name(self.config.repo_url),
+                        result.working_directory
+                    )
+            else:
+                # Original flow
+                generation_results = self._generate_content(
+                    result, working_dir_path, result.working_directory
+                )
             
             # Store results
             result.generation_results = generation_results
@@ -239,9 +336,23 @@ class ContentDeveloperOrchestrator:
                 self._apply_generated_content(generation_results, working_dir_path)
                 # Set applied flag to indicate changes were written to repository
                 generation_results['applied'] = True
+                if self.console_display:
+                    self.console_display.show_status("Changes applied to repository", "success")
             else:
                 # Set applied flag to false to indicate preview mode
                 generation_results['applied'] = False
+                if self.console_display:
+                    self.console_display.show_status("Preview mode - changes not applied (use --apply-changes to apply)", "info")
+            
+            # Show phase summary
+            if self.console_display:
+                create_count = sum(1 for r in generation_results.get('create_results', []) if r.get('success'))
+                update_count = sum(1 for r in generation_results.get('update_results', []) if r.get('success'))
+                self.console_display.show_phase_summary("3: Content Generation", {
+                    "Files Created": create_count,
+                    "Files Updated": update_count,
+                    "Applied to Repository": generation_results.get('applied', False)
+                })
             
             # Log summary
             self._log_generation_summary(generation_results)
@@ -252,7 +363,7 @@ class ContentDeveloperOrchestrator:
     def _generate_content(self, result: Result, working_dir_path: Path, 
                          working_directory: str) -> Dict:
         """Generate content using ContentGenerator"""
-        generator = ContentGenerator(self.client, self.config)
+        generator = ContentGenerator(self.client, self.config, self.console_display)
         return generator.process(
             result.content_strategy,
             result.material_summaries,
@@ -274,6 +385,10 @@ class ContentDeveloperOrchestrator:
     def _handle_phase3_error(self, result: Result, error: Exception) -> None:
         """Handle Phase 3 execution errors"""
         logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
         result.generation_results = None
         result.generation_ready = False
     
@@ -387,24 +502,61 @@ class ContentDeveloperOrchestrator:
             # Get working directory path
             working_dir_path = Path(result.working_directory_full_path)
             
-            # Run TOC management
-            toc_results = self._run_toc_phase(
-                working_dir_path,
-                result.generation_results.get('created_files', []),
-                result.generation_results.get('updated_files', []),
-                result.content_strategy
-            )
+            if self.console_display:
+                with self.console_display.phase_progress("4: TOC Management", 2) as progress:
+                    # Run TOC management
+                    progress.update_func(description="Analyzing TOC structure")
+                    toc_processor = TOCProcessor(self.client, self.config, self.console_display)
+                    toc_results = toc_processor.process(
+                        working_dir_path,
+                        result.generation_results.get('created_files', []),
+                        result.generation_results.get('updated_files', []),
+                        {
+                            'decisions': result.content_strategy.decisions if hasattr(result.content_strategy, 'decisions') else []
+                        }
+                    )
+                    progress.update_func(1)
+                    
+                    # Apply if requested
+                    progress.update_func(description="Updating TOC")
+                    if self.config.apply_changes and toc_results.get('success') and toc_results.get('changes_made'):
+                        self._apply_toc_changes(toc_results, working_dir_path)
+                        toc_results['applied'] = True
+                        self.console_display.show_status("TOC.yml updated", "success")
+                    else:
+                        toc_results['applied'] = False
+                        if toc_results.get('success') and not toc_results.get('changes_made'):
+                            self.console_display.show_status("No TOC changes needed", "info")
+                        elif toc_results.get('success'):
+                            self.console_display.show_status("TOC preview generated (use --apply-changes to apply)", "info")
+                    progress.update_func(1)
+            else:
+                # Original flow
+                toc_results = self._run_toc_phase(
+                    working_dir_path,
+                    result.generation_results.get('created_files', []),
+                    result.generation_results.get('updated_files', []),
+                    result.content_strategy
+                )
+                
+                if self.config.apply_changes and toc_results.get('success') and toc_results.get('changes_made'):
+                    self._apply_toc_changes(toc_results, working_dir_path)
+                    toc_results['applied'] = True
+                else:
+                    toc_results['applied'] = False
             
             # Update result
             result.toc_results = toc_results
             result.toc_ready = True
             
-            # Apply TOC changes if requested and successful
-            if self.config.apply_changes and toc_results.get('success') and toc_results.get('changes_made'):
-                self._apply_toc_changes(toc_results, working_dir_path)
-                toc_results['applied'] = True
-            else:
-                toc_results['applied'] = False
+            # Show phase summary
+            if self.console_display:
+                entries_added = len(toc_results.get('entries_added', []))
+                self.console_display.show_phase_summary("4: TOC Management", {
+                    "Entries Added": entries_added,
+                    "Applied to Repository": toc_results.get('applied', False),
+                    "Status": toc_results.get('message', 'Completed')
+                })
             
             logger.info(f"Phase 4 completed: {toc_results.get('message', 'No message')}")
             
@@ -414,7 +566,7 @@ class ContentDeveloperOrchestrator:
     def _run_toc_phase(self, working_dir_path: Path, created_files: list, updated_files: list, 
                       strategy: 'ContentStrategy') -> Dict:
         """Run TOC management phase"""
-        toc_processor = TOCProcessor(self.client, self.config)
+        toc_processor = TOCProcessor(self.client, self.config, self.console_display)
         return toc_processor.process(
             working_dir_path,
             created_files,
@@ -449,5 +601,9 @@ class ContentDeveloperOrchestrator:
     def _handle_phase4_error(self, result: Result, error: Exception) -> None:
         """Handle Phase 4 execution errors"""
         logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
         result.toc_results = None
         result.toc_ready = False 
