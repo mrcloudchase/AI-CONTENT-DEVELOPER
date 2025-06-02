@@ -1,0 +1,39 @@
+{
+  "data": {
+    "content": "## Validated distributions\n\nThe following Microsoft-provided Kubernetes distributions and infrastructure providers have successfully passed the conformance tests for Azure Arc-enabled Kubernetes:\n\n| Distribution and infrastructure provider | Version |\n| ---------------------------------------- | ------- |\n| Cluster API Provider on Azure            | Release version: [1.18.0](https://github.com/kubernetes-sigs/cluster-api-provider-azure/releases/tag/v1.18.0); API version v1.8.8; Kubernetes version: [1.31.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.31.1) |\n| AKS on Azure Local                       | Release version: [December 2020 Update](https://github.com/Azure/aks-hci/releases/tag/AKS-HCI-2012); Kubernetes version: [1.18.8](https://github.com/kubernetes/kubernetes/releases/tag/v1.18.8) |\n| K8s on Azure Stack Edge                  | Release version: Azure Stack Edge 2501 (3.3.2501.1176); Kubernetes version: [1.29.4](https://github.com/kubernetes/kubernetes/releases/tag/v1.29.4) |\n| AKS Edge Essentials                      | Release version [1.10.868.0](https://github.com/Azure/AKS-Edge/releases); Kubernetes version [1.29.9](https://github.com/kubernetes/kubernetes/releases/tag/v1.29.9) |\n\nThe following providers and their corresponding Kubernetes distributions have successfully passed the conformance tests for Azure Arc-enabled Kubernetes:",
+    "file_path": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/validation-program.md",
+    "heading_path": [
+      "Azure Arc-enabled Kubernetes validation",
+      "Validated distributions"
+    ],
+    "section_level": 2,
+    "chunk_index": 1,
+    "frontmatter": {
+      "title": "Azure Arc-enabled Kubernetes validation",
+      "ms.date": "01/07/2025",
+      "ms.topic": "how-to",
+      "description": "Describes Arc validation program for Kubernetes distributions"
+    },
+    "embedding_content": "Document: Azure Arc-enabled Kubernetes validation | Topic: how-to | Description: Describes Arc validation program for Kubernetes distributions | Section: Azure Arc-enabled Kubernetes validation > Validated distributions | ## Validated distributions\n\nThe following Microsoft-provided Kubernetes distributions and infrastructure providers have successfully passed the conformance tests for Azure Arc-enabled Kubernetes:\n\n| Distribution and infrastructure provider | Version |\n| ---------------------------------------- | ------- |\n| Cluster API Provider on Azure            | Release version: [1.18.0](https://github.com/kubernetes-sigs/cluster-api-provider-azure/releases/tag/v1.18.0); API version v1.8.8; Kubernetes version: [1.31.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.31.1) |\n| AKS on Azure Local                       | Release version: [December 2020 Update](https://github.com/Azure/aks-hci/releases/tag/AKS-HCI-2012); Kubernetes version: [1.18.8](https://github.com/kubernetes/kubernetes/releases/tag/v1.18.8) |\n| K8s on Azure Stack Edge                  | Release version: Azure Stack Edge 2501 (3.3.2501.1176); Kubernetes version: [1.29.4](https://github.com/kubernetes/kubernetes/releases/tag/v1.29.4) |\n| AKS Edge Essentials                      | Release version [1.10.868.0](https://github.com/Azure/AKS-Edge/releases); Kubernetes version [1.29.9](https://github.com/kubernetes/kubernetes/releases/tag/v1.29.9) |\n\nThe following providers and their corresponding Kubernetes distributions have successfully passed the conformance tests for Azure Arc-enabled Kubernetes:",
+    "embedding": null,
+    "embedding_model": null,
+    "embedding_generated_at": null,
+    "content_hash": "cafb4a972f7c3b631e135c23d7ed1e8ce810050bce120b45a9cec4c960c722b8",
+    "file_id": "ca4526051ad2f58a06578464dbc6c94b4a704c5a0c4b176699803ab82dd6e113",
+    "chunk_id": "943fbca9c03ceaf5a23e89e62c9de49b23f03e4ff1c27070c67b6bdd242650ce",
+    "prev_chunk_id": "c3fa06eae51f8ae38c01d31b4dee9ac0dc34be55b924d6ee4b400d03d0b0787e",
+    "next_chunk_id": "be29034a3946605d872c5267778c37af84560ab72e94740d88285396476d1b12",
+    "parent_heading_chunk_id": "1a79ea923110a5806b659a49c4c4a957fafc91b121165d80a828f3c1426575b7",
+    "total_chunks_in_file": 5
+  },
+  "meta": {
+    "type": "chunk",
+    "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/validation-program.md",
+    "section": [
+      "Azure Arc-enabled Kubernetes validation",
+      "Validated distributions"
+    ],
+    "has_embedding": false
+  },
+  "timestamp": "2025-06-02T16:13:46.244510"
+}

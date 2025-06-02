@@ -18,6 +18,13 @@ class SmartProcessor:
         self.client = client
         self.config = config
         self.console_display = console_display
+        self.current_phase = None
+        self.current_step = None
+    
+    def set_phase_step(self, phase: int, step: int):
+        """Set current phase and step for directory organization"""
+        self.current_phase = phase
+        self.current_step = step
     
     def process(self, *args, **kwargs):
         """Public process method"""
@@ -53,6 +60,20 @@ class SmartProcessor:
         # Extract and display thinking if present
         self._display_thinking(result, operation_name)
         
+        # Automatically save ALL LLM interactions for complete observability
+        if operation_name:
+            # Use phase/step directory structure
+            output_dir = self._determine_phase_step_directory()
+            
+            # Save the interaction
+            self.save_interaction(
+                prompt=user,
+                response=result,
+                operation=operation_name,
+                output_dir=output_dir,
+                source=operation_name.replace(" ", "_").lower()
+            )
+        
         return result
     
     def _call_llm(self, messages: List[Dict[str, str]], 
@@ -79,7 +100,74 @@ class SmartProcessor:
         # Extract and display thinking if present
         self._display_thinking(result, operation_name)
         
+        # Automatically save ALL LLM interactions for complete observability
+        if operation_name:
+            # Use phase/step directory structure
+            output_dir = self._determine_phase_step_directory()
+            
+            # Extract prompt from messages
+            prompt = self._extract_prompt_from_messages(messages)
+            
+            # Save the interaction
+            self.save_interaction(
+                prompt=prompt,
+                response=result,
+                operation=operation_name,
+                output_dir=output_dir,
+                source=operation_name.replace(" ", "_").lower()
+            )
+        
         return result
+    
+    def _determine_phase_step_directory(self) -> str:
+        """Determine directory based on current phase and step"""
+        if self.current_phase is not None and self.current_step is not None:
+            return f"./llm_outputs/phase-{self.current_phase:02d}/step-{self.current_step:02d}"
+        else:
+            # Fallback to old structure if phase/step not set
+            return self._determine_output_directory("Unknown Operation")
+    
+    def _determine_output_directory(self, operation_name: str) -> str:
+        """Determine appropriate output directory based on operation name"""
+        operation_lower = operation_name.lower()
+        
+        # Map operations to directories
+        if "material" in operation_lower:
+            return "./llm_outputs/materials_summary"
+        elif "directory" in operation_lower or "working" in operation_lower:
+            return "./llm_outputs/decisions/working_directory"
+        elif "strategy" in operation_lower:
+            return "./llm_outputs/content_strategy"
+        elif "create" in operation_lower or "creation" in operation_lower:
+            return "./llm_outputs/content_generation/create"
+        elif "update" in operation_lower:
+            return "./llm_outputs/content_generation/update"
+        elif "toc" in operation_lower:
+            return "./llm_outputs/toc_management"
+        elif "intent" in operation_lower or "ranking" in operation_lower:
+            return "./llm_outputs/content_discovery"
+        elif "structure" in operation_lower or "quality" in operation_lower or "placement" in operation_lower:
+            return "./llm_outputs/document_analysis"
+        elif "extraction" in operation_lower or "validation" in operation_lower:
+            return "./llm_outputs/information_extraction"
+        else:
+            # Default directory for unclassified operations
+            return "./llm_outputs/general_operations"
+    
+    def _extract_prompt_from_messages(self, messages: List[Dict[str, str]]) -> str:
+        """Extract prompt content from messages format"""
+        prompt_parts = []
+        
+        for msg in messages:
+            role = msg.get("role", "")
+            content = msg.get("content", "")
+            
+            if role and content:
+                prompt_parts.append(f"=== {role.upper()} ===")
+                prompt_parts.append(content)
+                prompt_parts.append("")
+        
+        return "\n".join(prompt_parts)
     
     def _display_thinking(self, result: Dict, operation_name: str = None) -> None:
         """Extract and display thinking from LLM response"""
@@ -104,7 +192,35 @@ class SmartProcessor:
             title = f"🤔 AI Thinking"
             if operation_name:
                 title += f" - {operation_name}"
-            self.console_display.show_thinking(thinking, title)
+            
+            # Format numbered steps if present
+            formatted_thinking = self._format_numbered_thinking(thinking)
+            self.console_display.show_thinking(formatted_thinking, title)
+    
+    def _format_numbered_thinking(self, thinking: str) -> str:
+        """Format thinking with proper numbered step formatting"""
+        if not thinking:
+            return thinking
+            
+        # Check if thinking already has numbered steps
+        lines = thinking.split('\n')
+        formatted_lines = []
+        
+        for line in lines:
+            line = line.strip()
+            if line:
+                # Check if line starts with number pattern (1., 2., etc.)
+                if line and len(line) > 2 and line[0].isdigit() and line[1] == '.':
+                    # This is a numbered step - make it bold
+                    formatted_lines.append(f"[bold]{line}[/bold]")
+                else:
+                    # Regular line - indent if it follows a numbered line
+                    if formatted_lines and formatted_lines[-1].startswith("[bold]"):
+                        formatted_lines.append(f"   {line}")
+                    else:
+                        formatted_lines.append(line)
+        
+        return '\n'.join(formatted_lines)
     
     def _build_llm_kwargs(self, messages: List[Dict[str, str]], model: str, 
                          response_format: Optional[str]) -> Dict:

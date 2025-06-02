@@ -1,0 +1,211 @@
+=== CHUNK RANKING ===
+2025-06-02T15:48:41.658461
+==================================================
+
+=== SYSTEM ===
+You are an expert at identifying relevant documentation.
+
+CRITICAL: You MUST follow JSON type specifications exactly. The ranked_indices must be an array of numbers.
+
+=== USER ===
+Rank these content chunks by relevance to the goal.
+
+GOAL: document cilium for aks
+
+CHUNKS TO RANK:
+0. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/conceptual-connectivity-modes.md - Azure Arc-enabled Kubernetes connectivity modes > Next steps
+   Preview: ## Next steps
+
+- Walk through our quickstart to [connect a Kubernetes cluster to Azure Arc](./quickstart-connect-cluster.md).
+- Learn more about creating connections between your cluster and a Git rep...
+
+1. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/identity-access-overview.md - Azure Arc-enabled Kubernetes identity and access overview > Next steps
+   Preview: ## Next steps
+
+- Learn more about [Azure Microsoft Entra ID](/azure/active-directory/fundamentals/active-directory-whatis) and [Azure role-based access control (Azure RBAC)](/azure/role-based-access-c...
+
+2. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md - Azure Arc-enabled Kubernetes network requirements
+   Preview: # Azure Arc-enabled Kubernetes network requirements
+
+This topic describes the networking requirements for connecting a Kubernetes cluster to Azure Arc and supporting various Arc-enabled Kubernetes sce...
+
+3. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/troubleshooting.md - Troubleshoot platform issues for Azure Arc-enabled Kubernetes clusters
+   Preview: # Troubleshoot platform issues for Azure Arc-enabled Kubernetes clusters
+
+This document provides troubleshooting guides for issues with Azure Arc-enabled Kubernetes connectivity, permissions, and agen...
+
+4. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/overview.md - What is Azure Arc-enabled Kubernetes? > Scenarios and enhanced functionality
+   Preview: ## Scenarios and enhanced functionality
+
+Once your Kubernetes clusters are connected to Azure, at scale you can:
+
+* View all connected Kubernetes clusters for inventory, grouping, and tagging, along w...
+
+5. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/conceptual-agent-overview.md - Azure Arc-enabled Kubernetes agent overview > Next steps
+   Preview: ## Next steps
+
+* Walk through our quickstart to [connect a Kubernetes cluster to Azure Arc](./quickstart-connect-cluster.md).
+* View release notes to see [details about the latest agent versions](rele...
+
+6. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/kubernetes-resource-view.md - Access Kubernetes resources from Azure portal > Next steps
+   Preview: ## Next steps
+
+- Learn how to [deploy Azure Monitor for containers](/azure/azure-monitor/containers/container-insights-enable-arc-enabled-clusters?toc=/azure/azure-arc/kubernetes/toc.json) for more in...
+
+7. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/conceptual-agent-overview.md - Azure Arc-enabled Kubernetes agent overview
+   Preview: # Azure Arc-enabled Kubernetes agent overview
+
+[Azure Arc-enabled Kubernetes](overview.md) provides a centralized, consistent control plane to manage policy, governance, and security across Kubernetes...
+
+8. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/conceptual-connectivity-modes.md - Azure Arc-enabled Kubernetes connectivity modes
+   Preview: # Azure Arc-enabled Kubernetes connectivity modes
+
+Azure Arc-enabled Kubernetes requires deployment of Azure Arc agents on your Kubernetes clusters so that capabilities such as [configurations (GitOps...
+
+9. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/overview.md - What is Azure Arc-enabled Kubernetes? > Next steps
+   Preview: ## Next steps
+
+* Learn about best practices and design patterns through the [Cloud Adoption Framework for hybrid and multicloud](/azure/cloud-adoption-framework/scenarios/hybrid/arc-enabled-kubernetes...
+
+10. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md - Azure Arc-enabled Kubernetes network requirements > Details
+   Preview: ## Details
+
+[!INCLUDE [network-requirement-principles](../includes/network-requirement-principles.md)]
+
+[!INCLUDE [network-requirements](includes/network-requirements.md)]
+
+11. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/kubernetes-resource-view.md - Access Kubernetes resources from Azure portal > Prerequisites
+   Preview: ## Prerequisites
+
+- An existing Kubernetes cluster [connected](quickstart-connect-cluster.md) to Azure as an Azure Arc-enabled Kubernetes resource.
+
+- An account that can authenticate to the cluster a...
+
+12. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/tutorial-gitops-flux2-ci-cd.md - Tutorial: Implement CI/CD with GitOps (Flux v2) > Prerequisites > Connect Azure Container Registry to Kubernetes > Connect Azure Container Registry to existing AKS clusters
+   Preview: #### Connect Azure Container Registry to existing AKS clusters
+
+Integrate an existing Azure Container Registry with existing AKS clusters using the following command:
+
+```azurecli
+az aks update -n arc...
+
+13. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md - Azure Arc-enabled Kubernetes network requirements > Additional endpoints
+   Preview: ## Additional endpoints
+
+Depending on your scenario, you may need connectivity to other URLs, such as those used by the Azure portal, management tools, or other Azure services. In particular, review t...
+
+14. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/conceptual-agent-overview.md - Azure Arc-enabled Kubernetes agent overview > Deploy agents to your cluster
+   Preview: ## Deploy agents to your cluster
+
+Most on-premises datacenters enforce strict network rules that prevent inbound communication on the network boundary firewall. Azure Arc-enabled Kubernetes works with...
+
+15. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/conceptual-azure-rbac.md - Azure RBAC on Azure Arc-enabled Kubernetes clusters > Enable Azure RBAC on your Arc-enabled Kubernetes clusters
+   Preview: ## Enable Azure RBAC on your Arc-enabled Kubernetes clusters
+
+For detailed information about how to set up Azure RBAC and create role assignments for your clusters, see [Use Azure RBAC on Azure Arc-en...
+
+16. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/faq.md - Frequently Asked Questions - Azure Arc-enabled Kubernetes and GitOps > What is the difference between Azure Arc-enabled Kubernetes and Azure Kubernetes Service (AKS)?
+   Preview: ## What is the difference between Azure Arc-enabled Kubernetes and Azure Kubernetes Service (AKS)?
+
+AKS is the managed Kubernetes offering by Azure. AKS simplifies deploying a managed Kubernetes clust...
+
+17. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/workload-identity.md - Deploy and configure workload identity federation in Azure Arc-enabled Kubernetes (preview) > Prerequisites
+   Preview: ## Prerequisites
+
+- Workload identity for Azure Arc-enabled Kubernetes clusters (preview) is supported on the following Kubernetes distributions:
+  - Ubuntu Linux cluster running K3s  
+  - AKS on Edge...
+
+18. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md - Azure Arc-enabled Kubernetes network requirements > Next steps
+   Preview: ## Next steps
+
+- Understand [system requirements for Arc-enabled Kubernetes](system-requirements.md).
+- Use our [quickstart](quickstart-connect-cluster.md) to connect your cluster.
+- Review [frequentl...
+
+19. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/overview.md - What is Azure Arc-enabled Kubernetes?
+   Preview: # What is Azure Arc-enabled Kubernetes?
+
+Azure Arc-enabled Kubernetes allows you to attach Kubernetes clusters running anywhere so that you can manage and configure them in Azure. By managing all of y...
+
+20. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/conceptual-azure-rbac.md - Azure RBAC on Azure Arc-enabled Kubernetes clusters > Next steps
+   Preview: ## Next steps
+
+* Use our quickstart to [connect a Kubernetes cluster to Azure Arc](./quickstart-connect-cluster.md).
+* [Set up Azure RBAC](./azure-rbac.md) on your Azure Arc-enabled Kubernetes cluster...
+
+21. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/tutorial-use-gitops-argocd.md - Tutorial: Deploy applications using GitOps with ArgoCD > Prerequisites > Azure Arc-enabled Kubernetes clusters > Azure Kubernetes Service clusters
+   Preview: #### Azure Kubernetes Service clusters
+
+* An MSI-based AKS cluster that's up and running.
+
+  > [!IMPORTANT]
+  > The AKS cluster needs to be created with Managed Service Identity (MSI), not Service Pri...
+
+22. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/tutorial-use-gitops-argocd.md - Tutorial: Deploy applications using GitOps with ArgoCD > Next steps
+   Preview: ## Next steps
+
+* File issues and feature requests on the [Azure/AKS repository](https://github.com/Azure/AKS/labels/extension%2Fargocd) and be sure to include the word "ArgoCD" in the description or t...
+
+23. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/tutorial-use-gitops-flux2.md - Tutorial: Deploy applications using GitOps with Flux v2 > Configure annotation on Flux extension pods
+   Preview: ## Configure annotation on Flux extension pods
+
+When configuring a solution other than Azure Firewall, [network and FQDN/application rules](/azure/aks/outbound-rules-control-egress#required-outbound-n...
+
+24. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cluster-connect.md - Use cluster connect to securely connect to Azure Arc-enabled Kubernetes clusters > Prerequisites > [Azure CLI](#tab/azure-cli)
+   Preview: ### [Azure CLI](#tab/azure-cli)
+
+- [Install](/cli/azure/install-azure-cli) or [update](/cli/azure/update-azure-cli) Azure CLI to the latest version.
+
+- Install the latest version of the `connectedk8s`...
+
+25. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/tutorial-use-gitops-flux2.md - Tutorial: Deploy applications using GitOps with Flux v2 > Prerequisites > [Azure CLI](#tab/azure-cli) > Azure Kubernetes Service clusters
+   Preview: #### Azure Kubernetes Service clusters
+
+* An MSI-based AKS cluster that's up and running.
+
+  > [!IMPORTANT]
+  > Ensure that the AKS cluster is created with MSI (not SPN), because the `microsoft.flux` ...
+
+26. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/workload-management.md - Explore workload management in a multi-cluster environment with GitOps
+   Preview: # Explore workload management in a multi-cluster environment with GitOps
+
+Enterprise organizations, developing cloud native applications, face challenges to deploy, configure and promote a great varie...
+
+27. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/azure-rbac.md - Use Azure RBAC on Azure Arc-enabled Kubernetes clusters > Next steps
+   Preview: ## Next steps
+
+- Read about the [architecture of Azure RBAC on Arc-enabled Kubernetes](conceptual-azure-rbac.md).
+- Securely connect to an Arc-enabled Kubernetes cluster by using [cluster connect](clu...
+
+28. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/faq.md - Frequently Asked Questions - Azure Arc-enabled Kubernetes and GitOps > Should I connect my AKS on Azure Local or Azure Stack Edge to Azure Arc?
+   Preview: ## Should I connect my AKS on Azure Local or Azure Stack Edge to Azure Arc?
+
+Connecting your AKS on Azure Local or Azure Stack Edge to Azure Arc provides clusters with resource representation in Azure...
+
+29. /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/conceptual-agent-overview.md - Azure Arc-enabled Kubernetes agent overview > Deploy agents to your cluster
+   Preview: For more information on deploying the agents to a cluster, see [Quickstart: Connect an existing Kubernetes cluster to Azure Arc](quickstart-connect-cluster.md).
+
+Return JSON with EXACTLY these fields and types:
+{
+    "thinking": "Your numbered ranking process:
+1. Goal understanding...
+2. Chunk evaluation criteria...
+3. Relevance assessment...
+4. Final ranking logic...",  // STRING with numbered steps
+    "rankings": [
+        {
+            "chunk_id": "ID of the chunk",  // STRING
+            "relevance_score": 0-10,  // NUMBER
+            "relevance_reason": "Why this chunk is relevant"  // STRING
+        }
+    ],
+    "top_chunks": ["ordered", "list", "of", "most", "relevant", "chunk", "ids"],  // LIST of strings
+    "key_themes": ["main", "themes", "found", "across", "chunks"]  // LIST of strings
+}
+
+TYPE REQUIREMENTS:
+- thinking: MUST be a string with numbered steps (1., 2., 3., etc.)
+- rankings: MUST be an array of objects with chunk_id (string), relevance_score (number), and relevance_reason (string)
+- top_chunks: MUST be an array/list of strings
+- key_themes: MUST be an array/list of strings

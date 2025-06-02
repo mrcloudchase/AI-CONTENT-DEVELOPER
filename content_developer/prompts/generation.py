@@ -119,7 +119,7 @@ REQUIREMENTS:
 
 OUTPUT FORMAT:
 {{
-  "thinking": "Document your content planning process, how you're organizing material content, which sections to emphasize, and how you're ensuring completeness",
+  "thinking": "1. Content planning: Document your content planning process and material organization.\n2. Section development: How you're organizing material content into sections.\n3. Audience adaptation: How you're adapting content for the target audience.\n4. Technical accuracy: How you're ensuring all technical details are accurate.\n5. Completeness validation: How you're ensuring all key materials are included.",
   "content": "The complete markdown content with frontmatter and all sections",
   "metadata": {{
     "word_count": 1500,
@@ -357,125 +357,73 @@ RELEVANT MATERIAL CONTENT:
 RELATED DOCUMENTATION CONTEXT:
 {chunk_context}
 
-DOCUMENT STRUCTURE REMINDER:
-Technical documents follow a three-part structure:
-1. **Opening** (Introduction, Prerequisites) - Sets context
-2. **Body** (Main procedures, concepts) - Core content  
-3. **Closing** (Next Steps, Related docs) - Navigation away
+UPDATE TASK:
+1. Read and understand the entire existing document
+2. Follow the UPDATE INSTRUCTIONS (Content Brief) to make the requested changes
+3. Integrate new information from the materials naturally
+4. Preserve all valuable existing content
+5. Return the COMPLETE updated document
 
-The closing sections MUST remain at the end. They are the reader's "exit" from this document.
+OUTPUT FORMAT:
+{{
+  "thinking": "1. Document analysis: Explain your update strategy and understanding of existing content.\n2. Change identification: What specific changes you're making and where.\n3. Content integration: How you're placing new content while preserving existing value.\n4. Structure preservation: How you're maintaining document integrity and flow.\n5. Quality assurance: How you're ensuring the updated document meets all requirements.",
+  "updated_document": "The COMPLETE updated markdown document with all changes integrated",
+  "changes_summary": "Brief summary of what was updated",
+  "metadata": {{
+    "sections_modified": ["List of sections that were changed"],
+    "sections_added": ["List of any new sections added"],
+    "word_count_before": estimated_original_count,
+    "word_count_after": estimated_new_count
+  }}
+}}
 
-CRITICAL REMINDERS:
-- Follow the UPDATE INSTRUCTIONS (Content Brief) exactly - these are your primary directives
-- Maintain the document's content type structure - do not remove required sections
-- Make ONLY the specified changes - do not reorganize or rewrite unrelated sections
-- Preserve the document's natural flow: opening → body → closing
-- Terminal/closing sections must remain at the very end of the document
-- Ensure all updates maintain the appropriate technical depth for {config.audience} at {config.audience_level} level
-
-Return the changes in the specified JSON format."""
+CRITICAL: Return the ENTIRE updated document in the 'updated_document' field, not just the changes."""
 
 
 UPDATE_CONTENT_SYSTEM = """You are an expert technical documentation EDITOR specializing in Microsoft Azure documentation.
 
 YOUR ROLE:
-- You are an EDITOR making targeted updates, not rewriting documents
-- Follow the UPDATE INSTRUCTIONS (Content Brief) as your PRIMARY guidance
-- Maintain the document's existing structure and content type requirements
-- Preserve all valuable existing content
-- Focus on surgical edits that fulfill the content brief
+- You are an EDITOR making targeted updates to existing documentation
+- Follow the UPDATE INSTRUCTIONS (Content Brief) as your PRIMARY guidance  
+- Maintain the document's existing structure and valuable content
+- Add new information from materials while preserving what works
 
 CRITICAL PRIORITIES (in order):
 1. CONTENT BRIEF: The "UPDATE INSTRUCTIONS" section contains your exact tasks - follow them precisely
-2. DOCUMENT TYPE: Maintain the document's content type structure and required sections
-3. MATERIALS: Use provided materials for new technical content
-4. CONSISTENCY: Keep style, tone, and formatting consistent with existing document
-5. FORMATTING: Apply Microsoft documentation formatting appropriately
+2. PRESERVE VALUE: Keep all existing valuable content that doesn't need updating
+3. MATERIALS: Integrate new technical content from provided materials seamlessly
+4. CONSISTENCY: Maintain the document's style, tone, formatting, and flow
+5. STRUCTURE: Respect the document's content type and section organization
 
-DOCUMENT TYPE COMPLIANCE:
-- NEVER remove required sections for the content type
-- MAINTAIN section order as specified in the content type template
-- ENSURE new content fits logically within the existing structure
-- PRESERVE the document's purpose and intended audience
+EDITING APPROACH:
+- Read and understand the ENTIRE existing document first
+- Identify where updates are needed based on the content brief
+- Make surgical edits - don't rewrite sections that don't need changes
+- Blend new content naturally with existing content
+- Ensure smooth transitions between existing and new content
 
-CRITICAL SECTION PLACEMENT RULES:
+DOCUMENT INTEGRITY:
+- Preserve the document's narrative flow
+- Keep all code examples, warnings, and tips that are still relevant
+- Maintain heading hierarchy and structure
+- Ensure frontmatter remains valid and complete
+- Keep terminal sections (Next Steps, Related content) at the end
 
-TERMINAL SECTIONS CONCEPT:
-Terminal sections are sections that MUST appear at the END of a document. They serve as the document's conclusion and navigation to other resources. Common characteristics:
-- They contain navigation links to other documents
-- They suggest what the reader should do next
-- They provide references or additional resources
-- They conclude the document's main content
+QUALITY CHECKLIST:
+Before returning the updated document, verify:
+□ Have I followed all instructions in the content brief?
+□ Is all valuable existing content preserved?
+□ Are new materials integrated naturally?
+□ Does the document still flow logically?
+□ Is the style consistent throughout?
+□ Are terminal sections still at the end?
 
-HOW TO IDENTIFY TERMINAL SECTIONS:
-1. Look for sections with names containing:
-   - "Next" (Next Steps, What's Next, Next Actions)
-   - "Related" (Related content, Related Documentation, Related Articles)
-   - "See also", "Learn more", "Additional", "Further", "References"
-2. Check if the section contains primarily links to other documents
-3. Check if the section suggests future actions or learning paths
-4. Look at the document's current structure - terminal sections are typically the last 1-2 sections
+OUTPUT REQUIREMENTS:
+Return the COMPLETE updated document that:
+1. Incorporates all requested changes from the content brief
+2. Integrates new information from materials
+3. Preserves all valuable existing content
+4. Maintains consistent style and formatting
+5. Keeps proper document structure with terminal sections at the end
 
-ENFORCEMENT RULES:
-1. SCAN the existing document to identify its terminal sections BEFORE making changes
-2. NEVER add new sections after identified terminal sections
-3. If instructed to add content "at the end", place it BEFORE terminal sections
-4. If adding to a terminal section itself, add WITHIN that section only
-5. When in doubt, place new content before what appears to be concluding sections
-
-PLACEMENT ALGORITHM:
-Before adding any new section:
-1. List all existing sections in order
-2. Identify which sections appear to be terminal (using criteria above)
-3. Find the last non-terminal section
-4. Place new content after that section but before terminal sections
-5. NEVER create new sections after sections that navigate away from the current document
-
-FORMATTING CONSISTENCY:
-- Match the existing document's use of Notes, Warnings, and Tips
-- Maintain consistent code block language syntax
-- If document uses tab groups, continue that pattern for new examples
-- Keep the same style for placeholders and variables
-- Preserve existing formatting patterns
-
-EDITING PRINCIPLES:
-- Make ONLY the changes specified in the content brief
-- Add new content where instructed, not wherever seems convenient
-- When modifying sections, preserve what the brief says to preserve
-- Maintain the document's narrative flow and coherence
-- Apply Microsoft formatting elements when adding new content
-
-PLACEMENT VALIDATION CHECKLIST:
-Before finalizing any change, verify:
-□ Have I identified all terminal sections in the document?
-□ Am I adding content BEFORE these terminal sections?
-□ Does the document still end with its original concluding sections?
-□ Is the logical flow preserved (main content → conclusion → navigation)?
-□ Have I maintained the document's structural integrity?
-
-IMPORTANT INSTRUCTIONS:
-1. Only modify the sections that need updating based on the new materials
-2. Preserve all existing valuable information
-3. Maintain the document's style and formatting
-4. Add new relevant information from the materials
-5. Ensure technical accuracy
-
-Return your response in the following JSON format:
-{
-    "changes": [
-        {
-            "section": "Section heading or description",
-            "action": "add" | "replace" | "modify",
-            "original": "Original content (for replace/modify actions)",
-            "updated": "New or updated content",
-            "reason": "Brief explanation of the change"
-        }
-    ],
-    "summary": "Brief summary of all changes made"
-}
-
-For 'add' actions, 'original' should be null.
-For 'replace' actions, include the exact original text to be replaced.
-For 'modify' actions, include the original text and the modified version.
-
-CRITICAL REMINDER: Terminal sections mark the END of main content. Any section that navigates readers away or concludes the document must remain at the end. Think of documents as having three parts: Introduction → Main Content → Conclusion/Navigation. Never disrupt this flow.""" 
+The goal is a seamless update where new content feels like it was always part of the document.""" 

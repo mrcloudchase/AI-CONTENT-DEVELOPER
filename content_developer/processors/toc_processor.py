@@ -1,20 +1,20 @@
 """
-TOC (Table of Contents) processor for managing TOC.yml entries
+TOC (Table of Contents) processor using LLM-native approach
 """
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 import yaml
 
-from .smart_processor import SmartProcessor
+from .llm_native_processor import LLMNativeProcessor
 from ..models import DocumentChunk
 from ..utils import read, write
 
 logger = logging.getLogger(__name__)
 
 
-class TOCProcessor(SmartProcessor):
-    """Process TOC.yml to ensure all documentation is properly indexed"""
+class TOCProcessor(LLMNativeProcessor):
+    """Process TOC.yml using intelligent LLM understanding"""
     
     def process(
         self,
@@ -43,7 +43,7 @@ class TOCProcessor(SmartProcessor):
         updated_files: List[str],
         strategy_results: Dict
     ) -> Dict:
-        """Internal processing logic"""
+        """Internal processing logic using LLM-native approach"""
         toc_path = working_directory / "TOC.yml"
         
         # Check if TOC.yml exists
@@ -58,99 +58,58 @@ class TOCProcessor(SmartProcessor):
         # Read existing TOC
         try:
             toc_content = read(toc_path, limit=None)  # Read entire file without truncation
-            
-            # Log TOC file info for debugging
-            lines = toc_content.split('\n')
-            logger.info(f"TOC.yml has {len(lines)} lines, {len(toc_content)} characters")
-            if len(lines) > 10:
-                logger.debug(f"First 10 lines of TOC.yml:\n{chr(10).join(lines[:10])}")
-            
-            existing_toc = yaml.safe_load(toc_content) or []
-        except yaml.YAMLError as e:
-            logger.error(f"Failed to parse TOC.yml - YAML syntax error: {e}")
-            
-            # Try to extract the problematic line
-            error_details = str(e)
-            line_info = ""
-            if "line" in error_details:
-                try:
-                    # Extract line number from error message
-                    import re
-                    line_match = re.search(r'line (\d+)', error_details)
-                    if line_match:
-                        line_num = int(line_match.group(1))
-                        lines = toc_content.split('\n')
-                        if 0 < line_num <= len(lines):
-                            context_start = max(0, line_num - 3)
-                            context_end = min(len(lines), line_num + 2)
-                            line_info = "\nContext around error:\n"
-                            for i in range(context_start, context_end):
-                                prefix = ">>> " if i == line_num - 1 else "    "
-                                line_info += f"{prefix}{i+1}: {lines[i]}\n"
-                except Exception:
-                    pass
-            
-            return {
-                'success': False,
-                'message': f'TOC.yml has invalid YAML syntax: {str(e)}',
-                'toc_path': str(toc_path),
-                'error_details': error_details + line_info,
-                'suggestion': 'The TOC.yml file needs to be fixed manually before it can be updated automatically.'
-            }
+            logger.info(f"TOC.yml has {len(toc_content.split(chr(10)))} lines")
         except Exception as e:
-            logger.error(f"Failed to read or parse TOC.yml: {e}")
+            logger.error(f"Failed to read TOC.yml: {e}")
             return {
                 'success': False,
-                'message': f'Failed to parse TOC.yml: {str(e)}',
+                'message': f'Failed to read TOC.yml: {str(e)}',
                 'toc_path': str(toc_path)
             }
         
-        # Validate TOC structure
-        if not isinstance(existing_toc, list):
-            logger.error(f"TOC root is not a list, got {type(existing_toc)}")
-            return {
-                'success': False,
-                'message': 'TOC.yml root should be a list of entries',
-                'toc_path': str(toc_path)
-            }
-        
-        # Extract all file paths from TOC
-        existing_entries = self._extract_file_paths(existing_toc)
-        logger.info(f"Found {len(existing_entries)} existing entries in TOC")
-        
-        # Find missing entries
-        missing_created = [f for f in created_files if f not in existing_entries]
-        missing_updated = [f for f in updated_files if f not in existing_entries]
-        
-        if not missing_created and not missing_updated:
-            logger.info("All files already have TOC entries")
+        # Prepare entries that need TOC placement
+        all_files = created_files + updated_files
+        if not all_files:
+            logger.info("No files to add to TOC")
             return {
                 'success': True,
-                'message': 'All files already have TOC entries',
+                'message': 'No files to add to TOC',
                 'changes_made': False,
                 'toc_path': str(toc_path)
             }
         
-        # Prepare context for LLM
-        toc_update_context = self._prepare_toc_context(
-            toc_content,
-            existing_toc,
-            missing_created,
-            missing_updated,
-            strategy_results
+        # Extract file descriptions from strategy results
+        file_entries = self._prepare_file_entries(all_files, strategy_results)
+        
+        # Use LLM to suggest TOC placements
+        if self.console_display:
+            self.console_display.show_operation("Analyzing TOC structure")
+        
+        placement_suggestions = self.suggest_toc_placement(
+            toc_structure=toc_content,
+            new_entries=file_entries,
+            operation_name="TOC Placement Analysis"
         )
         
-        # Call LLM to generate TOC updates
-        updated_toc = self._generate_toc_updates(toc_update_context)
+        # Extract thinking if available
+        if self.console_display and 'thinking' in placement_suggestions:
+            self.console_display.show_thinking(placement_suggestions['thinking'], "🤔 AI Thinking - TOC Placement")
+        
+        # Generate updated TOC using LLM
+        updated_toc = self._generate_updated_toc(
+            toc_content, 
+            placement_suggestions,
+            file_entries
+        )
         
         if not updated_toc:
             return {
                 'success': False,
-                'message': 'Failed to generate TOC updates',
+                'message': 'Failed to generate updated TOC',
                 'toc_path': str(toc_path)
             }
         
-        # Save updated TOC
+        # Save preview
         preview_path = self._save_toc_preview(updated_toc['content'], working_directory)
         
         return {
@@ -159,93 +118,50 @@ class TOCProcessor(SmartProcessor):
             'changes_made': True,
             'toc_path': str(toc_path),
             'preview_path': str(preview_path),
-            'entries_added': updated_toc.get('entries_added', []),
-            'entries_verified': updated_toc.get('entries_verified', []),
-            'thinking': updated_toc.get('thinking', '')
+            'placements': placement_suggestions.get('placements', []),
+            'toc_suggestions': placement_suggestions.get('toc_suggestions', '')
         }
     
-    def _extract_file_paths(self, toc_items: List[Dict], prefix: str = "") -> List[str]:
-        """Recursively extract all file paths from TOC structure"""
-        file_paths = []
-        
-        for item in toc_items:
-            if isinstance(item, dict):
-                # Check for href
-                if 'href' in item:
-                    file_paths.append(item['href'])
-                
-                # Check for items (nested structure)
-                if 'items' in item and isinstance(item['items'], list):
-                    nested_paths = self._extract_file_paths(item['items'], prefix)
-                    file_paths.extend(nested_paths)
-        
-        return file_paths
-    
-    def _prepare_toc_context(
-        self,
-        toc_content: str,
-        existing_toc: List[Dict],
-        missing_created: List[str],
-        missing_updated: List[str],
-        strategy_results: Dict
-    ) -> Dict:
-        """Prepare context for TOC update"""
-        # Extract strategy decisions for context
+    def _prepare_file_entries(self, files: List[str], strategy_results: Dict) -> List[Dict[str, str]]:
+        """Prepare file entries with descriptions from strategy"""
+        entries = []
         decisions = strategy_results.get('decisions', [])
-        file_descriptions = {}
         
-        for decision in decisions:
-            filename = decision.get('filename', '')
-            if filename:
-                file_descriptions[filename] = {
-                    'action': decision.get('action'),
-                    'content_type': decision.get('content_type', decision.get('current_content_type')),
-                    'reason': decision.get('reason', ''),
-                    'content_brief': decision.get('content_brief', {})
-                }
-                
-                # Add path-based hints for placement
-                if '/' in filename:
-                    directory = filename.split('/')[0]
-                    file_descriptions[filename]['directory_hint'] = f"File is in '{directory}' directory"
-        
-        # For very large TOC files, we should provide a truncated version to the LLM
-        # while still maintaining the full structure for reference
-        toc_for_prompt = toc_content
-        if len(toc_content) > 20000:  # If TOC is larger than 20KB
-            logger.info(f"TOC is large ({len(toc_content)} chars), creating condensed version for prompt")
-            # Create a condensed version showing structure
-            lines = toc_content.split('\n')
-            condensed_lines = []
-            
-            # Keep first 100 lines to show structure
-            condensed_lines.extend(lines[:100])
-            condensed_lines.append("\n# ... [TOC continues with more entries] ...\n")
-            
-            # Add last 50 lines to show end structure
-            condensed_lines.extend(lines[-50:])
-            
-            toc_for_prompt = '\n'.join(condensed_lines)
-            logger.info(f"Condensed TOC for prompt: {len(toc_for_prompt)} chars")
-        
-        return {
-            'toc_content': toc_for_prompt,  # Use condensed version for prompt
-            'existing_structure': existing_toc,  # Keep full structure
-            'missing_created_files': missing_created,
-            'missing_updated_files': missing_updated,
-            'file_descriptions': file_descriptions,
-            'total_entries': len(self._extract_file_paths(existing_toc))
+        # Create a mapping of filename to decision info
+        decision_map = {
+            decision.get('filename'): decision 
+            for decision in decisions 
+            if decision.get('filename')
         }
+        
+        for file in files:
+            entry = {'filename': file}
+            
+            # Add description from strategy if available
+            if file in decision_map:
+                decision = decision_map[file]
+                entry['description'] = decision.get('reason', '')
+                entry['content_type'] = decision.get('content_type', '')
+                
+                # Extract key topic from content brief if available
+                content_brief = decision.get('content_brief', {})
+                if content_brief.get('objective'):
+                    entry['objective'] = content_brief['objective']
+            
+            entries.append(entry)
+        
+        return entries
     
-    def _generate_toc_updates(self, context: Dict) -> Optional[Dict]:
-        """Generate TOC updates using LLM"""
+    def _generate_updated_toc(self, current_toc: str, placement_suggestions: Dict, 
+                             file_entries: List[Dict]) -> Optional[Dict]:
+        """Generate the updated TOC content using LLM"""
         from ..prompts.toc import get_toc_update_prompt, TOC_UPDATE_SYSTEM
         
         prompt = get_toc_update_prompt(
-            context['toc_content'],
-            context['missing_created_files'],
-            context['missing_updated_files'],
-            context['file_descriptions']
+            current_toc,
+            [entry['filename'] for entry in file_entries if 'filename' in entry],
+            [],  # No updated files distinction needed
+            {entry['filename']: entry for entry in file_entries}
         )
         
         messages = [
@@ -254,13 +170,11 @@ class TOCProcessor(SmartProcessor):
         ]
         
         try:
-            # Note: gpt-4o supports JSON response format, but gpt-4 does not
-            # Models that support JSON response format: gpt-4o, gpt-4-turbo-preview, gpt-3.5-turbo (1106 and later)
             response = self._call_llm(
                 messages,
                 model=self.config.completion_model,
                 response_format="json_object",
-                operation_name="TOC Analysis"
+                operation_name="TOC Generation"
             )
             
             # Save interaction
@@ -275,48 +189,6 @@ class TOCProcessor(SmartProcessor):
             
         except Exception as e:
             logger.error(f"Failed to generate TOC updates: {e}")
-            
-            # If JSON response format failed, try without it as a fallback
-            if "response_format" in str(e):
-                logger.info("Retrying without JSON response format...")
-                try:
-                    response = self._call_llm(
-                        messages,
-                        model=self.config.completion_model,
-                        operation_name="TOC Analysis (Fallback)"
-                        # No response_format parameter
-                    )
-                    
-                    # Try to parse the response as JSON manually
-                    import json
-                    if isinstance(response, dict) and 'content' in response:
-                        content = response['content']
-                        # Try to extract JSON from the content
-                        if content.strip().startswith('{'):
-                            response = json.loads(content)
-                        else:
-                            # Look for JSON in code blocks
-                            import re
-                            json_match = re.search(r'```json?\s*(\{.*?\})\s*```', content, re.DOTALL)
-                            if json_match:
-                                response = json.loads(json_match.group(1))
-                            else:
-                                logger.error("Could not extract JSON from response")
-                                return None
-                    
-                    # Save interaction
-                    self.save_interaction(
-                        prompt,
-                        response,
-                        "toc_update",
-                        "./llm_outputs/toc_management"
-                    )
-                    
-                    return response
-                    
-                except Exception as e2:
-                    logger.error(f"Fallback also failed: {e2}")
-                    
             return None
     
     def _save_toc_preview(self, updated_toc: str, working_directory: Path) -> Path:

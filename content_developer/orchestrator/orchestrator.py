@@ -43,7 +43,7 @@ class ContentDeveloperOrchestrator:
         )
         
         self.repo_manager = RepositoryManager()
-        self.dir_confirmator = DirectoryConfirmation(config)
+        self.dir_confirmator = DirectoryConfirmation(config, self.client)
         self.strategy_confirmator = StrategyConfirmation(config)
         setup_logging()
     
@@ -100,9 +100,10 @@ class ContentDeveloperOrchestrator:
                 repo_path = self.repo_manager.clone_or_update(self.config.repo_url, self.config.work_dir)
                 progress.update_func(1)
                 
-                # Process materials
+                # Process materials - Phase 1, Step 1
                 progress.update_func(description="Processing materials")
                 material_processor = MaterialProcessor(self.client, self.config, self.console_display)
+                material_processor.set_phase_step(1, 1)
                 materials = material_processor.process(
                     self.config.support_materials, repo_path
                 )
@@ -113,14 +114,16 @@ class ContentDeveloperOrchestrator:
                 structure = self.repo_manager.get_structure(repo_path, self.config.max_repo_depth)
                 progress.update_func(1)
                 
-                # Detect working directory with LLM
+                # Detect working directory with LLM - Phase 1, Step 2
                 progress.update_func(description="Selecting directory")
                 llm_result, llm_failed, error = self._detect_directory(repo_path, structure, materials)
                 progress.update_func(1)
         else:
             # Original flow without console display
             repo_path = self.repo_manager.clone_or_update(self.config.repo_url, self.config.work_dir)
-            materials = MaterialProcessor(self.client, self.config).process(
+            material_processor = MaterialProcessor(self.client, self.config)
+            material_processor.set_phase_step(1, 1)
+            materials = material_processor.process(
                 self.config.support_materials, repo_path
             )
             structure = self.repo_manager.get_structure(repo_path, self.config.max_repo_depth)
@@ -166,6 +169,7 @@ class ContentDeveloperOrchestrator:
         """Detect working directory using LLM"""
         try:
             detector = DirectoryDetector(self.client, self.config, self.console_display)
+            detector.set_phase_step(1, 2)
             llm_result = detector.process(
                 repo_path, structure, materials
             )
@@ -201,9 +205,10 @@ class ContentDeveloperOrchestrator:
             
             if self.console_display:
                 with self.console_display.phase_progress("2: Content Strategy", 3) as progress:
-                    # Discover content chunks
+                    # Discover content chunks - Phase 2, Step 1
                     progress.update_func(description="Discovering content")
                     discovery_processor = ContentDiscoveryProcessor(self.client, self.config, self.console_display)
+                    discovery_processor.set_phase_step(2, 1)
                     chunks = discovery_processor.process(
                         working_dir_path,
                         self.repo_manager.extract_name(self.config.repo_url),
@@ -211,9 +216,10 @@ class ContentDeveloperOrchestrator:
                     )
                     progress.update_func(1)
                     
-                    # Generate content strategy
+                    # Generate content strategy - Phase 2, Step 2
                     progress.update_func(description="Analyzing gaps")
                     strategy_processor = ContentStrategyProcessor(self.client, self.config, self.console_display)
+                    strategy_processor.set_phase_step(2, 2)
                     strategy = strategy_processor.process(
                         chunks, result.material_summaries, self.config,
                         self.repo_manager.extract_name(self.config.repo_url),
@@ -261,6 +267,7 @@ class ContentDeveloperOrchestrator:
     def _discover_content(self, working_dir_path: Path, working_directory: str) -> list:
         """Discover and chunk content in the working directory"""
         processor = ContentDiscoveryProcessor(self.client, self.config, self.console_display)
+        processor.set_phase_step(2, 1)
         chunks = processor.process(
             working_dir_path,
             self.repo_manager.extract_name(self.config.repo_url),
@@ -273,6 +280,7 @@ class ContentDeveloperOrchestrator:
                           working_directory: str) -> 'ContentStrategy':
         """Generate content strategy based on discovered chunks"""
         processor = ContentStrategyProcessor(self.client, self.config, self.console_display)
+        processor.set_phase_step(2, 2)
         strategy = processor.process(
             chunks, materials, self.config,
             self.repo_manager.extract_name(self.config.repo_url),
@@ -307,6 +315,7 @@ class ContentDeveloperOrchestrator:
                 with self.console_display.phase_progress("3: Content Generation", total_actions) as progress:
                     # Generate content with progress updates
                     generator = ContentGenerator(self.client, self.config, self.console_display)
+                    generator.set_phase_step(3, 1)  # Phase 3, Step 1: Main generation
                     
                     # Set up progress callback
                     def update_progress(action_name: str):
@@ -364,6 +373,7 @@ class ContentDeveloperOrchestrator:
                          working_directory: str) -> Dict:
         """Generate content using ContentGenerator"""
         generator = ContentGenerator(self.client, self.config, self.console_display)
+        generator.set_phase_step(3, 1)  # Phase 3, Step 1: Main generation
         return generator.process(
             result.content_strategy,
             result.material_summaries,
@@ -507,6 +517,7 @@ class ContentDeveloperOrchestrator:
                     # Run TOC management
                     progress.update_func(description="Analyzing TOC structure")
                     toc_processor = TOCProcessor(self.client, self.config, self.console_display)
+                    toc_processor.set_phase_step(4, 1)  # Phase 4, Step 1: TOC processing
                     toc_results = toc_processor.process(
                         working_dir_path,
                         result.generation_results.get('created_files', []),
@@ -567,6 +578,7 @@ class ContentDeveloperOrchestrator:
                       strategy: 'ContentStrategy') -> Dict:
         """Run TOC management phase"""
         toc_processor = TOCProcessor(self.client, self.config, self.console_display)
+        toc_processor.set_phase_step(4, 1)  # Phase 4, Step 1: TOC processing
         return toc_processor.process(
             working_dir_path,
             created_files,

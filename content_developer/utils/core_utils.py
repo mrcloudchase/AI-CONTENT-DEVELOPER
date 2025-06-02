@@ -36,31 +36,21 @@ def error_handler(func: Callable) -> Callable:
 def extract_from_markdown_block(content: str) -> str:
     """Extract content from markdown code blocks.
     
-    Handles various formats:
-    - ```markdown...```
-    - ````markdown...````
-    - ```...``` (generic code block)
-    
-    Returns the content without the code block markers.
+    Simply removes the most common markdown fence patterns.
+    For complex cases, the LLM will handle it naturally.
     """
     if not content:
         return content
     
-    # Pattern for markdown blocks with optional language specifier
-    # Handles both ``` and ```` markers
-    patterns = [
-        (r'^````markdown\s*\n(.*?)\n````$', re.DOTALL),
-        (r'^```markdown\s*\n(.*?)\n```$', re.DOTALL),
-        (r'^````\s*\n(.*?)\n````$', re.DOTALL),
-        (r'^```\s*\n(.*?)\n```$', re.DOTALL),
-    ]
-    
     content = content.strip()
     
-    for pattern, flags in patterns:
-        match = re.match(pattern, content, flags)
-        if match:
-            return match.group(1).strip()
+    # Check for common fence patterns
+    if content.startswith('```') and content.endswith('```'):
+        # Find first newline after opening fence
+        first_newline = content.find('\n')
+        if first_newline > 0:
+            # Remove opening fence and closing fence
+            return content[first_newline + 1:-3].strip()
     
-    # If no code block markers found, return as-is
+    # Return as-is if no fence found
     return content 

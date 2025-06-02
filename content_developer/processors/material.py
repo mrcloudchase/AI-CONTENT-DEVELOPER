@@ -48,13 +48,7 @@ class MaterialProcessor(SmartProcessor):
             source_name = Path(source).name
             result = self.llm_call(system, prompt, operation_name=f"Material Analysis: {source_name}")
             
-            self.save_interaction(
-                prompt, 
-                result, 
-                "materials_summary", 
-                "./llm_outputs/materials_summary", 
-                source
-            )
+            # save_interaction is now handled automatically by llm_call
             return result
         except Exception as e:
             logger.error(f"Failed to summarize {source}: {e}")

@@ -98,7 +98,7 @@ ANALYSIS REQUIREMENTS:
 
 OUTPUT FORMAT:
 {{
-  "thinking": "Document your complete analysis process including gap identification, content type considerations, and decision rationale",
+  "thinking": "1. Gap analysis: Document your complete analysis process including gap identification.\n2. Content type evaluation: Explain content type considerations and selection rationale.\n3. Decision framework: Apply the decision criteria to determine CREATE vs UPDATE actions.\n4. Content brief development: Detail how you developed the specific content briefs.\n5. Final validation: Confirm all decisions align with user goals and existing content patterns.",
   "decisions": [
     {{
       "action": "CREATE",

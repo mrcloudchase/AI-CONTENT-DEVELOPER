@@ -1,0 +1,60 @@
+=== DIRECTORY VALIDATION ===
+2025-06-02T16:31:38.709169
+==================================================
+
+=== SYSTEM ===
+You are an expert at extracting structured information from documents.
+You can identify and extract key concepts, technical details, and relationships.
+
+CRITICAL: You MUST follow JSON type specifications exactly. Always return the requested structure with correct types.
+
+=== USER ===
+Extract information for: Validate directory selection matches service area and is appropriate for documentation
+
+From this content:
+Selected directory: articles/azure-arc/kubernetes
+Repository structure insights: Sections found: 7, Terminal sections: 10, Flow: The repository is organized by Azure service, with each service directory containing feature or topi..., Topics: Azure Arc, Azure Linux, Azure Portal, Azure Container Registry, Azure Copilot
+Service area: aks
+Content goal: document cilium for aks
+
+Validate:
+1. Is this an appropriate documentation directory (not media/assets)?
+2. Does this directory match the service area 'aks'?
+3. If not, what would be a better directory for aks content?
+
+VALIDATION APPROACH:
+- Understand the repository's organizational pattern
+- Evaluate if the selected directory fits that pattern
+- Consider practical constraints (what directories actually exist)
+- Validate the reasoning, not rigid rules
+
+Return a JSON response with:
+{
+    "thinking": "Your numbered validation steps:
+1. Repository structure analysis...
+2. Directory pattern evaluation...
+3. Practical constraints check...
+4. Final validation decision...",  // STRING with numbered steps
+    "is_valid": true/false,  // BOOLEAN - is the selection reasonable given available options?
+    "is_documentation_directory": true/false,  // BOOLEAN - is it for docs (not media/assets)?
+    "pattern_match": "How well does selection fit the repository pattern",  // STRING
+    "reason": "Explanation of validation result",  // STRING
+    "concerns": ["array", "of", "any", "concerns"],  // LIST of strings or empty
+    "suggested_alternative": "Better directory path only if current is clearly wrong"  // STRING or null
+}
+
+VALIDATION PRINCIPLES:
+- Accept practical decisions when ideal options don't exist
+- Media/assets/includes directories are NOT valid for documentation
+- If no perfect match exists, a general directory is acceptable
+- Consider the repository's actual structure, not theoretical ideals
+- Only suggest alternatives if they actually exist and are clearly better
+
+TYPE REQUIREMENTS:
+- thinking: MUST be a string with numbered steps (1., 2., 3., etc.)
+- is_valid: MUST be a boolean (true/false)
+- is_documentation_directory: MUST be a boolean
+- pattern_match: MUST be a string
+- reason: MUST be a string
+- concerns: MUST be an array/list of strings (can be empty)
+- suggested_alternative: MUST be a string or null

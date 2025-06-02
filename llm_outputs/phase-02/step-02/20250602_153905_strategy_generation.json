@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "timestamp": "2025-06-02T15:39:05.165801",
+    "operation": "Strategy Generation"
+  },
+  "data": {
+    "thinking": "I began by analyzing the user materials, which focus on Cilium integration with AKS, specifically around CiliumEndpointSlices, Azure CNI, and advanced networking features. The PRD (Material 1) provides business and technical requirements, while the Microsoft Learn guide (Material 2) offers a technical walkthrough for deploying Azure CNI powered by Cilium. Next, I reviewed the existing content and its relevance. The most relevant files are Azure Arc-related tutorials and concept articles, which cover GitOps, network requirements, and connectivity modes for Azure Arc-enabled Kubernetes but do not address Cilium for AKS directly. There is no existing content in the provided set that documents Cilium integration for AKS, CiliumEndpointSlices, or the specific configuration and operational guidance required for platform engineers using AKS. The content types in the repository are mostly tutorials and concept articles for Azure Arc, with no how-to or overview content for Cilium on AKS. Coverage for the target topic is therefore <30% (low), and the content type needed (How-To Guide for Cilium on AKS) does not exist. This justifies a CREATE action. The most appropriate content type is a How-To Guide, as platform engineers will need step-by-step instructions for deploying, configuring, and managing Cilium in AKS, including advanced features like endpoint slices and integration with Azure Monitor. I referenced the most relevant chunk_ids (from the Azure Arc network requirements and GitOps tutorials) to provide context for related networking and operational practices, but the new content will be independent and focused on AKS+Cilium. No UPDATE actions are warranted, as there is no overlapping content to extend.",
+    "decisions": [
+      {
+        "action": "CREATE",
+        "filename": "aks-cilium-howto.md",
+        "content_type": "How-To Guide",
+        "ms_topic": "how-to",
+        "reason": "There is currently no documentation in the repository that provides step-by-step guidance for deploying and configuring Cilium with Azure CNI in AKS. The user materials specify advanced networking features (CiliumEndpointSlices, policy enforcement, observability) that are not covered in any existing content. Platform engineers require actionable, technical instructions for integrating and operating Cilium in AKS, which is not addressed by the current Azure Arc-focused docs.",
+        "priority": "high",
+        "relevant_chunks": [
+          "azure-arc/kubernetes/network-requirements.md:Azure Arc-enabled Kubernetes network requirements",
+          "azure-arc/kubernetes/network-requirements.md:Details"
+        ],
+        "content_brief": {
+          "objective": "Enable platform engineers to deploy, configure, and operate Azure CNI powered by Cilium in AKS, including advanced features such as CiliumEndpointSlices, enhanced network policy enforcement, and integration with Azure Monitor.",
+          "key_points_to_cover": [
+            "Overview of Cilium integration with Azure CNI in AKS and its benefits (eBPF data plane, scalability, security)",
+            "Step-by-step instructions for enabling Cilium on new and existing AKS clusters",
+            "Configuration of CiliumEndpointSlices and explanation of their role in dynamic endpoint grouping and policy enforcement",
+            "Integration steps with Azure Monitor and Cilium observability tools",
+            "Best practices for operationalizing Cilium in production AKS environments, including fallback mechanisms and scalability considerations",
+            "Limitations and supported scenarios (e.g., Linux-only, ipBlock restrictions, version compatibility)"
+          ],
+          "prerequisites_to_state": [
+            "Familiarity with AKS and Kubernetes networking concepts",
+            "Azure CLI installed and authenticated",
+            "Access to an Azure subscription with permissions to create and manage AKS clusters",
+            "Supported AKS and Cilium versions (as per Microsoft Learn guide)"
+          ],
+          "related_docs_to_reference": [
+            "/articles/azure-arc/kubernetes/network-requirements.md",
+            "/articles/azure-arc/kubernetes/tutorial-use-gitops-flux2.md"
+          ],
+          "next_steps_to_suggest": [
+            "Implement advanced network policies using Cilium",
+            "Monitor and troubleshoot Cilium-powered networking in AKS",
+            "Explore multi-cloud or hybrid scenarios with Cilium and Azure Arc"
+          ],
+          "technical_depth": "Intermediate: Provide enough detail for platform engineers to understand both the architecture and the practical steps, but avoid deep-dive kernel-level or eBPF internals. Focus on actionable configuration, operational best practices, and troubleshooting.",
+          "code_examples_needed": [
+            "Azure CLI commands for enabling Cilium in AKS",
+            "Sample YAML for CiliumEndpointSlices configuration",
+            "Example network policy definitions using Cilium",
+            "Sample Azure Monitor integration configuration"
+          ],
+          "important_warnings": [
+            "Cilium on AKS is currently supported only on Linux nodes",
+            "ipBlock restrictions and other feature limitations",
+            "Ensure compatibility between AKS, Azure CNI, and Cilium versions",
+            "Potential impacts on existing workloads when migrating to Cilium"
+          ]
+        }
+      }
+    ],
+    "confidence": 0.85,
+    "summary": "There is a significant documentation gap for Cilium integration in AKS. No existing content addresses this use case or provides the required how-to guidance. The strategy is to create a new, high-priority How-To Guide for platform engineers, covering deployment, configuration, advanced features, and operational best practices for Cilium on AKS. Related Azure Arc networking docs should be referenced for context, but the new content will be focused on AKS."
+  }
+}

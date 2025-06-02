@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "timestamp": "2025-06-02T16:32:37.502758",
+    "operation": "TOC Placement Analysis"
+  },
+  "data": {
+    "thinking": "1. TOC structure understanding: The current TOC is organized into high-level sections such as Overview, Quickstarts, Tutorials, Samples, Concepts, How-to guides, Reference, and Resources. Networking topics are currently under 'Concepts' (network requirements) and 'How-to guides' (simplify network connectivity). 2. Entry categorization: The new entry 'aks-cilium-networking-howto.md' is a practical, actionable guide focused on implementing and optimizing Cilium networking specifically in AKS, which is not covered in the existing docs. 3. Placement logic: Since this is a hands-on guide (not just conceptual), it fits best under 'How-to guides', specifically with other cluster/network management topics. It is more advanced than basic network requirements (Concepts), and more specific than the general 'Simplify network connectivity' guide. 4. Final recommendations: Place the new entry under 'How-to guides', ideally after 'Simplify network connectivity', and consider creating a dedicated networking subsection if more network-related how-tos are anticipated.",
+    "placements": [
+      {
+        "filename": "aks-cilium-networking-howto.md",
+        "suggested_location": "After 'Simplify network connectivity'",
+        "parent_section": "How-to guides",
+        "reasoning": "This is a practical, actionable guide for implementing Cilium networking in AKS, which aligns with the hands-on nature of 'How-to guides'. Placing it after 'Simplify network connectivity' maintains a logical flow from general to specific networking solutions, and keeps related content together for user discoverability."
+      }
+    ],
+    "toc_suggestions": [
+      "Create a dedicated 'Networking' subsection under 'How-to guides' if more network-related how-tos are added in the future.",
+      "Consider cross-linking the new Cilium networking guide from the 'Concepts > Network requirements' section for users seeking deeper implementation details.",
+      "Review the overall balance of conceptual vs. how-to networking content to ensure users can easily find both high-level and hands-on guidance.",
+      "Add displayName metadata to the new entry for improved searchability (e.g., cilium, aks, networking, azure cni)."
+    ]
+  }
+}

@@ -32,7 +32,7 @@ CRITICAL EXTRACTION REQUIREMENTS:
 
 EXAMPLE OUTPUT FORMAT:
 {{
-  "thinking": "I systematically analyzed the Azure CNI documentation. First, I identified this as a technical implementation guide focused on container networking. I extracted specific technologies: Azure CNI, Cilium, Kubernetes, eBPF. Key concepts include endpoint slices, network policies, automatic configuration. Microsoft products mentioned are AKS, Azure Virtual Network, Azure Resource Manager. The document provides comprehensive coverage of advanced networking configuration with specific implementation examples.",
+  "thinking": "1. Document analysis: I systematically analyzed the Azure CNI documentation and identified this as a technical implementation guide focused on container networking.\n2. Technology extraction: I extracted specific technologies including Azure CNI, Cilium, Kubernetes, and eBPF.\n3. Concept identification: Key concepts include endpoint slices, network policies, and automatic configuration.\n4. Microsoft product mapping: Products mentioned are AKS, Azure Virtual Network, and Azure Resource Manager.\n5. Summary synthesis: The document provides comprehensive coverage of advanced networking configuration with specific implementation examples.",
   "main_topic": "Azure CNI Cilium Integration",
   "technologies": ["Azure CNI", "Cilium", "Kubernetes", "eBPF", "CiliumEndpointSlices"],
   "key_concepts": ["network policies", "endpoint slices", "automatic configuration", "container networking"],
@@ -49,6 +49,11 @@ MATERIAL_SUMMARY_SYSTEM = """You are a specialized technical document analyzer w
 
 INSTRUCTION ADHERENCE: You MUST follow the user's instructions exactly as specified. GPT-4.1 is trained to follow instructions precisely - any deviation from the requested format will be considered a failure.
 
+CRITICAL TYPE REQUIREMENTS: You MUST follow JSON type specifications exactly:
+- Strings for text values (NOT arrays)
+- Arrays for lists (NOT strings)
+- Empty arrays [] if no items found (NOT null or omitted)
+
 PLANNING PROCESS ENFORCEMENT: You MUST plan extensively before generating your response:
 1. Carefully read through the entire content multiple times
 2. Identify document type and primary technical focus
@@ -59,17 +64,25 @@ PLANNING PROCESS ENFORCEMENT: You MUST plan extensively before generating your r
 7. Create comprehensive summary covering purpose, scope, and technical value
 
 JSON FORMAT ENFORCEMENT:
-- thinking: MUST document complete step-by-step analysis process (minimum 100 words)
-- main_topic: MUST be concise primary subject (maximum 50 characters)
-- technologies: MUST be complete array of technical tools/frameworks mentioned
-- key_concepts: MUST be complete array of important concepts covered
-- microsoft_products: MUST be complete array of Microsoft/Azure products mentioned
-- document_type: MUST be specific document classification
-- summary: MUST be comprehensive overview (100-200 words)
-- source: MUST exactly match provided source path
+- thinking: MUST be a STRING with numbered steps (1., 2., 3., etc.) documenting complete step-by-step analysis process (minimum 100 words)
+- main_topic: MUST be a STRING with concise primary subject (maximum 50 characters)
+- technologies: MUST be an ARRAY of strings listing technical tools/frameworks mentioned
+- key_concepts: MUST be an ARRAY of strings listing important concepts covered
+- microsoft_products: MUST be an ARRAY of strings listing Microsoft/Azure products mentioned
+- document_type: MUST be a STRING with specific document classification
+- summary: MUST be a STRING with comprehensive overview (100-200 words)
+- source: MUST be a STRING exactly matching provided source path
+
+TYPE VALIDATION:
+✓ ALL fields must be present (no omissions)
+✓ thinking, main_topic, document_type, summary, source MUST be strings
+✓ thinking MUST use numbered steps (1., 2., 3., etc.)
+✓ technologies, key_concepts, microsoft_products MUST be arrays
+✓ Arrays must contain strings only (not objects or numbers)
+✓ Empty arrays [] are valid if nothing found (NOT null)
 
 VALIDATION CHECKLIST:
-✓ thinking field documents complete analysis methodology
+✓ thinking field documents complete analysis methodology with numbered steps
 ✓ main_topic is concise and specific
 ✓ technologies array includes ALL technical tools mentioned
 ✓ key_concepts array includes ALL important concepts

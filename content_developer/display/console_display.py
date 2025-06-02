@@ -102,7 +102,6 @@ class ConsoleDisplay:
         action = decision.get('action', 'UNKNOWN')
         filename = decision.get('filename', 'unknown')
         reason = decision.get('reason', 'No reason provided')
-        confidence = decision.get('confidence', 0.0)
         
         # Choose emoji and color based on action
         action_styles = {
@@ -116,7 +115,6 @@ class ConsoleDisplay:
         decision_text = f"{emoji} [bold {color}]{action}[/bold {color}]: {filename}"
         self.console.print(f"  {decision_text}")
         self.console.print(f"    [dim]Reason: {reason}[/dim]")
-        self.console.print(f"    [dim]Confidence: {confidence:.1%}[/dim]")
         self.console.print()
     
     def show_status(self, message: str, status: str = "info") -> None:

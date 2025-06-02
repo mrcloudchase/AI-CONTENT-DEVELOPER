@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "timestamp": "2025-06-02T16:13:32.759275",
+    "operation": "Material Analysis: azure-cni-powered-by-cilium"
+  },
+  "data": {
+    "thinking": "1. I began by reading the entire document carefully, noting all technical details, tools, and services explicitly mentioned. 2. I identified the document as a technical implementation guide focused on configuring Azure CNI powered by Cilium in Azure Kubernetes Service (AKS). 3. I extracted all technologies and frameworks referenced, such as Azure CNI, Cilium, Kubernetes, eBPF, Azure CLI, and CiliumEndpointSlices. 4. I listed all key concepts, including network policy enforcement, IP address management, overlay and virtual network modes, FQDN filtering, Layer 7 policies, observability, and limitations. 5. I cataloged all Microsoft/Azure products and services, including Azure Kubernetes Service, Azure CLI, Azure Virtual Network, Azure Resource Manager, and Azure Network Policy Manager. 6. I validated each extracted item against the source content to ensure accuracy and avoided fabricating any information. 7. I synthesized a comprehensive summary describing the document's purpose, scope, and technical value, focusing on configuration options, supported features, and operational considerations. 8. I formatted all findings into the required JSON structure, ensuring strict adherence to type and content requirements.",
+    "main_topic": "Configuring Azure CNI Powered by Cilium in AKS",
+    "technologies": [
+      "Azure CNI",
+      "Cilium",
+      "Kubernetes",
+      "eBPF",
+      "Azure CLI",
+      "CiliumEndpointSlices",
+      "Kube-Proxy",
+      "Calico"
+    ],
+    "key_concepts": [
+      "network policy enforcement",
+      "IP address management",
+      "overlay network",
+      "virtual network",
+      "dynamic pod IP assignment",
+      "service routing",
+      "observability",
+      "FQDN filtering",
+      "Layer 7 network policies",
+      "advanced container networking services",
+      "limitations",
+      "pod and node subnet configuration",
+      "network policy limitations",
+      "resource group and virtual network creation",
+      "AKS API versioning",
+      "automatic configuration",
+      "host networking",
+      "Cilium daemonset resource limits"
+    ],
+    "microsoft_products": [
+      "Azure Kubernetes Service",
+      "Azure CLI",
+      "Azure Virtual Network",
+      "Azure Resource Manager",
+      "Azure Network Policy Manager"
+    ],
+    "document_type": "Technical Implementation Guide",
+    "summary": "This technical implementation guide provides detailed instructions for configuring Azure CNI Powered by Cilium within Azure Kubernetes Service (AKS). It explains how Azure CNI leverages Cilium's eBPF-based data plane to enhance networking performance, policy enforcement, and observability. The document outlines multiple deployment options for assigning pod IPs, including overlay networks and virtual networks, and specifies prerequisites such as Azure CLI and AKS API versions. It covers supported Kubernetes and Cilium versions, details network policy enforcement without the need for additional engines like Calico, and highlights current limitations and unsupported features. Advanced features such as FQDN filtering, Layer 7 policies, and enhanced observability are available through Advanced Container Networking Services. The guide also addresses frequently asked questions, provides command-line examples for cluster creation, and clarifies operational considerations for production environments.",
+    "source": "https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium"
+  }
+}

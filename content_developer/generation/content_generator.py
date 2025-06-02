@@ -72,6 +72,8 @@ class ContentGenerator(SmartProcessor):
         """Load existing chunks from the working directory"""
         # Pass console_display to child processor
         processor = ContentDiscoveryProcessor(self.client, self.config, self.console_display)
+        if hasattr(self, 'current_phase') and self.current_phase:
+            processor.set_phase_step(self.current_phase, 2)  # Step 2: Load chunks
         return processor.process(
             working_dir_path, repo_name, working_directory
         )
@@ -80,6 +82,8 @@ class ContentGenerator(SmartProcessor):
         """Load content from materials"""
         # Pass console_display to child processor
         material_loader = MaterialContentLoader(self.client, self.config, self.console_display)
+        if hasattr(self, 'current_phase') and self.current_phase:
+            material_loader.set_phase_step(self.current_phase, 3)  # Step 3: Load materials
         materials_content = material_loader.process(materials)
         
         if not materials_content:
@@ -134,6 +138,8 @@ class ContentGenerator(SmartProcessor):
         """Process all CREATE actions"""
         # Pass console_display to child processor
         create_processor = CreateContentProcessor(self.client, self.config, self.console_display)
+        if hasattr(self, 'current_phase') and self.current_phase:
+            create_processor.set_phase_step(self.current_phase, 4)  # Step 4: Create content
         results = []
         
         for action in create_actions:
@@ -167,6 +173,8 @@ class ContentGenerator(SmartProcessor):
         """Process all UPDATE actions"""
         # Pass console_display to child processor
         update_processor = UpdateContentProcessor(self.client, self.config, self.console_display)
+        if hasattr(self, 'current_phase') and self.current_phase:
+            update_processor.set_phase_step(self.current_phase, 5)  # Step 5: Update content
         results = []
         
         for action in update_actions:

@@ -162,8 +162,8 @@
         href: /azure/machine-learning/how-to-attach-kubernetes-anywhere?toc=/azure/azure-arc/kubernetes/toc.json&bc=/azure/azure-arc/kubernetes/breadcrumb/toc.json
   - name: Simplify network connectivity
     href: arc-gateway-simplify-networking.md
-  - name: Deploy and manage Cilium with Azure CNI in AKS
-    href: aks-cilium-azure-cni-howto.md
+  - name: Configure Cilium networking
+    href: aks-cilium-networking-howto.md
   - name: Troubleshooting
     items:
     - name: Platform issues

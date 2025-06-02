@@ -1,0 +1,11 @@
+{
+  "metadata": {
+    "timestamp": "2025-06-02T15:34:46.296411",
+    "operation": "Test Operation"
+  },
+  "data": {
+    "thinking": "1. I'm analyzing the request to test phase/step directory structure.\n2. The directory should be ./llm_outputs/phase-03/step-02/.\n3. The thinking field should be displayed with numbered steps.\n4. This will help verify the implementation is working correctly.",
+    "result": "Test successful",
+    "confidence": 0.95
+  }
+}

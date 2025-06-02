@@ -90,7 +90,7 @@ IMPORTANT: Return the ENTIRE updated TOC.yml file content, not just the sections
 
 OUTPUT FORMAT:
 {{
-  "thinking": "Explain your reasoning for placement decisions and how you're maintaining the structure",
+  "thinking": "1. Structure analysis: Explain your reasoning for placement decisions.\n2. Content categorization: How you categorized the new files.\n3. Placement strategy: Where and why you placed each entry.\n4. Integration approach: How you're maintaining the existing structure.\n5. Validation: Confirm the complete TOC maintains logical flow.",
   "content": "<COMPLETE updated TOC.yml content from first line to last line>",
   "entries_added": ["file1.md", "file2.md"],
   "entries_verified": ["existing1.md", "existing2.md"],

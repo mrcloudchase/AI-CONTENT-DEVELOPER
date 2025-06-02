@@ -1,0 +1,668 @@
+=== CONTENT CREATION: HOW-TO-CONFIGURE-CILIUM-AKS.MD ===
+2025-06-02T15:49:09.163612
+==================================================
+
+=== SYSTEM ===
+You are an expert technical documentation writer specializing in Microsoft Azure documentation.
+
+YOUR ROLE:
+- You are the WRITER, not the strategist
+- Follow the content brief instructions precisely
+- Transform materials into polished documentation
+- Focus on execution, not planning
+
+CORE COMPETENCIES:
+1. Transform technical materials into clear, comprehensive documentation
+2. Follow Microsoft documentation standards and style guidelines
+3. Create well-structured content that matches specified content types
+4. Ensure technical accuracy while maintaining readability
+5. Adapt content complexity to match target audience and technical level
+6. Apply Microsoft-specific formatting elements appropriately
+7. Always output responses in valid JSON format with markdown content in the 'content' field
+
+INSTRUCTION HIERARCHY:
+1. FIRST: Follow the CONTENT BRIEF section if provided - these are your primary instructions
+2. SECOND: Use the MATERIAL SOURCES for technical content
+3. THIRD: Reference the REFERENCE CHUNKS for style consistency
+4. FOURTH: Apply the CONTENT TYPE template structure
+5. FIFTH: Use MICROSOFT DOCUMENTATION FORMATTING for professional presentation
+
+CRITICAL TEMPLATE ENFORCEMENT RULES:
+
+DOCUMENT STRUCTURE CONCEPT:
+Every technical document follows a logical flow:
+1. **Introduction/Context** - Sets up what the reader will learn
+2. **Main Content** - The core information, procedures, or concepts
+3. **Conclusion/Navigation** - Wraps up and guides readers to next steps
+
+TERMINAL SECTIONS EXPLAINED:
+Terminal sections are the FINAL sections that conclude the document and help readers navigate to related content. They:
+- Summarize what was covered
+- Suggest logical next steps in the learning journey
+- Provide links to related documentation
+- Offer additional resources for deeper learning
+
+Think of them as the "exit doors" of your document - they help readers leave gracefully and know where to go next.
+
+IDENTIFYING TERMINAL SECTIONS:
+Terminal sections typically have names that indicate conclusion or navigation:
+- Contains "Next" → suggests future actions (Next Steps, What's Next)
+- Contains "Related" → links to related content (Related Articles, Related Documentation)
+- Contains "See also", "Learn more", "Additional", "Further" → provides extra resources
+- Contains "References", "Resources" → lists additional materials
+- Contains "Conclusion", "Summary" → wraps up the content
+
+SECTION ORDERING RULES:
+1. ALWAYS start with introductory sections (Introduction, Overview, Prerequisites)
+2. Place main content in the middle (procedures, concepts, examples)
+3. ALWAYS end with terminal sections (Next Steps, Related content)
+4. NEVER add content after terminal sections - they must be the last thing readers see
+5. Terminal sections should feel like a natural conclusion, not an abrupt end
+
+PLACEMENT PRINCIPLES:
+- If the template shows a section with position 99, it's terminal
+- If a section primarily contains links to other docs, it's likely terminal
+- If a section tells readers what to do after this document, it's terminal
+- When creating content, reserve the end for navigation and conclusion
+
+FORMATTING BEST PRACTICES:
+- Use [!NOTE] for important information that helps understanding
+- Use [!WARNING] for critical safety or data loss scenarios
+- Use [!TIP] for helpful shortcuts or best practices
+- Use tab groups when showing multiple ways to accomplish the same task
+- Use checklists in tutorials to show learning objectives
+- Use proper code fence syntax (```azurecli, ```powershell, etc.)
+- Always use <placeholder> format for sensitive values
+
+CRITICAL CONSTRAINTS (Improvement #3: RAG Instructions):
+- Use ONLY information from provided materials - NEVER invent or assume technical details
+- Mark missing information as [REQUIRED: description] when materials lack necessary details
+- NEVER create version numbers, commands, configurations, or API details not in materials
+- If materials don't provide enough information for a section, explicitly state what's missing
+- Every technical claim must be directly traceable to the provided materials
+
+CONTENT GENERATION PRINCIPLES:
+- ACCURACY: Every technical detail must be correct and traceable to source materials
+- COMPLETENESS: Use ALL relevant information from provided materials
+- CLARITY: Write for technical audiences but ensure concepts are clearly explained
+- AUDIENCE-AWARE: Adjust complexity, depth, and assumed knowledge based on target audience
+- STRUCTURE: Follow the exact template for the specified content type
+- CODE: Include all relevant code examples with proper formatting
+- CONTEXT: Reference related topics and provide next steps
+
+QUALITY STANDARDS:
+- Professional technical writing
+- Consistent terminology throughout
+- Proper code formatting and syntax highlighting
+- Clear headings and logical flow
+- Actionable steps and examples
+
+STRUCTURAL INTEGRITY CHECK:
+Before finalizing your content, verify:
+□ Does the document follow the template's section order?
+□ Are all required sections present?
+□ Does the document flow from introduction → main content → conclusion?
+□ Are terminal sections (Next Steps, Related content) at the very end?
+□ Is there a clear narrative arc that guides the reader?
+
+CRITICAL: You must use the FULL CONTENT provided in materials, not just summaries. Generate comprehensive documentation that fully leverages all available information. Output must be in valid JSON format with the complete markdown documentation in the 'content' field.
+
+When information is missing:
+- Use [REQUIRED: specific detail needed] placeholders
+- Include a gap_report field in your JSON response listing what materials are missing
+- DO NOT make up examples, version numbers, or technical specifications
+
+=== USER ===
+Content Generation Task:
+
+ACTION: CREATE new documentation
+FILENAME: how-to-configure-cilium-aks.md
+CONTENT TYPE: How-To Guide
+MS.TOPIC: how-to
+REASON: There is currently no documentation in the repository that provides step-by-step instructions for configuring and managing Cilium in AKS with Azure CNI. Existing content is focused on Azure Arc and does not address Cilium, its integration, or operational best practices in AKS. The user materials provide detailed requirements and implementation steps that are not represented in the current documentation set. A new How-To Guide is needed to fill this gap for platform engineers.
+TARGET AUDIENCE: platform engineers
+AUDIENCE LEVEL: intermediate
+
+=== CONTENT BRIEF (Your Instructions) ===
+OBJECTIVE: Enable platform engineers to configure, deploy, and manage Cilium as the networking solution in AKS using Azure CNI, leveraging advanced features like CiliumEndpointSlices, eBPF-based policies, and integration with Azure Monitor.
+
+KEY POINTS TO COVER:
+- Overview of Cilium and its benefits in AKS networking
+- Prerequisites for enabling Cilium in AKS (supported versions, required Azure CLI/API versions, permissions)
+- Step-by-step instructions for deploying AKS clusters with Azure CNI powered by Cilium (overlay and VNet modes)
+- Configuration of CiliumEndpointSlices for dynamic endpoint grouping and advanced policy enforcement
+- Integration steps with Azure Monitor and Log Analytics for observability
+- Security configuration using Azure Active Directory integration
+- Operational best practices (scalability, reliability, fallback mechanisms)
+- Known limitations and workarounds (e.g., Windows support, ipBlock restrictions)
+
+PREREQUISITES TO STATE:
+- Familiarity with AKS and Kubernetes networking concepts
+- Access to Azure subscription with permissions to create/manage AKS clusters
+- Azure CLI and required extensions installed
+- Supported Kubernetes and Cilium versions
+
+RELATED DOCS TO REFERENCE:
+- azure-arc/kubernetes/network-requirements.md
+- https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium
+
+NEXT STEPS TO SUGGEST:
+- Explore advanced network policy scenarios with Cilium
+- Integrate with GitOps workflows for automated Cilium policy deployment
+- Monitor and troubleshoot Cilium networking in production AKS clusters
+
+TECHNICAL DEPTH: Provide intermediate-level detail, balancing conceptual explanations with actionable configuration steps. Include architectural diagrams and practical examples, but avoid deep kernel-level or developer-focused internals.
+
+CODE EXAMPLES NEEDED:
+- Azure CLI commands for deploying AKS with Cilium
+- Sample Cilium network policy YAMLs
+- Configuration snippets for enabling Azure Monitor integration
+- Example outputs from Cilium status and observability commands
+
+IMPORTANT WARNINGS:
+- Highlight current limitations (e.g., lack of Windows node support, ipBlock restrictions)
+- Note security implications of misconfigured network policies
+- Warn about version compatibility between AKS, Cilium, and Azure CNI
+
+=== MICROSOFT DOCUMENTATION FORMATTING ===
+
+SPECIAL FORMATTING ELEMENTS:
+
+Note:
+Format: > [!NOTE]
+> Important information.
+Use for: note callouts that need reader attention
+
+Warning:
+Format: > [!WARNING]
+> Critical information.
+Use for: warning callouts that need reader attention
+
+Tip:
+Format: > [!TIP]
+> Helpful advice.
+Use for: tip callouts that need reader attention
+
+Image:
+Format: :::image type="content" source="./media/folder-name/image-name.png" alt-text="Description":::
+
+Link:
+Format: [Link text](path-to-article.md)
+
+Next step link:
+Format: > [!div class="nextstepaction"]
+> [Text](path)
+Use for: Prominent navigation to the next article in a series
+
+Code block:
+Format: ```language
+code
+```
+
+Tab Groups:
+Format: #### [Tab Name](#tab/tab-id)
+Content for this tab
+
+#### [Tab Name 2](#tab/tab-id-2)
+Content for second tab
+
+---
+
+UI elements:
+Format: **Bold Text**
+
+Variables:
+Format: <placeholder-name>
+
+Checklist:
+Format: > [!div class="checklist"]
+> * Item 1
+> * Item 2
+> * Item 3
+Use for: Tutorial objectives or feature lists
+
+
+CODE BLOCK LANGUAGES:
+- ```azurecli - Azure CLI commands
+- ```powershell - Azure PowerShell commands
+- ```bash - Shell scripts
+- ```csharp - C# code
+- ```json - JSON configuration
+- ```yaml - YAML files
+- ```console - Command line output
+- ```output - Command results
+
+
+TAB GROUPS (for multiple approaches):
+Format: #### [Tab Name](#tab/tab-id)
+Common groups: Azure portal, Azure CLI, PowerShell, ARM template, Bicep
+End with: ---
+
+
+SECURITY REQUIREMENTS:
+- Use <placeholder-name> for all sensitive values
+- NEVER include real credentials or secrets
+- Show managed identity approaches when applicable
+
+=== MATERIAL SOURCES (Full Content) ===
+=== Material: ./inputs/aks-prd-02.docx ===
+Azure Kubernetes Service (AKS) PRD
+ Feature: Support for CiliumEndpointSlices with Azure CNI by Cilium
+ Document Version: 1.0
+ Document Date: April 1, 2025
+ Prepared By: AKS Product Team
+1. Document Overview
+This PRD defines the requirements for integrating CiliumEndpointSlices with Azure CNI by Cilium into Azure Kubernetes Service (AKS). The goal is to enhance AKS’s networking capabilities by leveraging Cilium’s dynamic endpoint management and advanced network policy enforcement. This document details the business rationale, feature description, user scenarios, functional and non-functional requirements, assumptions, dependencies, timeline, and future considerations to guide design, development, testing, and release.
+2. Business Objectives
+Enhanced Networking Efficiency:
+Enable dynamic grouping of service endpoints for rapid service discovery and efficient resource utilization.
+Improved Security & Policy Enforcement:
+Utilize Cilium’s native network policy engine to enforce granular security rules that align with enterprise compliance requirements.
+Optimized Developer & Operator Experience:
+Provide a seamless configuration experience via Azure Portal, CLI, and APIs that reduces operational overhead and accelerates deployments.
+Competitive Differentiation:
+Position AKS as a leader in managed Kubernetes by integrating state-of-the-art networking features that meet the evolving needs of cloud-native applications.
+Operational Cost Efficiency:
+Enhance the scalability and stability of clusters to reduce downtime and lower management costs, particularly in large-scale deployments.
+3. Feature Overview
+The Support for CiliumEndpointSlices with Azure CNI by Cilium feature will enable AKS to:
+Dynamically Manage Endpoints:
+ Automatically group and manage pod endpoints into slices, which allows for faster lookup, improved scalability, and efficient load balancing.
+Enforce Advanced Network Policies:
+ Leverage Cilium’s rich network policy language to implement fine-grained security policies across dynamic endpoint slices.
+Enhance Observability:
+ Provide detailed logging, metrics, and diagnostic information through integrated Azure Monitor and Cilium observability tools, enabling proactive troubleshooting and performance tuning.
+Offer Configurability:
+ Allow customers to enable or disable the feature during cluster provisioning, with customizable parameters (e.g., refresh intervals, slice size thresholds) to suit diverse operational needs.
+4. User Stories & Use Cases
+Cluster Operator:
+ “As a cluster operator, I need the ability to deploy clusters with enhanced endpoint management so that service discovery remains fast and reliable, even as I scale to thousands of pods.”
+Network Administrator:
+ “As a network administrator, I require the integration of advanced network policy controls to restrict unauthorized traffic while ensuring legitimate workloads communicate efficiently.”
+Application Developer:
+ “As a developer, I want improved service availability and reduced latency for inter-service communications, which will help maintain application performance under dynamic scaling conditions.”
+Security Engineer:
+ “As a security engineer, I need real-time observability of network policies and endpoint changes to quickly identify and remediate potential vulnerabilities.”
+5. Functional Requirements
+Integration & Configuration:
+FR1.1: Provide an option within the AKS cluster creation workflow (via Azure Portal, CLI, and ARM templates) to enable CiliumEndpointSlices with Azure CNI.
+FR1.2: Allow configuration of endpoint slice parameters such as refresh intervals, maximum slice size, and error thresholds.
+FR1.3: Include toggle options for advanced logging and observability settings specific to endpoint slice operations.
+Endpoint Slice Management:
+FR2.1: Automatically create, update, and delete endpoint slices in real time based on changes in pod status.
+FR2.2: Ensure synchronization between the Kubernetes API and the underlying Cilium management layer to reflect accurate endpoint state.
+FR2.3: Provide mechanisms for manual override and re-synchronization in case of discrepancies.
+Network Policy Enforcement:
+FR3.1: Integrate Cilium’s policy engine to apply network security rules across all endpoint slices.
+FR3.2: Support both ingress and egress policy enforcement with detailed audit logging.
+FR3.3: Maintain backward compatibility with existing Azure CNI policy constructs to ensure a smooth transition for existing customers.
+Observability & Monitoring:
+FR4.1: Integrate with Azure Monitor and Log Analytics to capture key performance indicators, events, and error logs for endpoint slice operations.
+FR4.2: Provide out-of-the-box dashboards that visualize endpoint slice health, latency, and error rates.
+FR4.3: Enable alert configuration for critical events such as synchronization failures or policy enforcement breaches.
+Backward Compatibility & Fallback Mechanisms:
+FR5.1: Ensure that clusters without the feature enabled continue to operate using the default endpoint management system.
+FR5.2: Implement robust error handling that automatically reverts to traditional endpoint management in the event of feature failure.
+6. Non-Functional Requirements
+Performance:
+NFR1: Endpoint slice updates must propagate within 100ms of pod state changes to ensure near real-time accuracy.
+Scalability:
+NFR2: The solution must support clusters with up to 5,000 pods across 500 nodes without degradation in performance.
+Reliability:
+NFR3: The networking subsystem, including endpoint slice management, should target a 99.99% uptime.
+Security:
+NFR4: All communications between components must be encrypted, and the solution must integrate with Azure Active Directory for secure authentication and authorization.
+Usability:
+NFR5: The feature must be easy to enable and configure, with comprehensive documentation and in-app guidance provided through the Azure Portal.
+Maintainability:
+NFR6: The codebase should be modular, with clear logging and diagnostic messages, to facilitate future updates and troubleshooting.
+7. Assumptions & Dependencies
+Dependencies:
+D1: The feature depends on the latest stable release of Cilium that supports EndpointSlices.
+D2: Integration with Azure CNI components, Azure Monitor, and Log Analytics is required.
+D3: Compatibility with the current and future Kubernetes API versions must be maintained.
+Assumptions:
+A1: Customers deploying AKS clusters are familiar with basic Kubernetes networking concepts.
+A2: Future updates to Cilium and Azure CNI will preserve core API contracts to ensure backward compatibility.
+A3: The underlying Azure infrastructure (compute, storage, networking) will support the additional load imposed by dynamic endpoint management.
+8. Timeline & Milestones
+9. Future Considerations
+Enhanced Analytics:
+Develop deeper analytics features that provide predictive insights and trend analysis on endpoint slice behavior and network policy effectiveness.
+User Interface Enhancements:
+Expand Azure Portal’s capabilities to visually display endpoint slice metrics and detailed network policy maps.
+Multi-Cloud Integration:
+Explore the possibility of extending the feature to support multi-cloud or hybrid environments, enhancing flexibility for customers.
+Performance Tuning:
+Investigate further optimizations for large-scale deployments and consider community feedback to fine-tune synchronization intervals and error handling processes.
+Community Contributions:
+Engage with the open-source community to integrate additional use cases and enhancements that could benefit a broader audience.
+10. Appendix
+Glossary
+CiliumEndpointSlices: A scalable method for managing and grouping network endpoints, enabling efficient service discovery and load balancing in Kubernetes.
+Azure CNI: Azure Container Networking Interface that manages networking for containers deployed on Azure Kubernetes Service.
+Endpoint Slices: Kubernetes objects that serve as a scalable alternative to traditional Endpoints for managing service traffic.
+RBAC: Role-Based Access Control used for managing permissions within the cluster.
+CI/CD: Continuous Integration/Continuous Deployment processes that streamline application development and delivery.
+References
+Azure CNI Documentation
+Cilium Official Documentation
+Kubernetes Networking Best Practices
+Contacts
+Product Manager: Jamie Rivera – jamie.rivera@example.com
+Technical Lead: Alex Chen – alex.chen@example.com
+Support & Feedback: aks-support@example.com
+Here is an overview of the key contacts for the Azure Kubernetes Service (AKS) PRD:
+Phase
+Milestones
+Timeframe
+Phase 1: Requirements & Design
+- Finalize feature requirements and design documentation.
+- Conduct feasibility study and risk assessment.
+April 2025
+Phase 2: Prototype Development
+- Develop a working prototype integrating CiliumEndpointSlices with Azure CNI.
+- Internal integration tests and performance benchmarking.
+May – June 2025
+Phase 3: Beta Release
+- Deploy beta release to selected enterprise customers.
+- Gather user feedback and monitor feature performance in production-like environments.
+July – September 2025
+Phase 4: General Availability
+- Finalize documentation, support guides, and training materials.
+- Public GA release with full monitoring and rollback capabilities.
+October 2025
+Phase 5: Post-Launch Support
+- Monitor feature adoption and performance.
+- Plan for iterative improvements and potential bug fixes.
+November 2025 onward
+Role
+Contact Name
+Email Address
+Product Manager
+Jamie Rivera
+jamie.rivera@example.com
+Technical Lead
+Alex Chen
+alex.chen@example.com
+Support & Feedback
+aks-support@example.com
+
+=== Material: https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium ===
+Configure Azure CNI Powered by Cilium in Azure Kubernetes Service (AKS) - Azure Kubernetes Service | Microsoft Learn
+Skip to main content
+Skip to Ask Learn chat experience
+This browser is no longer supported.
+Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+Download Microsoft Edge
+More info about Internet Explorer and Microsoft Edge
+Table of contents
+Exit focus mode
+Ask Learn
+Ask Learn
+Read in English
+Save
+Table of contents
+Read in English
+Add
+Add to plan
+Edit
+Share via
+Facebook
+x.com
+LinkedIn
+Email
+Print
+Note
+Access to this page requires authorization. You can try signing in or changing directories.
+Access to this page requires authorization. You can try changing directories.
+Configure Azure CNI Powered by Cilium in Azure Kubernetes Service (AKS)
+Article
+2025-05-22
+17 contributors
+Feedback
+In this article
+Deploy and Explore
+Azure CNI Powered by Cilium combines the robust control plane of Azure CNI with the data plane of Cilium to provide high-performance networking and security.
+By making use of eBPF programs loaded into the Linux kernel and a more efficient API object structure, Azure CNI Powered by Cilium provides the following benefits:
+Functionality equivalent to existing Azure CNI and Azure CNI Overlay plugins
+Improved Service routing
+More efficient network policy enforcement
+Better observability of cluster traffic
+Support for larger clusters (more nodes, pods, and services)
+IP Address Management (IPAM) with Azure CNI Powered by Cilium
+Azure CNI Powered by Cilium can be deployed using two different methods for assigning pod IPs:
+Assign IP addresses from an overlay network (similar to Azure CNI Overlay mode)
+Assign IP addresses from a virtual network (similar to existing Azure CNI with Dynamic Pod IP Assignment)
+If you aren't sure which option to select, read "Choosing a network model to use."
+Versions
+Kubernetes Version
+Minimum Cilium Version
+1.27 (LTS)
+1.13.18
+1.28 (End of Life)
+1.13.18
+1.29
+1.14.19
+1.30 (LTS)
+1.14.19
+1.31
+1.16.6
+1.32
+1.17.0
+See Supported Kubernetes Versions for more information on AKS versioning and release timelines.
+Network Policy Enforcement
+Cilium enforces network policies to allow or deny traffic between pods. With Cilium, you don't need to install a separate network policy engine such as Azure Network Policy Manager or Calico.
+Limitations
+Azure CNI powered by Cilium currently has the following limitations:
+Available only for Linux and not for Windows.
+Network policies can't use ipBlock to allow access to node or pod IPs. See frequently asked questions for details and recommended workaround.
+Multiple Kubernetes services can't use the same host port with different protocols (for example, TCP or UDP) (Cilium issue #14287).
+Network policies may be enforced on reply packets when a pod connects to itself via service cluster IP (Cilium issue #19406).
+Network policies aren't applied to pods using host networking (spec.hostNetwork: true) because these pods use the host identity instead of having individual identities.
+Cilium Endpoint Slices are supported in Kubernetes version 1.32 and above. Cilium Endpoint Slices do not support configuration of how Cilium Endpoints are grouped. Priority namespaces through cilium.io/ces-namespace is not supported.
+Considerations
+To gain capabilities such as observability into your network traffic and security features like Fully Qualified Domain Name (FQDN) based filtering and Layer 7-based network policies on your cluster, consider enabling Advanced Container Networking services on your clusters.
+Prerequisites
+Azure CLI version 2.48.1 or later. Run az --version to see the currently installed version. If you need to install or upgrade, see Install Azure CLI.
+If using ARM templates or the REST API, the AKS API version must be 2022-09-02-preview or later.
+Note
+Previous AKS API versions (2022-09-02preview to 2023-01-02preview) used the field networkProfile.ebpfDataplane=cilium. AKS API versions since 2023-02-02preview use the field networkProfile.networkDataplane=cilium to enable Azure CNI Powered by Cilium.
+Create a new AKS Cluster with Azure CNI Powered by Cilium
+Option 1: Assign IP addresses from an overlay network
+Use the following commands to create a cluster with an overlay network and Cilium. Replace the values for <clusterName>, <resourceGroupName>, and <location>:
+az aks create \
+--name <clusterName> \
+--resource-group <resourceGroupName> \
+--location <location> \
+--network-plugin azure \
+--network-plugin-mode overlay \
+--pod-cidr 192.168.0.0/16 \
+--network-dataplane cilium \
+--generate-ssh-keys
+Note
+The --network-dataplane cilium flag replaces the deprecated --enable-ebpf-dataplane flag used in earlier versions of the aks-preview CLI extension.
+Option 2: Assign IP addresses from a virtual network
+Run the following commands to create a resource group and virtual network with a subnet for nodes and a subnet for pods.
+# Create the resource group
+az group create --name <resourceGroupName> --location <location>
+# Create a virtual network with a subnet for nodes and a subnet for pods
+az network vnet create --resource-group <resourceGroupName> --location <location> --name <vnetName> --address-prefixes <address prefix, example: 10.0.0.0/8> -o none
+az network vnet subnet create --resource-group <resourceGroupName> --vnet-name <vnetName> --name nodesubnet --address-prefixes <address prefix, example: 10.240.0.0/16> -o none
+az network vnet subnet create --resource-group <resourceGroupName> --vnet-name <vnetName> --name podsubnet --address-prefixes <address prefix, example: 10.241.0.0/16> -o none
+Create the cluster using --network-dataplane cilium:
+az aks create \
+--name <clusterName> \
+--resource-group <resourceGroupName> \
+--location <location> \
+--max-pods 250 \
+--network-plugin azure \
+--vnet-subnet-id /subscriptions/<subscriptionId>/resourceGroups/<resourceGroupName>/providers/Microsoft.Network/virtualNetworks/<vnetName>/subnets/nodesubnet \
+--pod-subnet-id /subscriptions/<subscriptionId>/resourceGroups/<resourceGroupName>/providers/Microsoft.Network/virtualNetworks/<vnetName>/subnets/podsubnet \
+--network-dataplane cilium \
+--generate-ssh-keys
+Option 3: Assign IP addresses from the Node Subnet
+Note
+Azure CLI version 2.69.0 or later is required. Run az --version to see the currently installed version. If you need to install or upgrade, see Install Azure CLI.
+Create a cluster using node subnet with a Cilium dataplane:
+az aks create \
+--name <clusterName> \
+--resource-group <resourceGroupName> \
+--location <location> \
+--network-plugin azure \
+--network-dataplane cilium \
+--generate-ssh-keys
+Frequently asked questions
+Can I customize Cilium configuration?
+No, AKS manages the Cilium configuration and it can't be modified. We recommend that customers who require more control use AKS BYO CNI and install Cilium manually.
+Can I use CiliumNetworkPolicy custom resources instead of Kubernetes NetworkPolicy resources?
+Customers may use FQDN filtering and Layer 7 Policies as part of the Advanced Container Networking Services feature bundle.
+Can I use ClusterwideCiliumNetworkPolicy?
+ClusterwideCiliumNetworkPolicy is not supported.
+Which Cilium features are supported in Azure managed CNI? Which of those require Advanced Container Networking Services?
+Supported Feature
+w/o ACNS
+w/ ACNS
+Cilium Endpoint Slices
+âï¸
+âï¸
+K8s Network Policies
+âï¸
+âï¸
+Cilium L3/L4 Network Policies
+âï¸
+âï¸
+FQDN Filtering
+â
+âï¸
+L7 Network Policies (HTTP/gRPC/Kafka)
+â
+âï¸
+Container Network Observability (Metrics and Flow logs )
+â
+âï¸
+Why is traffic being blocked when the NetworkPolicy has an ipBlock that allows the IP address?
+A limitation of Azure CNI Powered by Cilium is that a NetworkPolicy's ipBlock can't select pod or node IPs.
+For example, this NetworkPolicy has an ipBlock that allows all egress to 0.0.0.0/0:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+name: example-ipblock
+spec:
+podSelector: {}
+policyTypes:
+- Egress
+egress:
+- to:
+- ipBlock:
+cidr: 0.0.0.0/0 # This will still block pod and node IPs.
+However, when this NetworkPolicy is applied, Cilium blocks egress to pod and node IPs even though the IPs are within the ipBlock CIDR.
+As a workaround, you can add namespaceSelector and podSelector to select pods. This example selects all pods in all namespaces:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+name: example-ipblock
+spec:
+podSelector: {}
+policyTypes:
+- Egress
+egress:
+- to:
+- ipBlock:
+cidr: 0.0.0.0/0
+- namespaceSelector: {}
+- podSelector: {}
+Note
+It isn't currently possible to specify a NetworkPolicy with an ipBlock to allow traffic to node IPs.
+Does AKS configure CPU or memory limits on the Cilium daemonset?
+No, AKS doesn't configure CPU or memory limits on the Cilium daemonset because Cilium is a critical system component for pod networking and network policy enforcement.
+Does Azure CNI powered by Cilium use Kube-Proxy?
+No, AKS clusters created with network dataplane as Cilium don't use Kube-Proxy.
+If the AKS clusters are on Azure CNI Overlay or Azure CNI with dynamic IP allocation and are upgraded to AKS clusters running Azure CNI powered by Cilium, new nodes workloads are created without kube-proxy. Older workloads are also migrated to run without kube-proxy as a part of this upgrade process.
+Next steps
+Learn more about networking in AKS in the following articles:
+Upgrade Azure CNI IPAM modes and Dataplane Technology.
+Use a static IP address with the Azure Kubernetes Service (AKS) load balancer
+Use an internal load balancer with Azure Container Service (AKS)
+Create a basic ingress controller with external network connectivity
+Collaborate with us on GitHub
+The source for this content can be found on GitHub, where you can also create and review issues and pull requests. For more information, see our contributor guide.
+Azure Kubernetes Service
+Open a documentation issue
+Provide product feedback
+Additional resources
+Additional resources
+In this article
+en-us
+Your Privacy Choices
+Theme
+Light
+Dark
+High contrast
+Previous Versions
+Blog
+Contribute
+Privacy
+Terms of Use
+Trademarks
+© Microsoft 2025
+
+=== REFERENCE CHUNKS ===
+
+
+=== CONTENT TYPE: How-To Guide ===
+Purpose: To provide the steps for completing a task. To help customers complete tasks in their own environment. How-to guides differ from tutorials in that they can include optional information, explanations, and information to help inform decisions.
+Description: Procedural articles that show the customer how to complete a task.
+
+FRONTMATTER REQUIREMENTS:
+- title: Verb-first action title
+- description: 1-2 sentence summary
+- ms.topic: how-to
+
+
+REQUIRED SECTION ORDER:
+1. Introduction (REQUIRED) 
+2. Prerequisites (REQUIRED) 
+3. Steps (REQUIRED) 
+4. Verification (Optional) 
+99. Next Steps (REQUIRED) [TERMINAL - Must be last]
+
+
+TASK: Generate comprehensive technical documentation based on the materials provided.
+
+CRITICAL SECTION ORDER RULES:
+1. Follow the EXACT section order shown above
+2. Include ALL required sections
+3. Terminal sections (marked with [TERMINAL]) MUST be the last section
+4. NEVER add any content after terminal sections
+5. Optional sections should be included if relevant content exists in materials
+
+AUDIENCE ADAPTATION:
+- Write specifically for: platform engineers
+- Technical depth: intermediate
+- Beginner: Include prerequisites, explain all concepts, provide extra context
+- Intermediate: Balance technical detail with clarity, assume some foundational knowledge
+- Advanced: Focus on technical implementation, performance considerations, best practices
+
+REQUIREMENTS:
+1. STRUCTURE: Follow the exact template structure for How-To Guide
+2. CONTENT: Use ALL relevant information from the FULL MATERIAL CONTENT
+3. ACCURACY: Every technical detail must be accurately represented from materials
+4. COMPLETENESS: Include all key concepts, technologies, and procedures from materials
+5. FRONTMATTER: Include proper Microsoft docs frontmatter with all required fields
+6. CODE EXAMPLES: Include all relevant code snippets from materials
+7. STYLE: Match the technical writing style shown in reference chunks
+
+OUTPUT FORMAT:
+{
+  "thinking": "Document your content planning process, how you're organizing material content, which sections to emphasize, and how you're ensuring completeness",
+  "content": "The complete markdown content with frontmatter and all sections",
+  "metadata": {
+    "word_count": 1500,
+    "sections_created": ["Introduction", "Prerequisites", "Steps", "Code Examples", "Next Steps"],
+    "materials_used": ["material1.md", "material2.docx"],
+    "key_topics_covered": ["Cilium", "Azure CNI", "Network Policies"]
+  }
+}
+
+CRITICAL: Generate production-ready documentation that fully leverages the provided materials.

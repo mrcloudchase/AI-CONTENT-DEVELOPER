@@ -1,0 +1,43 @@
+=== CONTENT INTENT ANALYSIS ===
+2025-06-02T15:36:25.787750
+==================================================
+
+=== SYSTEM ===
+You are an expert at understanding documentation needs and intent.
+You can analyze materials and goals to determine:
+- What type of content is needed
+- Target audience and their needs
+- Key topics to cover
+- Appropriate depth and style
+
+CRITICAL: You MUST follow JSON type specifications exactly. Lists must be arrays, not strings.
+
+=== USER ===
+Based on these materials and goal, what is the primary intent?
+
+MATERIALS:
+[{'thinking': "I began by thoroughly reading the entire document, identifying it as a Product Requirements Document (PRD) for a new AKS feature: support for CiliumEndpointSlices with Azure CNI by Cilium. I noted all explicit mentions of technologies, tools, and frameworks, including Cilium, Azure CNI, Kubernetes, Endpoint Slices, Azure Monitor, Log Analytics, ARM templates, RBAC, and CI/CD. I extracted key concepts such as dynamic endpoint management, network policy enforcement, observability, scalability, reliability, security, usability, maintainability, and backward compatibility. For Microsoft/Azure products, I listed Azure Kubernetes Service (AKS), Azure CNI, Azure Monitor, Log Analytics, Azure Portal, Azure Active Directory, and ARM templates. I validated each extraction by cross-referencing the content, ensuring no fabrication. I then synthesized a summary emphasizing the document's purpose (defining requirements for integrating CiliumEndpointSlices with Azure CNI in AKS), scope (business objectives, functional/non-functional requirements, user stories, dependencies, timeline), and technical value (enhanced networking, security, observability, and operational efficiency for AKS). Finally, I formatted all findings into the required JSON structure, ensuring type and content accuracy.", 'main_topic': 'CiliumEndpointSlices in AKS with Azure CNI', 'technologies': ['Cilium', 'Azure CNI', 'Kubernetes', 'CiliumEndpointSlices', 'Endpoint Slices', 'Azure Monitor', 'Log Analytics', 'ARM templates', 'RBAC', 'CI/CD'], 'key_concepts': ['dynamic endpoint management', 'advanced network policy enforcement', 'observability', 'scalability', 'reliability', 'security', 'usability', 'maintainability', 'backward compatibility', 'real-time synchronization', 'manual override', 'performance tuning', 'multi-cloud integration', 'predictive analytics'], 'microsoft_products': ['Azure Kubernetes Service', 'Azure CNI', 'Azure Monitor', 'Log Analytics', 'Azure Portal', 'Azure Active Directory', 'ARM templates'], 'document_type': 'Product Requirements Document', 'summary': 'This Product Requirements Document (PRD) outlines the integration of CiliumEndpointSlices with Azure CNI by Cilium into Azure Kubernetes Service (AKS). The feature aims to enhance AKS networking by enabling dynamic endpoint grouping, advanced network policy enforcement, and improved observability through Azure Monitor and Cilium tools. It details business objectives such as networking efficiency, security, operational cost reduction, and competitive differentiation. The PRD specifies functional and non-functional requirements, including real-time endpoint management, policy enforcement, integration with Azure services, and robust fallback mechanisms. It also covers user scenarios, dependencies (e.g., on Cilium and Azure CNI), and a phased implementation timeline. The document emphasizes scalability, reliability, and ease of use, positioning AKS as a leader in managed Kubernetes networking. Future considerations include analytics enhancements, UI improvements, and multi-cloud support.', 'source': './inputs/aks-prd-02.docx'}, {'thinking': "I began by thoroughly reading the entire document, noting its structure as a technical guide for configuring Azure CNI powered by Cilium in Azure Kubernetes Service (AKS). I identified the main topic as the integration and configuration of Cilium as the data plane for Azure CNI within AKS environments. I systematically extracted all explicitly mentioned technologies, including Azure CNI, Cilium, Kubernetes, eBPF, Azure CLI, and CiliumEndpointSlices. For key concepts, I noted network policy enforcement, IP address management (IPAM), overlay and virtual network modes, service routing, observability, and limitations such as lack of Windows support and ipBlock restrictions. I also extracted all Microsoft/Azure products referenced: Azure Kubernetes Service, Azure CLI, Azure Virtual Network, Azure Resource Manager, and Azure Network Policy Manager. I verified each item was present in the source and avoided inferring or fabricating information. The summary was synthesized to reflect the document's purpose, scope, and technical value, focusing on deployment options, supported features, and operational considerations. I ensured all fields matched the required types and the output format was strictly adhered to.", 'main_topic': 'Azure CNI Powered by Cilium in AKS', 'technologies': ['Azure CNI', 'Cilium', 'Kubernetes', 'eBPF', 'Azure CLI', 'CiliumEndpointSlices', 'Kube-Proxy', 'Calico'], 'key_concepts': ['network policy enforcement', 'IP address management', 'overlay network', 'virtual network', 'service routing', 'observability', 'cluster scalability', 'limitations', 'pod IP assignment', 'FQDN filtering', 'Layer 7 network policies', 'Advanced Container Networking Services', 'Cilium configuration management', 'host networking', 'namespace and pod selectors', 'Kubernetes version compatibility'], 'microsoft_products': ['Azure Kubernetes Service', 'Azure CLI', 'Azure Virtual Network', 'Azure Resource Manager', 'Azure Network Policy Manager'], 'document_type': 'Technical Implementation Guide', 'summary': 'This document provides a comprehensive technical guide for configuring Azure CNI powered by Cilium within Azure Kubernetes Service (AKS). It details the integration of Cilium’s eBPF-based data plane with Azure CNI’s control plane, offering improved network policy enforcement, service routing, observability, and scalability for Kubernetes clusters. The guide explains deployment options for pod IP assignment, including overlay and virtual network modes, and outlines prerequisites such as Azure CLI and supported AKS API versions. It highlights key limitations, such as Linux-only support and ipBlock restrictions in network policies, and clarifies which Cilium features are available with or without Advanced Container Networking Services. The document provides step-by-step CLI commands for cluster creation, discusses supported Kubernetes and Cilium versions, and addresses frequently asked questions about configuration, feature support, and operational behaviors. This resource is essential for Azure administrators and DevOps engineers seeking advanced, secure, and scalable networking in AKS.', 'source': 'https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium'}]
+
+GOAL: document cilium for aks
+
+Return JSON with EXACTLY these fields and types:
+{
+    "thinking": "Your numbered analysis steps:
+1. Materials review...
+2. Goal analysis...
+3. Intent determination...
+4. Strategy formulation...",  // STRING with numbered steps
+    "primary_intent": "Main purpose of the content",  // STRING
+    "content_type": "Type of content to create",  // STRING
+    "target_audience": "Who this is for",  // STRING
+    "key_objectives": ["list", "of", "main", "objectives"],  // LIST of strings
+    "success_criteria": ["how", "to", "measure", "success"]  // LIST of strings
+}
+
+TYPE REQUIREMENTS:
+- thinking: MUST be a string with numbered steps (1., 2., 3., etc.)
+- primary_intent: MUST be a string
+- content_type: MUST be a string
+- target_audience: MUST be a string
+- key_objectives: MUST be an array/list of strings
+- success_criteria: MUST be an array/list of strings

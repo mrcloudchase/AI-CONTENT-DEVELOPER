@@ -1,0 +1,12 @@
+{
+  "metadata": {
+    "timestamp": "2025-06-02T16:31:35.658379",
+    "operation": "Working Directory Selection"
+  },
+  "data": {
+    "thinking": "1. Pattern analysis: I analyzed the repository structure and identified a service-based organizational pattern, with top-level directories under 'articles/' corresponding to major Azure services (e.g., azure-arc, azure-linux, container-registry, copilot, lighthouse, quotas). There is no direct 'aks' or 'kubernetes' folder at the top level. 2. Structure understanding: AKS-related and Kubernetes networking content appears to be distributed; however, the most relevant technical overlap is in 'azure-arc/kubernetes', which contains deep Kubernetes and cluster management documentation, including networking, extensions, and advanced configuration. 3. Option evaluation: For Cilium on AKS, I considered: (a) articles/azure-arc/kubernetes/ (Kubernetes/Arc cluster management and networking), (b) articles/azure-linux/ (Linux node pools, but not networking), (c) articles/container-registry/ (container images, not networking), (d) articles/azure-arc/ (parent, but less specific). 4. Selection rationale: I selected 'articles/azure-arc/kubernetes/' because it is the most specific directory containing Kubernetes cluster and networking documentation, including advanced networking concepts, RBAC, extensions, and integration topics, which closely match Cilium on AKS. 5. Validation: This directory exists, is not a special folder, and is the best available match for advanced AKS networking content.",
+    "working_directory": "articles/azure-arc/kubernetes",
+    "justification": "Selected based on service/topic hybrid pattern\u2014'articles/azure-arc/kubernetes' is the most relevant existing directory for advanced Kubernetes (AKS) networking content, including Cilium integration.",
+    "confidence": 0.92
+  }
+}

@@ -83,12 +83,6 @@ class CreateContentProcessor(BaseContentProcessor):
         response = self._call_llm(messages, response_format="json_object", 
                                 operation_name=f"Content Creation: {filename}")
         
-        # Save interaction for debugging (Improvement #7)
-        self.save_interaction(
-            prompt, response, "create_content",
-            "./llm_outputs/content_generation/create", filename
-        )
-        
         return response
     
     def _create_success_result(self, action: Dict, response: Dict, preview_path, content: str) -> Dict:

@@ -94,7 +94,7 @@ class UpdateContentProcessor(BaseContentProcessor):
                        materials: List[Dict], materials_content: Dict[str, str],
                        relevant_chunks: Dict[str, DocumentChunk],
                        chunks_with_context: Dict[str, Dict]) -> Optional[str]:
-        """Generate updated content for the file"""
+        """Generate updated content for the file using LLM-native approach"""
         # Extract document content type
         doc_info = self._extract_content_type_from_document(existing_content)
         content_type = doc_info['content_type']
@@ -130,6 +130,10 @@ class UpdateContentProcessor(BaseContentProcessor):
                                   response_format="json_object",
                                   operation_name=f"Content Update: {action.get('filename', 'unknown')}")
             
+            # Extract and display thinking if available
+            if self.console_display and 'thinking' in result:
+                self.console_display.show_thinking(result['thinking'], f"🤔 AI Thinking - Content Update: {filename}")
+            
             # Save interaction for debugging
             self.save_interaction(
                 messages[1]['content'], 
@@ -138,155 +142,34 @@ class UpdateContentProcessor(BaseContentProcessor):
                 "./llm_outputs/content_generation/update"
             )
             
-            # Apply the changes to the existing content
-            updated_content = self._apply_changes(existing_content, result.get('changes', []))
+            # Get the complete updated document from the LLM response
+            updated_document = result.get('updated_document', '')
             
-            return updated_content
+            if not updated_document:
+                logger.error("LLM did not return an updated document")
+                return None
+            
+            # Log summary of changes
+            if 'changes_summary' in result:
+                logger.info(f"Update summary: {result['changes_summary']}")
+            
+            # Log metadata
+            if 'metadata' in result:
+                metadata = result['metadata']
+                logger.info(f"Sections modified: {', '.join(metadata.get('sections_modified', []))}")
+                if metadata.get('sections_added'):
+                    logger.info(f"Sections added: {', '.join(metadata['sections_added'])}")
+            
+            return updated_document
             
         except Exception as e:
             logger.error(f"Failed to generate updated content: {e}")
             return None
     
     def _apply_changes(self, original_content: str, changes: List[Dict]) -> str:
-        """Apply the specified changes to the original content"""
-        if not changes:
-            logger.warning("No changes provided by LLM")
-            return original_content
-        
-        updated_content = original_content
-        
-        # Extract content type for validation
-        doc_info = self._extract_content_type_from_document(original_content)
-        content_standards = self._load_content_standards()
-        content_type_info = self._get_content_type_info(content_standards, doc_info['content_type'])
-        
-        # Extract existing sections for validation
-        existing_sections = self._extract_sections_from_content(original_content)
-        
-        # Sort changes by action type to handle adds last
-        sorted_changes = sorted(changes, key=lambda x: 0 if x.get('action') != 'add' else 1)
-        
-        for change in sorted_changes:
-            action = change.get('action', '')
-            
-            if action == 'replace':
-                original_text = change.get('original', '')
-                updated_text = change.get('updated', '')
-                
-                if original_text and original_text in updated_content:
-                    updated_content = updated_content.replace(original_text, updated_text)
-                    logger.info(f"Replaced content in section: {change.get('section', 'Unknown')}")
-                else:
-                    logger.warning(f"Could not find original text to replace in section: {change.get('section', 'Unknown')}")
-            
-            elif action == 'modify':
-                # Similar to replace but with more context
-                original_text = change.get('original', '')
-                updated_text = change.get('updated', '')
-                
-                if original_text and original_text in updated_content:
-                    updated_content = updated_content.replace(original_text, updated_text)
-                    logger.info(f"Modified content in section: {change.get('section', 'Unknown')}")
-                else:
-                    logger.warning(f"Could not find original text to modify in section: {change.get('section', 'Unknown')}")
-            
-            elif action == 'add':
-                # For add actions, we need to find the right place to insert
-                section = change.get('section', '')
-                new_content = change.get('updated', '')
-                
-                # Validate section placement
-                if section and section in existing_sections:
-                    validation = self._validate_section_placement(
-                        existing_sections, section, section, content_type_info
-                    )
-                    
-                    if not validation['valid']:
-                        logger.warning(f"Invalid placement: {validation['reason']}")
-                        if validation['suggested_position'] and validation['suggested_position'] != section:
-                            logger.info(f"Placing content after '{validation['suggested_position']}' instead")
-                            section = validation['suggested_position']
-                        else:
-                            logger.error(f"Cannot add content after terminal section '{section}'")
-                            continue
-                
-                # Try to find the section and add content after it
-                if section and new_content:
-                    updated_content = self._insert_content_after_section(
-                        updated_content, section, new_content, content_type_info
-                    )
-                    logger.info(f"Added new content to section: {section}")
-        
-        return updated_content
-    
-    def _insert_content_after_section(self, content: str, section: str, new_content: str, 
-                                    content_type_info: Dict) -> str:
-        """Insert new content after a specific section with terminal section validation"""
-        lines = content.split('\n')
-        
-        # Find the section
-        section_index = -1
-        for i, line in enumerate(lines):
-            if section.lower() in line.lower() and line.strip().startswith('#'):
-                section_index = i
-                break
-        
-        if section_index == -1:
-            # If section not found, check if we should add before terminal sections
-            logger.warning(f"Section '{section}' not found")
-            
-            # Find last non-terminal section
-            sections = self._extract_sections_from_content(content)
-            last_valid_index = -1
-            
-            for i in range(len(sections) - 1, -1, -1):
-                if not self._is_terminal_section(sections[i], content_type_info):
-                    # Find this section in the content
-                    for j, line in enumerate(lines):
-                        if sections[i].lower() in line.lower() and line.strip().startswith('#'):
-                            last_valid_index = j
-                            break
-                    break
-            
-            if last_valid_index >= 0:
-                section_index = last_valid_index
-                logger.info(f"Adding content after last non-terminal section")
-            else:
-                logger.error("Could not find appropriate place to add content")
-                return content
-        
-        # Check if this is a terminal section
-        if self._is_terminal_section(section, content_type_info):
-            logger.error(f"Cannot add content after terminal section '{section}'")
-            return content
-        
-        # Find the next section at the same level or higher
-        section_level = len(lines[section_index].split()[0])  # Count # characters
-        insert_index = len(lines)  # Default to end of file
-        
-        for i in range(section_index + 1, len(lines)):
-            if lines[i].strip().startswith('#'):
-                level = len(lines[i].split()[0])
-                if level <= section_level:
-                    insert_index = i
-                    break
-        
-        # Validate that we're not inserting after a terminal section
-        if insert_index < len(lines):
-            # Check if the next section is terminal
-            next_section_match = re.match(r'^#+\s+(.+)$', lines[insert_index].strip())
-            if next_section_match:
-                next_section = next_section_match.group(1)
-                if self._is_terminal_section(next_section, content_type_info):
-                    # We're about to insert before a terminal section, which is OK
-                    logger.info(f"Inserting content before terminal section '{next_section}'")
-        
-        # Insert the new content
-        lines.insert(insert_index, new_content)
-        if insert_index < len(lines) - 1:
-            lines.insert(insert_index, '')  # Add blank line before next section
-        
-        return '\n'.join(lines)
+        """DEPRECATED: No longer needed with LLM-native approach"""
+        logger.warning("_apply_changes called but is deprecated in LLM-native approach")
+        return original_content
     
     def _save_update_preview(self, content: str, filename: str, 
                             repo_name: str, working_directory: str) -> str:

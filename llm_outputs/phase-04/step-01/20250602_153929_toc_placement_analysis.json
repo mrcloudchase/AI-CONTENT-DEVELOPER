@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "timestamp": "2025-06-02T15:39:29.307123",
+    "operation": "TOC Placement Analysis"
+  },
+  "data": {
+    "thinking": "1. TOC structure understanding: The current TOC is organized by user journey, with high-level categories such as Overview, Quickstarts, Tutorials, Concepts, How-to guides, Reference, and Resources. Networking topics are found under 'Concepts' (e.g., 'Network requirements') and 'How-to guides' (e.g., 'Simplify network connectivity'). 2. Entry categorization: The new entry 'aks-cilium-howto.md' is a technical, step-by-step guide for deploying and configuring Cilium with Azure CNI in AKS, focusing on advanced networking features and integration. 3. Placement logic: Since this is a practical, actionable guide (not just conceptual), it fits best under 'How-to guides', specifically within or after existing networking-related how-tos. There is no dedicated 'Networking' sub-section, but 'Simplify network connectivity' and 'arc-gateway-simplify-networking.md' are the closest. 4. Final recommendations: Place 'aks-cilium-howto.md' in the 'How-to guides' section, immediately after 'Simplify network connectivity', and consider creating a 'Networking' sub-section if more networking guides are anticipated.",
+    "placements": [
+      {
+        "filename": "aks-cilium-howto.md",
+        "suggested_location": "After 'Simplify network connectivity'",
+        "parent_section": "How-to guides",
+        "reasoning": "This is a hands-on, step-by-step guide for a specific advanced networking scenario (Cilium with Azure CNI in AKS), which aligns with the purpose of the 'How-to guides' section. Placing it after 'Simplify network connectivity' groups networking-related how-tos together, making it easier for users seeking networking solutions to find all relevant content in one place."
+      }
+    ],
+    "toc_suggestions": [
+      "Create a 'Networking' sub-section under 'How-to guides' to group current and future networking-related guides (e.g., 'Simplify network connectivity', 'aks-cilium-howto.md').",
+      "Consider cross-linking networking how-tos from the 'Concepts > Network requirements' page for better discoverability.",
+      "If more advanced networking scenarios are planned, introduce a dedicated 'Advanced Networking' section under 'How-to guides' or 'Concepts'.",
+      "Add displayName metadata for new networking guides to improve searchability (e.g., cilium, azure cni, advanced networking, observability, policy enforcement)."
+    ]
+  }
+}
