@@ -67,7 +67,7 @@ class CreateContentProcessor(BaseContentProcessor):
         """Generate content using LLM"""
         # Get the prompt with all necessary information
         prompt = get_create_content_prompt(
-            action, materials_text, reference_chunks_text, content_type_info
+            self.config, action, materials_text, reference_chunks_text, content_type_info
         )
         
         # Call LLM for content generation

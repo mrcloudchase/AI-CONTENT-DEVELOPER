@@ -10,10 +10,10 @@ from .helpers import (
 
 
 def get_unified_content_strategy_prompt(config, materials_summary: str, 
-                                       semantic_matches: List[Dict], 
-                                       content_standards: Dict,
-                                       top_chunks: List[Dict] = None,
-                                       chunk_clusters: Dict[str, List[Dict]] = None) -> str:
+semantic_matches: List[Dict], 
+content_standards: Dict,
+top_chunks: List[Dict] = None,
+chunk_clusters: Dict[str, List[Dict]] = None) -> str:
     """Get the prompt for unified content strategy with gap analysis and content type selection"""
     
     # Format semantic matches for prompt
@@ -32,6 +32,8 @@ def get_unified_content_strategy_prompt(config, materials_summary: str,
 
 CONTENT GOAL: {config.content_goal}
 SERVICE AREA: {config.service_area}
+TARGET AUDIENCE: {config.audience}
+AUDIENCE LEVEL: {config.audience_level}
 
 USER MATERIALS ANALYSIS:
 {materials_summary}
@@ -47,6 +49,13 @@ AVAILABLE CONTENT TYPES:
 {content_types_info}
 
 TASK: Perform comprehensive gap analysis and generate content strategy with specific actions.
+
+AUDIENCE CONSIDERATIONS:
+- Target readers: {config.audience}
+- Technical depth: {config.audience_level} level
+- Beginner: Include prerequisites, detailed explanations, basic concepts
+- Intermediate: Balance explanation with technical detail
+- Advanced: Focus on implementation, optimization, and edge cases
 
 ANALYSIS REQUIREMENTS:
 1. GAP ANALYSIS: Compare user materials against existing content considering:

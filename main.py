@@ -49,6 +49,12 @@ Examples:
   # Run all phases
   python main.py https://github.com/user/repo "Create CNI docs" "Azure Kubernetes Service" material1.pdf material2.md
   
+  # Run with specific audience
+  python main.py https://github.com/user/repo "Create networking guide" "AKS" --audience "DevOps engineers" --audience-level advanced material.pdf
+  
+  # Run for beginners
+  python main.py https://github.com/user/repo "Create tutorial" "AKS" --audience "developers new to Kubernetes" --audience-level beginner tutorial.md
+  
   # Run specific phases
   python main.py https://github.com/user/repo "Update networking guides" "AKS" --phases 12 material.docx
   
@@ -70,6 +76,10 @@ def add_required_arguments(parser: argparse.ArgumentParser):
 def add_optional_arguments(parser: argparse.ArgumentParser):
     """Add optional arguments to parser"""
     parser.add_argument("materials", nargs="*", help="Support material files/URLs")
+    parser.add_argument("--audience", default="technical professionals", help="Target audience for the content")
+    parser.add_argument("--audience-level", default="intermediate", 
+                       choices=["beginner", "intermediate", "advanced"],
+                       help="Technical level of the target audience")
     parser.add_argument("--auto-confirm", "-y", action="store_true", help="Auto-confirm all prompts")
     parser.add_argument("--work-dir", type=Path, default=Path.cwd() / "work" / "tmp", help="Working directory")
     parser.add_argument("--max-depth", type=int, default=3, help="Max repository depth to analyze")
@@ -91,6 +101,8 @@ def create_config_from_args(args: argparse.Namespace) -> Config:
         repo_url=args.repo_url,
         content_goal=args.content_goal,
         service_area=args.service_area,
+        audience=args.audience,
+        audience_level=args.audience_level.replace("-", "_"),  # Convert kebab-case to snake_case
         support_materials=args.materials,
         auto_confirm=args.auto_confirm,
         work_dir=args.work_dir,

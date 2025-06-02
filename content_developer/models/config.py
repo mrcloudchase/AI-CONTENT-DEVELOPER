@@ -16,6 +16,10 @@ class Config:
     content_goal: str
     service_area: str
     
+    # Audience settings
+    audience: str = "technical professionals"
+    audience_level: str = "intermediate"  # beginner | intermediate | advanced
+    
     # Optional settings
     support_materials: List[str] = field(default_factory=list)
     auto_confirm: bool = False

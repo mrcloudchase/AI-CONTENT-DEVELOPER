@@ -78,7 +78,7 @@ class UpdateContentProcessor(BaseContentProcessor):
             {
                 "role": "user",
                 "content": get_update_content_prompt(
-                    action, existing_content, material_context, chunk_context
+                    self.config, action, existing_content, material_context, chunk_context
                 )
             }
         ]

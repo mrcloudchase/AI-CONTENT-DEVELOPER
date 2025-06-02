@@ -10,6 +10,7 @@ from .helpers import (
 
 
 def get_create_content_prompt(
+    config,
     action: Dict,
     materials_text: str,
     reference_chunks_text: str,
@@ -26,6 +27,8 @@ FILENAME: {action.get('filename', 'new-content.md')}
 CONTENT TYPE: {content_type}
 MS.TOPIC: {action.get('ms_topic', 'how-to')}
 REASON: {action.get('reason', 'No reason provided')}
+TARGET AUDIENCE: {config.audience}
+AUDIENCE LEVEL: {config.audience_level}
 
 === MATERIAL SOURCES (Full Content) ===
 {materials_text}
@@ -43,6 +46,13 @@ FRONTMATTER REQUIREMENTS:
 - ms.topic: {content_type_info.get('frontMatter', {}).get('ms.topic', action.get('ms_topic', 'how-to'))}
 
 TASK: Generate comprehensive technical documentation based on the materials provided.
+
+AUDIENCE ADAPTATION:
+- Write specifically for: {config.audience}
+- Technical depth: {config.audience_level}
+- Beginner: Include prerequisites, explain all concepts, provide extra context
+- Intermediate: Balance technical detail with clarity, assume some foundational knowledge
+- Advanced: Focus on technical implementation, performance considerations, best practices
 
 REQUIREMENTS:
 1. STRUCTURE: Follow the exact template structure for {content_type}
@@ -75,7 +85,8 @@ CORE COMPETENCIES:
 2. Follow Microsoft documentation standards and style guidelines
 3. Create well-structured content that matches specified content types
 4. Ensure technical accuracy while maintaining readability
-5. Always output responses in valid JSON format with markdown content in the 'content' field
+5. Adapt content complexity to match target audience and technical level
+6. Always output responses in valid JSON format with markdown content in the 'content' field
 
 CRITICAL CONSTRAINTS (Improvement #3: RAG Instructions):
 - Use ONLY information from provided materials - NEVER invent or assume technical details
@@ -88,6 +99,7 @@ CONTENT GENERATION PRINCIPLES:
 - ACCURACY: Every technical detail must be correct and traceable to source materials
 - COMPLETENESS: Use ALL relevant information from provided materials
 - CLARITY: Write for technical audiences but ensure concepts are clearly explained
+- AUDIENCE-AWARE: Adjust complexity, depth, and assumed knowledge based on target audience
 - STRUCTURE: Follow the exact template for the specified content type
 - CODE: Include all relevant code examples with proper formatting
 - CONTEXT: Reference related topics and provide next steps
@@ -108,6 +120,7 @@ When information is missing:
 
 
 def get_update_content_prompt(
+    config,
     action: Dict,
     existing_content: str,
     material_context: str,
@@ -116,6 +129,7 @@ def get_update_content_prompt(
     """Get the prompt for updating existing content based on UPDATE action
     
     Args:
+        config: Configuration object with audience settings
         action: The update action details
         existing_content: The current content of the file
         material_context: Formatted material content
@@ -130,6 +144,8 @@ def get_update_content_prompt(
 
 FILE TO UPDATE: {action.get('filename')}
 CHANGE DESCRIPTION: {action.get('change_description')}
+TARGET AUDIENCE: {config.audience}
+AUDIENCE LEVEL: {config.audience_level}
 
 SPECIFIC SECTIONS TO UPDATE:
 {sections_str}
@@ -147,6 +163,7 @@ RELATED DOCUMENTATION CONTEXT:
 
 Please analyze the existing content and provide specific changes based on the new materials.
 Focus on the sections mentioned above, but also identify any other sections that would benefit from updates based on the new information.
+Ensure all updates maintain the appropriate technical depth for {config.audience} at {config.audience_level} level.
 Return the changes in the specified JSON format."""
 
 

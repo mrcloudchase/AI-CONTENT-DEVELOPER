@@ -7,7 +7,7 @@
       "Next steps"
     ],
     "section_level": 2,
-    "chunk_index": 3,
+    "chunk_index": 4,
     "frontmatter": {
       "title": "Azure Arc-enabled Kubernetes network requirements",
       "description": "Learn about the networking requirements to connect Kubernetes clusters to Azure Arc.",
@@ -1555,14 +1555,14 @@
       -0.014207923784852028
     ],
     "embedding_model": "text-embedding-3-small",
-    "embedding_generated_at": "2025-06-01T16:31:54.638624",
+    "embedding_generated_at": "2025-06-01T19:13:04.637697",
     "content_hash": "da015a26c4a4fa22ded6ec9fde8e8f4e54673bfed557a455a317de8ee5ef71ae",
-    "file_id": "f77d8dd10646b97c9c052c2e3381be09834e683cf1f4e3f28914007caa9ab30f",
-    "chunk_id": "dc966e6199d0a8337b0613726f03233056c4f15bf721003cb345a206dbcbc119",
-    "prev_chunk_id": "c709fd41e335294afb792860f699adf246b88f1d0b86b791eb8624917b271ab4",
+    "file_id": "41904d48dc13159796fcdba5a1ac229f0c5378da366d9bc341ea6e7e197d3447",
+    "chunk_id": "3af33b67f1ecaa2b7e8ac26f70ec08aa7a2019c16b3dd87bba94f184f07f127e",
+    "prev_chunk_id": "60fc9f0909f062f8d2d690aaa9d1b59613e6bc1caec72b5011a1eb6b4644ee6d",
     "next_chunk_id": null,
-    "parent_heading_chunk_id": "e96c176fc62fb0923f5b50993310a4638a0ef3346332c2fc145cea0295d0095f",
-    "total_chunks_in_file": 4
+    "parent_heading_chunk_id": "bb06da44d66ec3ac16221b06361fe444cc7f24698d3ad9997cbc81331692a746",
+    "total_chunks_in_file": 5
   },
   "meta": {
     "type": "chunk",
@@ -1572,7 +1572,7 @@
       "Next steps"
     ],
     "has_embedding": true,
-    "embedding_updated_at": "2025-06-01T16:31:54.638640"
+    "embedding_updated_at": "2025-06-01T19:13:04.637716"
   },
-  "timestamp": "2025-06-01T16:31:54.638655"
+  "timestamp": "2025-06-01T19:13:04.637734"
 }

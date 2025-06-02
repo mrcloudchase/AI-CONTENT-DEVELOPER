@@ -223,6 +223,8 @@ python main.py https://github.com/Azure/azure-docs \
 | `content_goal` | Goal for content creation/update | Required |
 | `service_area` | Service area (e.g., 'Azure Kubernetes Service') | Required |
 | `materials` | Support material files/URLs | Optional |
+| `--audience` | Target audience for the content | "technical professionals" |
+| `--audience-level` | Technical level (beginner, intermediate, advanced) | "intermediate" |
 | `--auto-confirm`, `-y` | Auto-confirm all prompts | False |
 | `--work-dir` | Working directory for repos | `./work/tmp` |
 | `--max-depth` | Max repository depth to analyze | 3 |

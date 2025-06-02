@@ -1,0 +1,25 @@
+{
+  "metadata": {
+    "timestamp": "2025-06-01T19:13:25.391335",
+    "operation": "update_cilium-aks-integration-howto.md"
+  },
+  "data": {
+    "changes": [
+      {
+        "section": "Cilium Benefits",
+        "action": "add",
+        "original": null,
+        "updated": "## Cilium Benefits\n\nIntegrating Cilium with Azure CNI in AKS offers several key benefits:\n\n- **Enhanced Networking Efficiency**: Cilium enables dynamic grouping of service endpoints for rapid service discovery and efficient resource utilization.\n- **Improved Security & Policy Enforcement**: Utilize Cilium\u2019s native network policy engine to enforce granular security rules that align with enterprise compliance requirements.\n- **Optimized Developer & Operator Experience**: Provides a seamless configuration experience via Azure Portal, CLI, and APIs, reducing operational overhead and accelerating deployments.\n- **Operational Cost Efficiency**: Enhances the scalability and stability of clusters to reduce downtime and lower management costs, particularly in large-scale deployments.",
+        "reason": "To provide a comprehensive overview of the benefits of integrating Cilium with Azure CNI in AKS, highlighting the enhanced networking, security, and operational efficiencies."
+      },
+      {
+        "section": "Architecture Overview",
+        "action": "add",
+        "original": null,
+        "updated": "## Architecture Overview\n\nThe architecture of Cilium integration with Azure CNI in AKS combines the robust control plane of Azure CNI with the data plane of Cilium. This integration leverages eBPF programs loaded into the Linux kernel to provide high-performance networking and security. Key architectural components include:\n\n- **Cilium Endpoint Slices**: Automatically manages pod endpoints into slices for faster lookup and improved scalability.\n- **Network Policy Enforcement**: Cilium\u2019s policy engine applies network security rules across all endpoint slices, supporting both ingress and egress policy enforcement.\n- **Observability**: Integrated with Azure Monitor and Cilium observability tools to provide detailed logging, metrics, and diagnostic information.\n- **IP Address Management (IPAM)**: Supports both overlay and virtual network models for assigning pod IPs, offering flexibility in network configuration.",
+        "reason": "To provide an architectural overview that explains the integration of Cilium with Azure CNI in AKS, detailing how it enhances networking and security capabilities."
+      }
+    ],
+    "summary": "Added new sections 'Cilium Benefits' and 'Architecture Overview' to provide detailed insights into the advantages and architectural components of integrating Cilium with Azure CNI in AKS. These additions highlight the enhanced networking efficiency, security, and operational benefits, as well as the technical architecture that supports these improvements."
+  }
+}

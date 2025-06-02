@@ -1555,14 +1555,14 @@
       -0.006614666897803545
     ],
     "embedding_model": "text-embedding-3-small",
-    "embedding_generated_at": "2025-06-01T16:31:54.328151",
+    "embedding_generated_at": "2025-06-01T19:13:04.023377",
     "content_hash": "a5a92e9a520c3300259da23d93a48d807ce340d428ac959ee3cbc853806d6864",
-    "file_id": "f77d8dd10646b97c9c052c2e3381be09834e683cf1f4e3f28914007caa9ab30f",
-    "chunk_id": "c709fd41e335294afb792860f699adf246b88f1d0b86b791eb8624917b271ab4",
-    "prev_chunk_id": "dfe4fb394fd849aa9235530ecc30fb0f3e5835622bf560f5f5bc9520bf1e1a71",
-    "next_chunk_id": "dc966e6199d0a8337b0613726f03233056c4f15bf721003cb345a206dbcbc119",
-    "parent_heading_chunk_id": "e96c176fc62fb0923f5b50993310a4638a0ef3346332c2fc145cea0295d0095f",
-    "total_chunks_in_file": 4
+    "file_id": "41904d48dc13159796fcdba5a1ac229f0c5378da366d9bc341ea6e7e197d3447",
+    "chunk_id": "193bb91209b44a8f40d3ab06d6bde6171e4f881b1dfa8b49458b48755e2d8673",
+    "prev_chunk_id": "fb57c351d7028104c0bf3ab2fec527f229fda0e756c063e0d5aa86a3c6fd4502",
+    "next_chunk_id": "60fc9f0909f062f8d2d690aaa9d1b59613e6bc1caec72b5011a1eb6b4644ee6d",
+    "parent_heading_chunk_id": "bb06da44d66ec3ac16221b06361fe444cc7f24698d3ad9997cbc81331692a746",
+    "total_chunks_in_file": 5
   },
   "meta": {
     "type": "chunk",
@@ -1572,7 +1572,7 @@
       "Additional endpoints"
     ],
     "has_embedding": true,
-    "embedding_updated_at": "2025-06-01T16:31:54.328169"
+    "embedding_updated_at": "2025-06-01T19:13:04.023394"
   },
-  "timestamp": "2025-06-01T16:31:54.328191"
+  "timestamp": "2025-06-01T19:13:04.023408"
 }

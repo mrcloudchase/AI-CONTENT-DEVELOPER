@@ -1,0 +1,211 @@
+=== CONTENT_STRATEGY ===
+2025-06-01T19:15:48.985526
+==================================================
+
+Unified Content Strategy Analysis Task:
+
+CONTENT GOAL: document cilium for aks
+SERVICE AREA: aks
+TARGET AUDIENCE: platform engineers
+AUDIENCE LEVEL: intermediate
+
+USER MATERIALS ANALYSIS:
+• Cilium Integration with AKS: This Product Requirements Document (PRD) outlines the integration of CiliumEndpointSlices with Azure CNI in Azure Kubernetes Service (AKS) to enhance networking capabilities. The document details the 
+• Azure CNI Powered by Cilium: This document serves as a comprehensive guide for configuring Azure CNI Powered by Cilium in Azure Kubernetes Service (AKS). It explains the integration of Azure CNI's control plane with Cilium's data
+
+EXISTING CONTENT ANALYSIS:
+
+File: cilium-aks-integration-howto.md
+Content Type: How-To Guide (ms.topic: how-to)
+Relevance: 0.86 - High coverage - existing content addresses most concepts
+Matched Sections: Configure Cilium with Azure CNI in AKS > Introduction, Create a virtual network with a subnet for nodes and a subnet for pods > Cilium Benefits, Create a virtual network with a subnet for nodes and a subnet for pods > Next Steps
+
+TOP RELEVANT CHUNKS (Individual chunks for reference):
+
+These are the most relevant individual content chunks from your repository:
+
+Chunk #1:
+  Chunk ID: 1d60fa16a36679b95abe8d89a59057a398a4ea2e0daeda3cb0ef25e4f2b66fbb
+  File: cilium-aks-integration-howto.md
+  Section: Configure Cilium with Azure CNI in AKS > Introduction
+  Relevance Score: 0.900
+  Technologies: Azure, Cilium, Kubernetes, CNI, Network Policy
+  Preview: ## Introduction This guide provides step-by-step instructions for configuring Cilium with Azure CNI in Azure Kubernetes Service (AKS). By integrating ...
+
+Chunk #2:
+  Chunk ID: 4a2ffcfde8faaea277933516656e888c57e6308942baf43e2f327cce07752d8a
+  File: cilium-aks-integration-howto.md
+  Section: Create a virtual network with a subnet for nodes and a subnet for pods > Cilium Benefits
+  Relevance Score: 0.880
+  Technologies: Azure, Cilium, Kubernetes, CNI, Network Policy
+  Preview: ## Cilium Benefits  Integrating Cilium with Azure CNI in AKS offers several key benefits:  - **Enhanced Networking Efficiency**: Cilium enables dynami...
+
+Chunk #3:
+  Chunk ID: 7ec180443d50610c84fa89c9a218f738cd2398bc73c7e9680dcf2f5b333ed729
+  File: cilium-aks-integration-howto.md
+  Section: Create a virtual network with a subnet for nodes and a subnet for pods > Next Steps
+  Relevance Score: 0.860
+  Technologies: Azure, Cilium, Kubernetes, CNI, Network Policy
+  Preview: ## Next Steps - Explore advanced network policy configurations with Cilium. - Monitor cluster traffic and performance using Azure Monitor and Cilium o...
+
+Chunk #4:
+  Chunk ID: f923f8680a44e5a9073858571d869de58610e048210aa2e232910d79fb6ce9ba
+  File: cilium-aks-integration-howto.md
+  Section: Configure Cilium with Azure CNI in AKS > Steps
+  Relevance Score: 0.840
+  Technologies: Azure, Cilium, Kubernetes, CNI
+  Preview: ## Steps...
+
+Chunk #5:
+  Chunk ID: ef2957d5e8db6c988be2fbbfba812e1680dc7d3d8fbacfa551c988b7f9b95abf
+  File: cilium-aks-integration-howto.md
+  Section: Configure Cilium with Azure CNI in AKS > Prerequisites
+  Relevance Score: 0.820
+  Technologies: Azure, Cilium, Kubernetes, CNI
+  Preview: ## Prerequisites Before proceeding with the configuration, ensure that you have the following prerequisites:  - **Azure CLI**: Version 2.48.1 or later...
+
+Chunk #6:
+  Chunk ID: 7d2223191537c0261add2cda53b69ac394321f9fdd249c269ba3810923c4c6f4
+  File: cilium-aks-integration-howto.md
+  Section: Create a virtual network with a subnet for nodes and a subnet for pods > Step 3: Create an AKS Cluster with Cilium
+  Relevance Score: 0.800
+  Technologies: Azure, Cilium, Kubernetes, CNI, Pod
+  Preview: ### Step 3: Create an AKS Cluster with Cilium...
+
+Chunk #7:
+  Chunk ID: 0e4a63b1eeff47dfd85f1513c7b5ef6458c13532f5b45632410934de3e62ecc9
+  File: cilium-aks-integration-howto.md
+  Section: Configure Cilium with Azure CNI in AKS > Steps > Step 2: Create a Resource Group and Virtual Network (if using Virtual Network)
+  Relevance Score: 0.780
+  Technologies: Azure, Cilium, Kubernetes, CNI
+  Preview: ### Step 2: Create a Resource Group and Virtual Network (if using Virtual Network) ```bash...
+  Contains: Code examples
+
+Chunk #8:
+  Chunk ID: 3f26ddbe9ae49b2aa44188a0618cf6dd75edeb186adeb3e0659eea95a79e0987
+  File: cilium-aks-integration-howto.md
+  Section: Create a virtual network with a subnet for nodes and a subnet for pods > Architecture Overview
+  Relevance Score: 0.760
+  Technologies: Azure, Cilium, Kubernetes, CNI, eBPF
+  Preview: ## Architecture Overview  The architecture of Cilium integration with Azure CNI in AKS combines the robust control plane of Azure CNI with the data pl...
+
+Chunk #9:
+  Chunk ID: e5f1aa644868b858ed1893d9928cd82634aff4903cc29f45a99d581721ce6a13
+  File: cilium-aks-integration-howto.md
+  Section: Create a virtual network with a subnet for nodes and a subnet for pods > Code Examples
+  Relevance Score: 0.740
+  Technologies: Azure, Cilium, Kubernetes, CNI, Pod
+  Preview: ## Code Examples The code snippets provided in the Steps section illustrate how to create a resource group, virtual network, and AKS cluster with Cili...
+
+Chunk #10:
+  Chunk ID: 750727707fcc4040846f40889b623289778cd73bbc04263e4271087b40490fa3
+  File: cilium-aks-integration-howto.md
+  Section: Configure Cilium with Azure CNI in AKS > Steps > Step 1: Choose a Network Model
+  Relevance Score: 0.720
+  Technologies: Azure, Cilium, Kubernetes, CNI, Pod
+  Preview: ### Step 1: Choose a Network Model Azure CNI powered by Cilium supports two methods for assigning pod IPs: - **Overlay Network**: Assigns IP addresses...
+
+CONTENT CLUSTERS (Topic groupings for gap analysis):
+
+Existing content is organized into these main topics:
+
+📁 Configure Cilium with Azure CNI in AKS (5 chunks)
+  - cilium-aks-integration-howto.md > Configure Cilium with Azure CNI in AKS > Introduction
+    Chunk ID: 1d60fa16a36679b95abe8d89a59057a398a4ea2e0daeda3cb0ef25e4f2b66fbb
+  - cilium-aks-integration-howto.md > Configure Cilium with Azure CNI in AKS > Steps
+    Chunk ID: f923f8680a44e5a9073858571d869de58610e048210aa2e232910d79fb6ce9ba
+  - cilium-aks-integration-howto.md > Configure Cilium with Azure CNI in AKS > Prerequisites
+    Chunk ID: ef2957d5e8db6c988be2fbbfba812e1680dc7d3d8fbacfa551c988b7f9b95abf
+  ... and 2 more chunks
+
+📁 Create a virtual network with a subnet for nodes and a subnet for pods (5 chunks)
+  - cilium-aks-integration-howto.md > Create a virtual network with a subnet for nodes and a subnet for pods > Cilium Benefits
+    Chunk ID: 4a2ffcfde8faaea277933516656e888c57e6308942baf43e2f327cce07752d8a
+  - cilium-aks-integration-howto.md > Create a virtual network with a subnet for nodes and a subnet for pods > Next Steps
+    Chunk ID: 7ec180443d50610c84fa89c9a218f738cd2398bc73c7e9680dcf2f5b333ed729
+  - cilium-aks-integration-howto.md > Create a virtual network with a subnet for nodes and a subnet for pods > Step 3: Create an AKS Cluster with Cilium
+    Chunk ID: 7d2223191537c0261add2cda53b69ac394321f9fdd249c269ba3810923c4c6f4
+  ... and 2 more chunks
+
+COVERAGE SUMMARY: 2 topics, 10 total chunks
+
+AVAILABLE CONTENT TYPES:
+- **Overview** (ms.topic: overview)
+  Purpose: For new customers. To explain the service, technology, or functionality from a technical point of view. It isn't intended to define benefits or value prop; that would be in marketing content.
+  Use when: An article explaining the service from a technical point of view. And/or an article comparing features across related services/projects.
+- **Concept** (ms.topic: concept-article)
+  Purpose: When you want to: - explain what something is and define its critical functions - describe how something works or what happens when something is done - provide guidelines for completing a job task in varied situations.
+  Use when: In-depth explanation of functionality related to a service(s) that are fundamental to understanding and use.
+- **Quickstart** (ms.topic: quickstart)
+  Purpose: When you can get the service, technology, or functionality into the hands of new customers in less than 10 minutes. Quickstarts are preferred, but not required if no meaningful functionality can be introduced to new users in under 10 minutes.
+  Use when: Fundamental day-1 instructions for new customers to quickly try out a specific product/service. The focus is on getting the product/service into the hands of customers so they can use it in their production environment.
+- **How-To Guide** (ms.topic: how-to)
+  Purpose: To provide the steps for completing a task. To help customers complete tasks in their own environment. How-to guides differ from tutorials in that they can include optional information, explanations, and information to help inform decisions.
+  Use when: Procedural articles that show the customer how to complete a task.
+- **Tutorial** (ms.topic: tutorial)
+  Purpose: To show the single best procedure for completing a customer task.
+  Use when: Scenario-based procedures for top customer tasks. The focus is on showing the customer how to do the task, not on helping them set up their own environment.
+
+TASK: Perform comprehensive gap analysis and generate content strategy with specific actions.
+
+AUDIENCE CONSIDERATIONS:
+- Target readers: platform engineers
+- Technical depth: intermediate level
+- Beginner: Include prerequisites, detailed explanations, basic concepts
+- Intermediate: Balance explanation with technical detail
+- Advanced: Focus on implementation, optimization, and edge cases
+
+ANALYSIS REQUIREMENTS:
+1. GAP ANALYSIS: Compare user materials against existing content considering:
+   - Content type mismatches (need how-to but only have overview)
+   - Coverage depth (surface mention vs comprehensive coverage)
+   - Missing features or concepts from materials
+   
+2. DECISION FRAMEWORK:
+   - If coverage < 30% OR wrong content type exists → CREATE new content
+   - If coverage 30-70% AND same content type needed → UPDATE with additions
+   - If coverage > 70% but missing key details → UPDATE with specific sections
+   
+3. FOR CREATE ACTIONS:
+   - Select appropriate content type based on user materials and goal
+   - Reference specific chunk_ids from TOP RELEVANT CHUNKS section
+   - Specify exact filename and comprehensive reason
+   
+4. FOR UPDATE ACTIONS:
+   - Identify current content type from ms.topic
+   - Specify exact sections/information to add
+   - Reference specific chunk_ids that show where to add content
+   - Provide specific change description
+
+5. RELEVANT CHUNKS: Use ONLY chunk_ids from the provided TOP RELEVANT CHUNKS or from file's relevant_chunks
+
+OUTPUT FORMAT:
+{
+  "thinking": "Document your complete analysis process including gap identification, content type considerations, and decision rationale",
+  "decisions": [
+    {
+      "action": "CREATE",
+      "filename": "specific-name.md",
+      "content_type": "How-To Guide",
+      "ms_topic": "how-to",
+      "reason": "Detailed explanation of why this content is needed",
+      "priority": "high|medium|low",
+      "relevant_chunks": ["chunk_id_from_top_chunks", "another_chunk_id"]
+    },
+    {
+      "action": "UPDATE", 
+      "filename": "existing-file.md",
+      "current_content_type": "Overview",
+      "ms_topic": "overview",
+      "change_description": "Add new section 'Cilium Integration' after 'Network Plugins'",
+      "specific_sections": ["Cilium Benefits", "Architecture Overview"],
+      "reason": "Detailed explanation of what's missing",
+      "priority": "high|medium|low",
+      "relevant_chunks": ["chunk_id_from_that_file", "another_relevant_chunk_id"]
+    }
+  ],
+  "confidence": 0.85,
+  "summary": "Brief summary of overall strategy"
+}
+
+CRITICAL: Use ONLY real chunk_ids provided in the analysis above. Do NOT invent chunk identifiers. Return only valid JSON matching the exact format specified above.
