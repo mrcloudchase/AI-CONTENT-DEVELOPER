@@ -13,6 +13,11 @@ AI Content Developer now features a beautiful, informative console output using 
 - See the AI's reasoning process in formatted panels
 - Understand decision-making in real-time
 - Yellow-bordered panels highlight thinking sections
+- **Available in all phases**:
+  - Phase 1: Directory selection reasoning
+  - Phase 2: Gap analysis and strategy thinking
+  - Phase 3: Content generation decisions
+  - Phase 4: TOC placement reasoning
 
 ### 3. **Clean Status Messages**
 - ✓ Success messages in green
@@ -63,13 +68,24 @@ python main.py <repo> "<goal>" "<service>" materials.pdf --verbose
 
 📋 Phase 1: Repository Analysis ━━━━━━━━━━━━━━━━━ 100%
 
-╭─ 🤔 AI Thinking ────────────────────────────────────────────╮
+╭─ 🤔 AI Thinking - Working Directory Selection ──────────────╮
 │ The repository structure shows articles/aks as the main     │
 │ documentation directory. Based on the materials about        │
 │ Cilium, this is the appropriate location...                 │
 ╰──────────────────────────────────────────────────────────────╯
 
 ✓ Selected directory: articles/aks
+
+📋 Phase 4: TOC Management ━━━━━━━━━━━━━━━━━ 100%
+
+╭─ 🤔 AI Thinking - TOC Analysis ─────────────────────────────╮
+│ I need to analyze the existing TOC structure to find the    │
+│ appropriate place for the new Cilium documentation. The     │
+│ networking section already exists, so I'll add the new      │
+│ entries there to maintain logical organization...           │
+╰──────────────────────────────────────────────────────────────╯
+
+✓ TOC.yml updated
 ```
 
 ## Demo Script

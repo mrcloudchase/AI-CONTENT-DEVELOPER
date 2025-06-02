@@ -1,0 +1,956 @@
+=== WORKING_DIRECTORY ===
+2025-06-02T10:38:17.810953
+==================================================
+
+Directory Selection Analysis Task:
+
+CONTENT GOAL: document cilium for aks
+SERVICE AREA: aks
+
+REPOSITORY: /Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs
+
+REPOSITORY STRUCTURE:
+├── articles
+│   ├── azure-arc
+│   │   ├── container-storage
+│   │   │   ├── includes
+│   │   │   ├── media
+│   │   │   ├── alternate-onelake.md
+│   │   │   ├── azure-monitor-kubernetes.md
+│   │   │   ├── blob-index-metadata-tags.md
+│   │   │   ├── cloud-ingest-edge-volume-configuration.md
+│   │   │   ├── edge-volumes-overview.md
+│   │   │   ├── faq.yml
+│   │   │   ├── index.yml
+│   │   │   ├── ingest-data-flow.md
+│   │   │   ├── ingest-policies.md
+│   │   │   ├── install-edge-volumes.md
+│   │   │   ├── jumpstart.md
+│   │   │   ├── local-shared-edge-volumes.md
+│   │   │   ├── map-names.md
+│   │   │   ├── monitor-deployment-edge-volumes.md
+│   │   │   ├── multi-node-cluster-edge-volumes.md
+│   │   │   ├── overview.md
+│   │   │   ├── prepare-linux-edge-volumes.md
+│   │   │   ├── quickstart-install.md
+│   │   │   ├── release-notes.md
+│   │   │   ├── single-node-cluster-edge-volumes.md
+│   │   │   ├── storage-options.md
+│   │   │   ├── support-feedback.md
+│   │   │   ├── third-party-monitoring.md
+│   │   │   ├── toc.yml
+│   │   │   ├── tutorial-configure-edge-volume.md
+│   │   │   ├── volumes-subvolumes.md
+│   │   │   └── whats-new.md
+│   │   ├── data
+│   │   │   ├── breadcrumb
+│   │   │   ├── includes
+│   │   │   ├── media
+│   │   │   ├── about-arcdata-extension.md
+│   │   │   ├── active-directory-introduction.md
+│   │   │   ├── active-directory-prerequisites.md
+│   │   │   ├── automated-integration-testing.md
+│   │   │   ├── azure-data-studio-dashboards.md
+│   │   │   ├── backup-controller-database.md
+│   │   │   ├── backup-restore-postgresql.md
+│   │   │   ├── change-postgresql-port.md
+│   │   │   ├── clean-up-past-installation.md
+│   │   │   ├── configure-managed-instance.md
+│   │   │   ├── configure-security-postgresql.md
+│   │   │   ├── configure-transparent-data-encryption-manually.md
+│   │   │   ├── configure-transparent-data-encryption-sql-managed-instance.md
+│   │   │   ├── connect-active-directory-sql-managed-instance.md
+│   │   │   ├── connect-managed-instance.md
+│   │   │   ├── connectivity.md
+│   │   │   ├── create-complete-managed-instance-directly-connected.md
+│   │   │   ├── create-complete-managed-instance-indirectly-connected.md
+│   │   │   ├── create-custom-configuration-template.md
+│   │   │   ├── create-data-controller-direct-azure-portal.md
+│   │   │   ├── create-data-controller-direct-cli.md
+│   │   │   ├── create-data-controller-direct-prerequisites.md
+│   │   │   ├── create-data-controller-indirect-azure-data-studio.md
+│   │   │   ├── create-data-controller-indirect-azure-portal.md
+│   │   │   ├── create-data-controller-indirect-cli.md
+│   │   │   ├── create-data-controller-using-kubernetes-native-tools.md
+│   │   │   ├── create-postgresql-server-azure-data-studio.md
+│   │   │   ├── create-postgresql-server-kubernetes-native-tools.md
+│   │   │   ├── create-postgresql-server.md
+│   │   │   ├── create-sql-managed-instance-azure-data-studio.md
+│   │   │   ├── create-sql-managed-instance-using-kubernetes-native-tools.md
+│   │   │   ├── create-sql-managed-instance.md
+│   │   │   ├── delete-azure-resources.md
+│   │   │   ├── delete-managed-instance.md
+│   │   │   ├── delete-postgresql-server.md
+│   │   │   ├── deploy-active-directory-connector-cli.md
+│   │   │   ├── deploy-active-directory-connector-portal.md
+│   │   │   ├── deploy-active-directory-postgresql-server-cli.md
+│   │   │   ├── deploy-active-directory-sql-managed-instance-cli.md
+│   │   │   ├── deploy-active-directory-sql-managed-instance.md
+│   │   │   ├── deploy-customer-managed-keytab-active-directory-connector.md
+│   │   │   ├── deploy-system-managed-keytab-active-directory-connector.md
+│   │   │   ├── faq.yml
+│   │   │   ├── get-connection-endpoints-and-connection-strings-postgresql-server.md
+│   │   │   ├── index.yml
+│   │   │   ├── install-arcdata-extension.md
+│   │   │   ├── install-client-tools.md
+│   │   │   ├── least-privilege.md
+│   │   │   ├── limitations-managed-instance.md
+│   │   │   ├── limitations-postgresql.md
+│   │   │   ├── list-servers-postgresql.md
+│   │   │   ├── maintenance-window.md
+│   │   │   ├── manage-postgresql-server-with-azure-data-studio.md
+│   │   │   ├── managed-instance-business-continuity-overview.md
+│   │   │   ├── managed-instance-disaster-recovery-cli.md
+│   │   │   ├── managed-instance-disaster-recovery-portal.md
+│   │   │   ├── managed-instance-disaster-recovery.md
+│   │   │   ├── managed-instance-features.md
+│   │   │   ├── managed-instance-high-availability.md
+│   │   │   ├── managed-instance-overview.md
+│   │   │   ├── migrate-postgresql-data.md
+│   │   │   ├── migrate-to-managed-instance.md
+│   │   │   ├── monitor-certificates.md
+│   │   │   ├── monitor-grafana-kibana.md
+│   │   │   ├── monitoring-log-analytics-azure-portal-managed-instance.md
+│   │   │   ├── monitoring-log-analytics-azure-portal-postgresql.md
+│   │   │   ├── offline-deployment.md
+│   │   │   ├── overview.md
+│   │   │   ├── plan-azure-arc-data-services.md
+│   │   │   ├── pod-scheduling.md
+│   │   │   ├── point-in-time-restore.md
+│   │   │   ├── preview-testing.md
+│   │   │   ├── privacy-data-collection-and-reporting.md
+│   │   │   ├── release-notes.md
+│   │   │   ├── reprovision-replica.md
+│   │   │   ├── reserved-capacity-overview.md
+│   │   │   ├── resize-persistent-volume-claim.md
+│   │   │   ├── resource-sync.md
+│   │   │   ├── restore-adventureworks-sample-db-into-postgresql-server.md
+│   │   │   ├── restore-adventureworks-sample-db.md
+│   │   │   ├── restore-postgresql.md
+│   │   │   ├── rotate-customer-managed-keytab.md
+│   │   │   ├── rotate-sql-managed-instance-credentials.md
+│   │   │   ├── rotate-user-tls-certificate.md
+│   │   │   ├── scale-up-down-postgresql-server-using-cli.md
+│   │   │   ├── service-tiers.md
+│   │   │   ├── show-configuration-postgresql-server.md
+│   │   │   ├── sizing-guidance.md
+│   │   │   ├── storage-configuration.md
+│   │   │   ├── support-policy.md
+│   │   │   ├── supported-versions-postgresql.md
+│   │   │   ├── toc.yml
+│   │   │   ├── troubleshoot-guide.md
+│   │   │   ├── troubleshoot-managed-instance-configuration.md
+│   │   │   ├── troubleshoot-managed-instance.md
+│   │   │   ├── troubleshoot-postgresql-server.md
+│   │   │   ├── troubleshooting-get-logs.md
+│   │   │   ├── uninstall-azure-arc-data-controller.md
+│   │   │   ├── update-service-principal-credentials.md
+│   │   │   ├── upgrade-active-directory-connector.md
+│   │   │   ├── upgrade-data-controller-direct-cli.md
+│   │   │   ├── upgrade-data-controller-direct-portal.md
+│   │   │   ├── upgrade-data-controller-indirect-cli.md
+│   │   │   ├── upgrade-data-controller-indirect-kubernetes-tools.md
+│   │   │   ├── upgrade-overview.md
+│   │   │   ├── upgrade-sql-managed-instance-auto.md
+│   │   │   ├── upgrade-sql-managed-instance-cli.md
+│   │   │   ├── upgrade-sql-managed-instance-direct-cli.md
+│   │   │   ├── upgrade-sql-managed-instance-direct-portal.md
+│   │   │   ├── upgrade-sql-managed-instance-indirect-kubernetes-tools.md
+│   │   │   ├── upload-logs.md
+│   │   │   ├── upload-metrics-and-logs-to-azure-monitor.md
+│   │   │   ├── upload-metrics.md
+│   │   │   ├── upload-usage-data.md
+│   │   │   ├── using-extensions-in-postgresql-server.md
+│   │   │   ├── validation-program.md
+│   │   │   ├── version-log.md
+│   │   │   ├── view-arc-data-services-inventory-in-azure-portal.md
+│   │   │   ├── view-billing-data-in-azure.md
+│   │   │   ├── view-data-controller-in-azure-portal.md
+│   │   │   └── what-is-azure-arc-enabled-postgresql.md
+│   │   ├── edge-rag
+│   │   │   ├── includes
+│   │   │   ├── media
+│   │   │   ├── add-data-source.md
+│   │   │   ├── build-chat-solution-overview.md
+│   │   │   ├── complete-prerequisites.md
+│   │   │   ├── configure-driver-machine.md
+│   │   │   ├── configure-endpoint-authentication.md
+│   │   │   ├── configure-nfs-server.md
+│   │   │   ├── delete-data.md
+│   │   │   ├── deploy.md
+│   │   │   ├── enable-gpu-aks.md
+│   │   │   ├── evaluate-solution.md
+│   │   │   ├── evaluation-metrics.md
+│   │   │   ├── index.yml
+│   │   │   ├── known-issues.md
+│   │   │   ├── observability-metrics.md
+│   │   │   ├── observability.md
+│   │   │   ├── overview.md
+│   │   │   ├── requirements.md
+│   │   │   ├── set-up-data-query.md
+│   │   │   ├── test-end-user-app.md
+│   │   │   ├── toc.yml
+│   │   │   ├── uninstall-extension.md
+│   │   │   └── whats-new.md
+│   │   ├── includes
+│   │   │   ├── arc-region-note.md
+│   │   │   ├── azure-arc-enabled-kubernetes.md
+│   │   │   ├── azure-arc-enabled-servers.md
+│   │   │   ├── azure-arc.md
+│   │   │   └── network-requirement-principles.md
+│   │   ├── kubernetes
+│   │   │   ├── breadcrumb
+│   │   │   ├── includes
+│   │   │   ├── media
+│   │   │   ├── agent-upgrade.md
+│   │   │   ├── arc-gateway-simplify-networking.md
+│   │   │   ├── azure-rbac.md
+│   │   │   ├── cluster-connect.md
+│   │   │   ├── conceptual-agent-overview.md
+│   │   │   ├── conceptual-azure-rbac.md
+│   │   │   ├── conceptual-cluster-connect.md
+│   │   │   ├── conceptual-configurations.md
+│   │   │   ├── conceptual-connectivity-modes.md
+│   │   │   ├── conceptual-custom-locations.md
+│   │   │   ├── conceptual-data-exchange.md
+│   │   │   ├── conceptual-extensions.md
+│   │   │   ├── conceptual-gitops-flux2-ci-cd.md
+│   │   │   ├── conceptual-gitops-flux2.md
+│   │   │   ├── conceptual-inner-loop-gitops.md
+│   │   │   ├── conceptual-workload-identity.md
+│   │   │   ├── conceptual-workload-management.md
+│   │   │   ├── custom-locations.md
+│   │   │   ├── deploy-marketplace.md
+│   │   │   ├── diagnose-connection-issues.md
+│   │   │   ├── extensions-release.md
+│   │   │   ├── extensions-troubleshooting.md
+│   │   │   ├── extensions.md
+│   │   │   ├── faq.md
+│   │   │   ├── gitops-flux2-parameters.md
+│   │   │   ├── identity-access-overview.md
+│   │   │   ├── index.yml
+│   │   │   ├── kubernetes-resource-view.md
+│   │   │   ├── managed-extensions.md
+│   │   │   ├── monitor-gitops-flux-2.md
+│   │   │   ├── network-requirements.md
+│   │   │   ├── overview.md
+│   │   │   ├── policy-reference.md
+│   │   │   ├── private-link.md
+│   │   │   ├── quickstart-connect-cluster.md
+│   │   │   ├── release-notes.md
+│   │   │   ├── resource-graph-samples.md
+│   │   │   ├── secret-store-extension.md
+│   │   │   ├── system-requirements.md
+│   │   │   ├── toc.yml
+│   │   │   ├── troubleshooting.md
+│   │   │   ├── tutorial-akv-secrets-provider.md
+│   │   │   ├── tutorial-arc-enabled-open-service-mesh.md
+│   │   │   ├── tutorial-gitops-flux2-ci-cd.md
+│   │   │   ├── tutorial-use-gitops-argocd.md
+│   │   │   ├── tutorial-use-gitops-connected-cluster.md
+│   │   │   ├── tutorial-use-gitops-flux2.md
+│   │   │   ├── use-azure-policy-flux-2.md
+│   │   │   ├── validation-program.md
+│   │   │   ├── workload-identity.md
+│   │   │   └── workload-management.md
+│   │   ├── media
+│   │   │   ├── azure-firewall-explicit-proxy
+│   │   │   ├── edge-storage-accelerator
+│   │   │   ├── overview
+│   │   │   ├── 01088-icon-arc-kubernetes-menu.svg
+│   │   │   ├── 01850-icon-arc-sql-server-menu.svg
+│   │   │   ├── manage-450-machines-azure-arc.svg
+│   │   │   └── manage-756-azure-arc.svg
+│   │   ├── multicloud-connector
+│   │   │   ├── breadcrumb
+│   │   │   ├── media
+│   │   │   ├── connect-to-aws.md
+│   │   │   ├── index.yml
+│   │   │   ├── onboard-multicloud-vms-arc.md
+│   │   │   ├── overview.md
+│   │   │   ├── resource-representation.md
+│   │   │   ├── toc.yml
+│   │   │   ├── troubleshoot-multicloud-connector.md
+│   │   │   └── view-multicloud-inventory.md
+│   │   ├── platform
+│   │   │   └── conceptual-custom-locations.md
+│   │   ├── resource-bridge
+│   │   │   ├── includes
+│   │   │   ├── media
+│   │   │   ├── deploy-cli.md
+│   │   │   ├── maintenance.md
+│   │   │   ├── network-requirements.md
+│   │   │   ├── overview.md
+│   │   │   ├── release-notes.md
+│   │   │   ├── security-overview.md
+│   │   │   ├── system-requirements.md
+│   │   │   ├── troubleshoot-resource-bridge.md
+│   │   │   └── upgrade.md
+│   │   ├── servers
+│   │   │   ├── breadcrumb
+│   │   │   ├── includes
+│   │   │   ├── learn
+│   │   │   ├── media
+│   │   │   ├── agent-overview.md
+│   │   │   ├── agent-release-notes-archive.md
+│   │   │   ├── agent-release-notes.md
+│   │   │   ├── api-extended-security-updates.md
+│   │   │   ├── arc-gateway.md
+│   │   │   ├── azcmagent-check.md
+│   │   │   ├── azcmagent-config.md
+│   │   │   ├── azcmagent-connect.md
+│   │   │   ├── azcmagent-disconnect.md
+│   │   │   ├── azcmagent-extension.md
+│   │   │   ├── azcmagent-genkey.md
+│   │   │   ├── azcmagent-help.md
+│   │   │   ├── azcmagent-license.md
+│   │   │   ├── azcmagent-logs.md
+│   │   │   ├── azcmagent-show.md
+│   │   │   ├── azcmagent-version.md
+│   │   │   ├── azcmagent.md
+│   │   │   ├── azure-monitor-agent-deployment.md
+│   │   │   ├── billing-extended-security-updates.md
+│   │   │   ├── billing-windows-server-pay-go.md
+│   │   │   ├── deliver-extended-security-updates.md
+│   │   │   ├── deploy-ama-policy.md
+│   │   │   ├── deploy-management-services.md
+│   │   │   ├── deployment-options.md
+│   │   │   ├── index.yml
+│   │   │   ├── license-extended-security-updates.md
+│   │   │   ├── manage-agent.md
+│   │   │   ├── manage-automatic-vm-extension-upgrade.md
+│   │   │   ├── manage-howto-migrate.md
+│   │   │   ├── manage-vm-extensions-ansible.md
+│   │   │   ├── manage-vm-extensions-cli.md
+│   │   │   ├── manage-vm-extensions-portal.md
+│   │   │   ├── manage-vm-extensions-powershell.md
+│   │   │   ├── manage-vm-extensions-template.md
+│   │   │   ├── manage-vm-extensions.md
+│   │   │   ├── managed-identity-authentication.md
+│   │   │   ├── migrate-azure-monitor-agent-ansible.md
+│   │   │   ├── migrate-legacy-agents.md
+│   │   │   ├── modernize-server-management.md
+│   │   │   ├── network-requirements.md
+│   │   │   ├── onboard-ansible-playbooks.md
+│   │   │   ├── onboard-configuration-manager-custom-task.md
+│   │   │   ├── onboard-configuration-manager-powershell.md
+│   │   │   ├── onboard-group-policy-powershell.md
+│   │   │   ├── onboard-portal.md
+│   │   │   ├── onboard-powershell.md
+│   │   │   ├── onboard-service-principal.md
+│   │   │   ├── onboard-update-management-machines.md
+│   │   │   ├── onboard-windows-admin-center.md
+│   │   │   ├── onboard-windows-server.md
+│   │   │   ├── organize-inventory-servers.md
+│   │   │   ├── overview.md
+│   │   │   ├── plan-at-scale-deployment.md
+│   │   │   ├── plan-evaluate-on-azure-virtual-machine.md
+│   │   │   ├── policy-reference.md
+│   │   │   ├── prepare-extended-security-updates.md
+│   │   │   ├── prerequisites.md
+│   │   │   ├── private-link-security.md
+│   │   │   ├── resource-graph-samples.md
+│   │   │   ├── run-command-cli.md
+│   │   │   ├── run-command-powershell.md
+│   │   │   ├── run-command-rest.md
+│   │   │   ├── run-command-security.md
+│   │   │   ├── run-command.md
+│   │   │   ├── scenario-migrate-to-azure.md
+│   │   │   ├── scenario-onboard-azure-sentinel.md
+│   │   │   ├── security-controls-policy.md
+│   │   │   ├── security-data-privacy.md
+│   │   │   ├── security-extensions.md
+│   │   │   ├── security-identity-authorization.md
+│   │   │   ├── security-machine-configuration.md
+│   │   │   ├── security-networking.md
+│   │   │   ├── security-onboarding.md
+│   │   │   ├── security-overview.md
+│   │   │   ├── ssh-arc-overview.md
+│   │   │   ├── ssh-arc-powershell-remoting.md
+│   │   │   ├── ssh-arc-troubleshoot.md
+│   │   │   ├── toc.yml
+│   │   │   ├── troubleshoot-agent-onboard.md
+│   │   │   ├── troubleshoot-extended-security-updates.md
+│   │   │   ├── troubleshoot-vm-extensions.md
+│   │   │   ├── vmware-faq.md
+│   │   │   └── windows-server-management-overview.md
+│   │   ├── site-manager
+│   │   │   ├── breadcrumb
+│   │   │   ├── media
+│   │   │   ├── faq.md
+│   │   │   ├── how-to-configure-monitor-site.md
+│   │   │   ├── how-to-crud-site.md
+│   │   │   ├── how-to-view-alerts.md
+│   │   │   ├── how-to-view-connectivity-status.md
+│   │   │   ├── how-to-view-update-status.md
+│   │   │   ├── index.yml
+│   │   │   ├── known-issues.md
+│   │   │   ├── overview.md
+│   │   │   ├── quickstart.md
+│   │   │   ├── toc.yml
+│   │   │   ├── troubleshooting.md
+│   │   │   └── view-security-compliance-status.md
+│   │   ├── system-center-virtual-machine-manager
+│   │   │   ├── media
+│   │   │   ├── administer-arc-scvmm.md
+│   │   │   ├── agent-overview-scvmm.md
+│   │   │   ├── apply-azure-tags.md
+│   │   │   ├── built-in-roles.md
+│   │   │   ├── create-custom-roles.md
+│   │   │   ├── create-virtual-machine.md
+│   │   │   ├── deliver-esus-for-system-center-virtual-machine-manager-vms.md
+│   │   │   ├── disaster-recovery.md
+│   │   │   ├── enable-guest-management-at-scale.md
+│   │   │   ├── enable-scvmm-inventory-resources.md
+│   │   │   ├── enable-virtual-hardware-scvmm.md
+│   │   │   ├── index.yml
+│   │   │   ├── install-arc-agents-using-script.md
+│   │   │   ├── overview.md
+│   │   │   ├── perform-powercycle-operations.md
+│   │   │   ├── perform-vm-ops-on-scvmm-through-azure.md
+│   │   │   ├── quickstart-connect-system-center-virtual-machine-manager-to-arc.md
+│   │   │   ├── remove-scvmm-from-azure-arc.md
+│   │   │   ├── set-up-and-manage-self-service-access-scvmm.md
+│   │   │   ├── support-matrix-for-system-center-virtual-machine-manager.md
+│   │   │   ├── switch-to-the-new-version-scvmm.md
+│   │   │   ├── terraform-vm-management.md
+│   │   │   ├── toc.yml
+│   │   │   ├── troubleshoot-scvmm.md
+│   │   │   ├── upgrade-azure-arc-resource-bridge.md
+│   │   │   └── whats-new.md
+│   │   ├── validation-program
+│   │   │   └── overview.md
+│   │   ├── vmware-vsphere
+│   │   │   ├── includes
+│   │   │   ├── media
+│   │   │   ├── administer-arc-vmware.md
+│   │   │   ├── azure-arc-agent.md
+│   │   │   ├── browse-and-enable-vcenter-resources-in-azure.md
+│   │   │   ├── deliver-extended-security-updates-for-vmware-vms-through-arc.md
+│   │   │   ├── enable-guest-management-at-scale.md
+│   │   │   ├── enable-virtual-hardware.md
+│   │   │   ├── index.yml
+│   │   │   ├── overview.md
+│   │   │   ├── perform-vm-ops-through-azure.md
+│   │   │   ├── quick-start-connect-vcenter-to-arc-using-script.md
+│   │   │   ├── quick-start-create-a-vm.md
+│   │   │   ├── recover-from-resource-bridge-deletion.md
+│   │   │   ├── remove-vcenter-from-arc-vmware.md
+│   │   │   ├── setup-and-manage-self-service-access.md
+│   │   │   ├── support-matrix-for-arc-enabled-vmware-vsphere.md
+│   │   │   ├── switch-to-new-version.md
+│   │   │   ├── toc.yml
+│   │   │   └── troubleshoot-guest-management-issues.md
+│   │   ├── workload-orchestration
+│   │   │   ├── breadcrumb
+│   │   │   ├── includes
+│   │   │   ├── media
+│   │   │   ├── TOC.yml
+│   │   │   ├── azure-portal-monitoring.md
+│   │   │   ├── configure.md
+│   │   │   ├── configuring-schema.md
+│   │   │   ├── configuring-template.md
+│   │   │   ├── delete-resources.md
+│   │   │   ├── deploy.md
+│   │   │   ├── external-validation-payload.md
+│   │   │   ├── external-validation.md
+│   │   │   ├── index.yml
+│   │   │   ├── initial-setup-configuration.md
+│   │   │   ├── initial-setup-environment.md
+│   │   │   ├── monitor.md
+│   │   │   ├── onboarding-scripts.md
+│   │   │   ├── overview.md
+│   │   │   ├── quickstart-solution-multiple-instances-k8s.md
+│   │   │   ├── quickstart-solution-multiple-shared-adapter-dependency.md
+│   │   │   ├── quickstart-solution-shared-adapter-dependency.md
+│   │   │   ├── quickstart-solution-with-common-configuration.md
+│   │   │   ├── quickstart-solution-without-common-configuration.md
+│   │   │   ├── quickstart-upgrade-shared-application.md
+│   │   │   ├── rbac-guide.md
+│   │   │   └── service-group.md
+│   │   ├── azure-firewall-explicit-proxy.md
+│   │   ├── choose-service.md
+│   │   ├── index.yml
+│   │   ├── network-requirements-consolidated.md
+│   │   ├── overview.md
+│   │   ├── resource-graph-samples.md
+│   │   └── toc.yml
+│   ├── azure-linux
+│   │   ├── media
+│   │   │   ├── logos
+│   │   │   ├── aks-store-architecture.png
+│   │   │   ├── azure-voting-application.png
+│   │   │   ├── deploy-to-azure.png
+│   │   │   └── hdi-launch-cloud-shell.png
+│   │   ├── TOC.yml
+│   │   ├── concepts-core.md
+│   │   ├── concepts-packages.md
+│   │   ├── faq.md
+│   │   ├── how-to-enable-azure-linux-3.md
+│   │   ├── how-to-install-certs.md
+│   │   ├── index.yml
+│   │   ├── intro-azure-linux.md
+│   │   ├── quickstart-azure-cli.md
+│   │   ├── quickstart-azure-powershell.md
+│   │   ├── quickstart-azure-resource-manager-template.md
+│   │   ├── quickstart-terraform.md
+│   │   ├── support-cycle.md
+│   │   ├── support-help.md
+│   │   ├── troubleshoot-kernel.md
+│   │   ├── troubleshoot-packages.md
+│   │   ├── tutorial-azure-linux-add-nodepool.md
+│   │   ├── tutorial-azure-linux-create-cluster.md
+│   │   ├── tutorial-azure-linux-migration.md
+│   │   ├── tutorial-azure-linux-telemetry-monitor.md
+│   │   └── tutorial-azure-linux-upgrade.md
+│   ├── azure-portal
+│   │   ├── breadcrumb
+│   │   │   └── toc.yml
+│   │   ├── context
+│   │   │   └── context.yml
+│   │   ├── includes
+│   │   │   ├── media
+│   │   │   └── azure-portal-review-deployed-resources.md
+│   │   ├── media
+│   │   │   ├── azure-portal-add-remove-sort-favorites
+│   │   │   ├── azure-portal-dashboard-share-access
+│   │   │   ├── azure-portal-dashboards
+│   │   │   ├── azure-portal-dashboards-create-programmatically
+│   │   │   ├── azure-portal-dashboards-structure
+│   │   │   ├── azure-portal-markdown-tile
+│   │   │   ├── azure-portal-overview
+│   │   │   ├── capture-browser-trace
+│   │   │   ├── dashboard-hub
+│   │   │   ├── get-subscription-tenant-id
+│   │   │   ├── manage-filter-resource-views
+│   │   │   ├── quick-create-template
+│   │   │   ├── recover-shared-deleted-dashboard
+│   │   │   └── set-preferences
+│   │   ├── mobile-app
+│   │   │   ├── media
+│   │   │   ├── alerts-notifications.md
+│   │   │   ├── cloud-shell.md
+│   │   │   ├── home.md
+│   │   │   ├── intune-management.md
+│   │   │   ├── learn-training.md
+│   │   │   ├── microsoft-copilot-in-azure.md
+│   │   │   ├── microsoft-entra-id.md
+│   │   │   ├── overview.md
+│   │   │   └── virtual-machines.md
+│   │   ├── supportability
+│   │   │   ├── media
+│   │   │   ├── how-to-create-azure-support-request.md
+│   │   │   ├── how-to-manage-azure-support-request.md
+│   │   │   └── priority-community-support.md
+│   │   ├── TOC.yml
+│   │   ├── azure-portal-add-remove-sort-favorites.md
+│   │   ├── azure-portal-dashboard-share-access.md
+│   │   ├── azure-portal-dashboards-create-programmatically.md
+│   │   ├── azure-portal-dashboards-structure.md
+│   │   ├── azure-portal-dashboards.md
+│   │   ├── azure-portal-keyboard-shortcuts.md
+│   │   ├── azure-portal-markdown-tile.md
+│   │   ├── azure-portal-overview.md
+│   │   ├── azure-portal-quickstart-center.md
+│   │   ├── azure-portal-safelist-urls.md
+│   │   ├── azure-portal-supported-browsers-devices.md
+│   │   ├── capture-browser-trace.md
+│   │   ├── dashboard-hub.md
+│   │   ├── get-subscription-tenant-id.md
+│   │   ├── index.yml
+│   │   ├── manage-filter-resource-views.md
+│   │   ├── policy-reference.md
+│   │   ├── quick-create-bicep.md
+│   │   ├── quick-create-template.md
+│   │   ├── quickstart-portal-dashboard-azure-cli.md
+│   │   ├── quickstart-portal-dashboard-powershell.md
+│   │   ├── recover-shared-deleted-dashboard.md
+│   │   └── set-preferences.md
+│   ├── container-registry
+│   │   ├── breadcrumb
+│   │   │   └── TOC.yml
+│   │   ├── includes
+│   │   │   ├── media
+│   │   │   ├── azure-container-registry.md
+│   │   │   ├── container-registry-connected-connection-configuration.md
+│   │   │   ├── container-registry-connected-import-images.md
+│   │   │   ├── container-registry-connected-iot-edge-manifest.md
+│   │   │   ├── container-registry-docker-vm-setup.md
+│   │   │   ├── container-registry-quickstart-docker-pull.md
+│   │   │   ├── container-registry-quickstart-docker-push.md
+│   │   │   ├── container-registry-quickstart-sku.md
+│   │   │   ├── container-registry-scanning-limitation.md
+│   │   │   ├── container-registry-service-principal.md
+│   │   │   ├── container-registry-task-tutorial-prereq.md
+│   │   │   ├── container-registry-tasks-system-id-properties.md
+│   │   │   ├── container-registry-tasks-user-assigned-id.md
+│   │   │   ├── container-registry-tasks-user-id-properties.md
+│   │   │   └── pull-image-dockerfile-include.md
+│   │   ├── media
+│   │   │   ├── authenticate-kubernetes-cross-tenant
+│   │   │   ├── container-registry-access-selected-networks
+│   │   │   ├── container-registry-artifact-cache
+│   │   │   ├── container-registry-artifact-streaming
+│   │   │   ├── container-registry-artifacts
+│   │   │   ├── container-registry-authentication
+│   │   │   ├── container-registry-azure-policy
+│   │   │   ├── container-registry-best-practices
+│   │   │   ├── container-registry-concepts
+│   │   │   ├── container-registry-content-trust
+│   │   │   ├── container-registry-customer-managed-keys
+│   │   │   ├── container-registry-delete
+│   │   │   ├── container-registry-enable-conditional-policy
+│   │   │   ├── container-registry-event-grid-quickstart
+│   │   │   ├── container-registry-firewall-access-rules
+│   │   │   ├── container-registry-geo-replication
+│   │   │   ├── container-registry-get-started-bicep
+│   │   │   ├── container-registry-get-started-docker-cli
+│   │   │   ├── container-registry-get-started-geo-replication-template
+│   │   │   ├── container-registry-get-started-portal
+│   │   │   ├── container-registry-private-link
+│   │   │   ├── container-registry-rbac-abac-repository-permissions
+│   │   │   ├── container-registry-repositories
+│   │   │   ├── container-registry-retention-policy
+│   │   │   ├── container-registry-skus
+│   │   │   ├── container-registry-soft-delete
+│   │   │   ├── container-registry-tasks-logs
+│   │   │   ├── container-registry-token-based-repository-permissions
+│   │   │   ├── container-registry-tutorial-base-image-update
+│   │   │   ├── container-registry-tutorial-deploy-app
+│   │   │   ├── container-registry-tutorial-deploy-update
+│   │   │   ├── container-registry-tutorial-prepare-registry
+│   │   │   ├── container-registry-tutorial-quick-build
+│   │   │   ├── container-registry-vnet
+│   │   │   ├── container-registry-webhook
+│   │   │   ├── continuous-patching-media
+│   │   │   ├── dedicated-data-endpoints
+│   │   │   ├── github-action-scan
+│   │   │   ├── intro-connected-registry
+│   │   │   ├── launch-cloud-shell
+│   │   │   ├── monitor-service
+│   │   │   ├── overview-connected-registry-access
+│   │   │   ├── overview-connected-registry-and-iot-edge
+│   │   │   ├── quickstart-connected-registry-portal
+│   │   │   ├── tasks-consume-public-content
+│   │   │   └── zone-redundancy
+│   │   ├── TOC.yml
+│   │   ├── allow-access-trusted-services.md
+│   │   ├── anonymous-pull-access.md
+│   │   ├── artifact-cache-cli.md
+│   │   ├── artifact-cache-overview.md
+│   │   ├── artifact-cache-portal.md
+│   │   ├── authenticate-aks-cross-tenant.md
+│   │   ├── authenticate-kubernetes-options.md
+│   │   ├── buffer-gate-public-content.md
+│   │   ├── connected-registry-glossary.md
+│   │   ├── container-registry-access-selected-networks.md
+│   │   ├── container-registry-api-deprecation.md
+│   │   ├── container-registry-artifact-streaming.md
+│   │   ├── container-registry-auth-aci.md
+│   │   ├── container-registry-auth-kubernetes.md
+│   │   ├── container-registry-auth-service-principal.md
+│   │   ├── container-registry-authentication-managed-identity.md
+│   │   ├── container-registry-authentication.md
+│   │   ├── container-registry-auto-purge.md
+│   │   ├── container-registry-azure-policy.md
+│   │   ├── container-registry-best-practices.md
+│   │   ├── container-registry-check-health.md
+│   │   ├── container-registry-concepts.md
+│   │   ├── container-registry-configure-conditional-access.md
+│   │   ├── container-registry-content-trust-deprecation.md
+│   │   ├── container-registry-content-trust.md
+│   │   ├── container-registry-dedicated-data-endpoints.md
+│   │   ├── container-registry-delete.md
+│   │   ├── container-registry-disable-authentication-as-arm.md
+│   │   ├── container-registry-event-grid-quickstart.md
+│   │   ├── container-registry-faq.yml
+│   │   ├── container-registry-firewall-access-rules.md
+│   │   ├── container-registry-geo-replication.md
+│   │   ├── container-registry-get-started-azure-cli.md
+│   │   ├── container-registry-get-started-bicep.md
+│   │   ├── container-registry-get-started-docker-cli.md
+│   │   ├── container-registry-get-started-geo-replication-template.md
+│   │   ├── container-registry-get-started-portal.md
+│   │   ├── container-registry-get-started-powershell.md
+│   │   ├── container-registry-get-started-terraform.md
+│   │   ├── container-registry-health-error-reference.md
+│   │   ├── container-registry-helm-repos.md
+│   │   ├── container-registry-image-formats.md
+│   │   ├── container-registry-image-lock.md
+│   │   ├── container-registry-image-tag-version.md
+│   │   ├── container-registry-import-images.md
+│   │   ├── container-registry-intro.md
+│   │   ├── container-registry-java-quickstart.md
+│   │   ├── container-registry-manage-artifact.md
+│   │   ├── container-registry-private-link.md
+│   │   ├── container-registry-quickstart-task-cli.md
+│   │   ├── container-registry-rbac-abac-repository-permissions.md
+│   │   ├── container-registry-rbac-built-in-roles-directory-reference.md
+│   │   ├── container-registry-rbac-built-in-roles-overview.md
+│   │   ├── container-registry-rbac-custom-roles.md
+│   │   ├── container-registry-repositories.md
+│   │   ├── container-registry-retention-policy.md
+│   │   ├── container-registry-service-tag.md
+│   │   ├── container-registry-skus.md
+│   │   ├── container-registry-soft-delete-policy.md
+│   │   ├── container-registry-storage.md
+│   │   ├── container-registry-support-policies.md
+│   │   ├── container-registry-task-run-template.md
+│   │   ├── container-registry-tasks-authentication-key-vault.md
+│   │   ├── container-registry-tasks-authentication-managed-identity.md
+│   │   ├── container-registry-tasks-base-images.md
+│   │   ├── container-registry-tasks-cross-registry-authentication.md
+│   │   ├── container-registry-tasks-logs.md
+│   │   ├── container-registry-tasks-multi-step.md
+│   │   ├── container-registry-tasks-overview.md
+│   │   ├── container-registry-tasks-pack-build.md
+│   │   ├── container-registry-tasks-reference-yaml.md
+│   │   ├── container-registry-tasks-samples.md
+│   │   ├── container-registry-tasks-scheduled.md
+│   │   ├── container-registry-token-based-repository-permissions.md
+│   │   ├── container-registry-transfer-cli.md
+│   │   ├── container-registry-transfer-images.md
+│   │   ├── container-registry-transfer-prerequisites.md
+│   │   ├── container-registry-transfer-troubleshooting.md
+│   │   ├── container-registry-troubleshoot-access.md
+│   │   ├── container-registry-troubleshoot-login-authn-authz.md
+│   │   ├── container-registry-troubleshoot-performance.md
+│   │   ├── container-registry-tutorial-base-image-update.md
+│   │   ├── container-registry-tutorial-build-task.md
+│   │   ├── container-registry-tutorial-deploy-app.md
+│   │   ├── container-registry-tutorial-deploy-update.md
+│   │   ├── container-registry-tutorial-multistep-task.md
+│   │   ├── container-registry-tutorial-prepare-registry.md
+│   │   ├── container-registry-tutorial-private-base-image-update.md
+│   │   ├── container-registry-tutorial-quick-task.md
+│   │   ├── container-registry-tutorial-sign-build-push.md
+│   │   ├── container-registry-tutorial-sign-trusted-ca.md
+│   │   ├── container-registry-vnet.md
+│   │   ├── container-registry-webhook-reference.md
+│   │   ├── container-registry-webhook.md
+│   │   ├── data-loss-prevention.md
+│   │   ├── how-to-continuous-patching.md
+│   │   ├── index.yml
+│   │   ├── intro-connected-registry.md
+│   │   ├── key-concept-continuous-patching.md
+│   │   ├── manage-network-bypass-policy-for-tasks.md
+│   │   ├── monitor-container-registry-reference.md
+│   │   ├── monitor-container-registry.md
+│   │   ├── overview-connected-registry-access.md
+│   │   ├── policy-reference.md
+│   │   ├── pull-images-from-connected-registry.md
+│   │   ├── push-multi-architecture-images.md
+│   │   ├── quickstart-client-libraries.md
+│   │   ├── quickstart-connected-registry-arc-cli.md
+│   │   ├── quickstart-create-connected-registry.md
+│   │   ├── resource-graph-samples.md
+│   │   ├── scan-images-defender.md
+│   │   ├── security-controls-policy.md
+│   │   ├── tasks-agent-pools.md
+│   │   ├── tasks-consume-public-content.md
+│   │   ├── troubleshoot-artifact-cache.md
+│   │   ├── troubleshoot-artifact-streaming.md
+│   │   ├── troubleshoot-connected-registry-arc.md
+│   │   ├── troubleshoot-continuous-patching.md
+│   │   ├── tutorial-connected-registry-arc.md
+│   │   ├── tutorial-connected-registry-sync.md
+│   │   ├── tutorial-connected-registry-upgrade.md
+│   │   ├── tutorial-customer-managed-keys.md
+│   │   ├── tutorial-enable-customer-managed-keys.md
+│   │   ├── tutorial-rotate-revoke-customer-managed-keys.md
+│   │   ├── tutorial-troubleshoot-customer-managed-keys.md
+│   │   ├── wildcards-artifact-cache.md
+│   │   └── zone-redundancy.md
+│   ├── copilot
+│   │   ├── includes
+│   │   │   └── scenario-note.md
+│   │   ├── media
+│   │   │   ├── ai-shell-overview
+│   │   │   ├── analyze-cost-management
+│   │   │   ├── author-api-management-policies
+│   │   │   ├── capabilities
+│   │   │   ├── deploy-vms-effectively
+│   │   │   ├── deploy-workload-templates
+│   │   │   ├── discover-marketplace
+│   │   │   ├── execute-commands
+│   │   │   ├── generate-cli-scripts
+│   │   │   ├── generate-kubernetes-yaml
+│   │   │   ├── generate-powershell-scripts
+│   │   │   ├── generate-terraform-bicep
+│   │   │   ├── get-information-resource-graph
+│   │   │   ├── get-monitoring-information
+│   │   │   ├── improve-storage-accounts
+│   │   │   ├── network-management
+│   │   │   ├── query-attack-surface
+│   │   │   ├── troubleshoot-app-service
+│   │   │   ├── troubleshoot-arc-extension
+│   │   │   ├── troubleshoot-disk-performance
+│   │   │   ├── understand-service-health
+│   │   │   ├── work-aks-clusters
+│   │   │   ├── work-load-balancer
+│   │   │   └── work-smarter-edge
+│   │   ├── TOC.yml
+│   │   ├── ai-shell-overview.md
+│   │   ├── analyze-cost-management.md
+│   │   ├── author-api-management-policies.md
+│   │   ├── capabilities.md
+│   │   ├── deploy-vms-effectively.md
+│   │   ├── deploy-workload-templates.md
+│   │   ├── example-prompts.md
+│   │   ├── execute-commands.md
+│   │   ├── find-recommendations-advisor.md
+│   │   ├── generate-cli-scripts.md
+│   │   ├── generate-kubernetes-yaml.md
+│   │   ├── generate-powershell-scripts.md
+│   │   ├── generate-terraform-bicep.md
+│   │   ├── get-information-resource-graph.md
+│   │   ├── get-monitoring-information.md
+│   │   ├── improve-storage-accounts.md
+│   │   ├── index.yml
+│   │   ├── manage-access.md
+│   │   ├── network-management.md
+│   │   ├── overview.md
+│   │   ├── query-attack-surface.md
+│   │   ├── responsible-ai-faq.md
+│   │   ├── troubleshoot-app-service.md
+│   │   ├── troubleshoot-arc-extension.md
+│   │   ├── troubleshoot-disk-performance.md
+│   │   ├── understand-service-health.md
+│   │   ├── visualize-network-topology.md
+│   │   ├── work-aks-clusters.md
+│   │   ├── work-load-balancer.md
+│   │   ├── work-smarter-edge.md
+│   │   └── write-effective-prompts.md
+│   ├── lighthouse
+│   │   ├── concepts
+│   │   │   ├── architecture.md
+│   │   │   ├── cloud-solution-provider.md
+│   │   │   ├── cross-tenant-management-experience.md
+│   │   │   ├── enterprise.md
+│   │   │   ├── isv-scenarios.md
+│   │   │   ├── managed-applications.md
+│   │   │   ├── managed-services-offers.md
+│   │   │   ├── recommended-security-practices.md
+│   │   │   └── tenants-users-roles.md
+│   │   ├── how-to
+│   │   │   ├── create-eligible-authorizations.md
+│   │   │   ├── deploy-policy-remediation.md
+│   │   │   ├── manage-hybrid-infrastructure-arc.md
+│   │   │   ├── manage-sentinel-workspaces.md
+│   │   │   ├── migration-at-scale.md
+│   │   │   ├── monitor-at-scale.md
+│   │   │   ├── monitor-delegation-changes.md
+│   │   │   ├── onboard-customer.md
+│   │   │   ├── onboard-management-group.md
+│   │   │   ├── policy-at-scale.md
+│   │   │   ├── publish-managed-services-offers.md
+│   │   │   ├── remove-delegation.md
+│   │   │   ├── update-delegation.md
+│   │   │   ├── view-manage-customers.md
+│   │   │   ├── view-manage-service-providers.md
+│   │   │   └── view-service-provider-activity.md
+│   │   ├── includes
+│   │   │   ├── azure-lighthouse-samples-monitor.md
+│   │   │   ├── azure-lighthouse-samples-onboarding.md
+│   │   │   ├── azure-lighthouse-samples-policy.md
+│   │   │   └── azure-lighthouse-samples-scenarios.md
+│   │   ├── media
+│   │   │   ├── add-authorization.png
+│   │   │   ├── add-offer-via-template.png
+│   │   │   ├── azure-delegated-resource-management-service-provider-tenant.jpg
+│   │   │   ├── azure-lighthouse-overview.jpg
+│   │   │   ├── csp-1.jpg
+│   │   │   ├── csp-2.jpg
+│   │   │   ├── delegation-activity-portal.jpg
+│   │   │   ├── delegation.jpg
+│   │   │   ├── enterprise-azure-lighthouse.jpg
+│   │   │   ├── logical-projection.svg
+│   │   │   ├── subscription-filter-all.png
+│   │   │   ├── subscription-filter-delegated.png
+│   │   │   ├── update-delegation.jpg
+│   │   │   └── update-offer.jpg
+│   │   ├── samples
+│   │   │   ├── index.md
+│   │   │   └── policy-reference.md
+│   │   ├── index.yml
+│   │   ├── overview.md
+│   │   └── toc.yml
+│   └── quotas
+│       ├── media
+│       │   ├── monitoring-alerting
+│       │   ├── networking-quota-request
+│       │   ├── per-vm-quota-requests
+│       │   ├── quickstart-increase-quota-portal
+│       │   ├── quota-groups
+│       │   ├── regional-quota-requests
+│       │   ├── spot-quota
+│       │   ├── storage-account-quota-requests
+│       │   └── view-quotas
+│       ├── TOC.yml
+│       ├── how-to-guide-monitoring-alerting.md
+│       ├── index.yml
+│       ├── monitoring-alerting.md
+│       ├── networking-quota-requests.md
+│       ├── per-vm-quota-requests.md
+│       ├── quickstart-increase-quota-portal.md
+│       ├── quota-groups.md
+│       ├── quotas-overview.md
+│       ├── regional-quota-requests.md
+│       ├── spot-quota.md
+│       ├── storage-account-quota-requests.md
+│       └── view-quotas.md
+├── breadcrumb
+│   └── azure-management
+│       └── toc.yml
+├── zone-pivots
+│   └── zone-pivot-groups.yml
+├── LICENSE
+├── LICENSE-CODE
+├── README.md
+├── SECURITY.md
+├── ThirdPartyNotices.md
+└── docfx.json
+
+MATERIALS CONTEXT:
+• ./inputs/aks-prd-02.docx: AKS CiliumEndpointSlices Integration
+  Summary: This Product Requirements Document (PRD) outlines the integration of CiliumEndpointSlices with Azure CNI by Cilium into Azure Kubernetes Service (AKS). The feature aims to enhance AKS networking by enabling dynamic endpoint grouping, advanced network policy enforcement, and improved observability through integration with Azure Monitor and Log Analytics. The document details business objectives, user scenarios, functional and non-functional requirements, dependencies, and future enhancements. Key goals include boosting networking efficiency, security, scalability, and operational cost-effectiveness for large-scale Kubernetes deployments. The PRD also addresses backward compatibility, usability, and maintainability, ensuring a seamless experience for operators, developers, and security engineers. Future considerations include deeper analytics, UI enhancements, and potential multi-cloud support, positioning AKS as a leader in managed Kubernetes networking.
+  Technologies: Cilium, Azure CNI, Kubernetes, CiliumEndpointSlices, Endpoint Slices, RBAC, CI/CD
+  Key Concepts: dynamic endpoint management, advanced network policy enforcement, observability, scalability, reliability, security, usability, maintainability, backward compatibility, integration with Azure services, real-time synchronization, manual override, performance tuning, predictive analytics, multi-cloud integration
+  Products: Azure Kubernetes Service, Azure CNI, Azure Monitor, Log Analytics, Azure Portal, Azure Active Directory, ARM templates
+• https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium: Azure CNI Powered by Cilium in AKS
+  Summary: This document provides a comprehensive guide to configuring Azure CNI Powered by Cilium in Azure Kubernetes Service (AKS). It details the integration of Azure CNI's robust control plane with Cilium's eBPF-based data plane to deliver high-performance, scalable, and secure Kubernetes networking. The guide explains deployment options for assigning pod IPs via overlay or virtual networks, outlines supported Kubernetes and Cilium versions, and describes network policy enforcement without the need for additional engines like Calico. It also covers advanced features such as observability, FQDN filtering, and Layer 7 policies, available through Advanced Container Networking Services. Limitations, such as lack of Windows support and specific network policy constraints, are clearly stated. Step-by-step CLI examples and operational considerations equip users to deploy and manage AKS clusters with enhanced networking capabilities.
+  Technologies: Azure CNI, Cilium, Kubernetes, eBPF, CiliumEndpointSlices
+  Key Concepts: network policy enforcement, IP address management (IPAM), overlay network, virtual network, service routing, observability, FQDN filtering, Layer 7 network policies, dynamic pod IP assignment, limitations and considerations, cluster scalability, host networking, advanced container networking services, Kube-Proxy replacement
+  Products: Azure Kubernetes Service, Azure CLI, Azure Virtual Network, Azure Resource Manager
+
+TASK: Select the optimal directory for content placement based on comprehensive analysis.
+
+MANDATORY PLANNING PROCESS:
+1. ANALYZE: Systematically examine the repository structure to understand organizational patterns
+2. CONTEXTUALIZE: Review materials context to identify key technologies, concepts, and products  
+3. MATCH: Identify 2-3 candidate directories that align with content goal and service area
+4. VERIFY: Ensure selected directory exists exactly as written in the provided structure
+5. DECIDE: Select EXACTLY ONE directory with detailed justification
+6. ASSESS: Evaluate confidence based on alignment quality and materials relevance
+
+CRITICAL SELECTION REQUIREMENTS:
+- working_directory MUST be exact path from repository structure (no modifications)
+- justification MUST explain WHY this directory is optimal (minimum 50 characters)
+- thinking MUST document complete analysis process showing all evaluation steps
+- confidence MUST be float between 0.0-1.0 reflecting selection certainty
+
+EXAMPLE OUTPUT FORMAT:
+{
+  "thinking": "I analyzed the repository structure and identified the content goal focuses on automatic AKS configurations. Reviewing the materials about Cilium networking and Azure CNI integration, I examined candidate directories: 'articles/aks/networking/', 'articles/aks/automatic/', and 'articles/azure/virtual-network/'. The 'articles/aks/automatic/' directory specifically targets automatic configurations in AKS, which perfectly aligns with the Cilium automatic networking setup described in the materials. This directory exists in the structure and is the most relevant for automatic networking content.",
+  "working_directory": "articles/aks/automatic",
+  "justification": "The automatic directory under AKS is specifically designed for automatic configuration content, directly matching the Cilium automatic networking setup detailed in the materials.",
+  "confidence": 0.90
+}
+
+STRICT VALIDATION REQUIREMENTS:
+- working_directory MUST exist exactly in provided repository structure
+- Path format MUST match structure exactly (no leading/trailing slashes unless shown)
+- confidence MUST reflect genuine assessment of alignment quality
+- justification MUST specifically reference materials context and directory purpose
+
+YOU MUST RETURN EXACTLY THIS JSON FORMAT. NO DEVIATIONS ALLOWED.

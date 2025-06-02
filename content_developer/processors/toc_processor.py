@@ -259,7 +259,8 @@ class TOCProcessor(SmartProcessor):
             response = self._call_llm(
                 messages,
                 model=self.config.completion_model,
-                response_format="json_object"
+                response_format="json_object",
+                operation_name="TOC Analysis"
             )
             
             # Save interaction
@@ -281,7 +282,8 @@ class TOCProcessor(SmartProcessor):
                 try:
                     response = self._call_llm(
                         messages,
-                        model=self.config.completion_model
+                        model=self.config.completion_model,
+                        operation_name="TOC Analysis (Fallback)"
                         # No response_format parameter
                     )
                     

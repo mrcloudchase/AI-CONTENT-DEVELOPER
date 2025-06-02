@@ -126,7 +126,9 @@ class UpdateContentProcessor(BaseContentProcessor):
         ]
         
         try:
-            result = self._call_llm(messages, model=self.config.completion_model, response_format="json_object")
+            result = self._call_llm(messages, model=self.config.completion_model, 
+                                  response_format="json_object",
+                                  operation_name=f"Content Update: {action.get('filename', 'unknown')}")
             
             # Save interaction for debugging
             self.save_interaction(

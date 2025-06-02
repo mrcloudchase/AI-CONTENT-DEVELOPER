@@ -503,7 +503,7 @@ class ContentStrategyProcessor(SmartProcessor, StrategyDebugMixin, StrategyHelpe
         system = UNIFIED_CONTENT_STRATEGY_SYSTEM
         
         try:
-            result = self.llm_call(system, prompt)
+            result = self.llm_call(system, prompt, operation_name="Content Strategy Analysis")
             self.save_interaction(prompt, result, "content_strategy", "./llm_outputs/content_strategy")
             return ContentStrategy(
                 result.get('thinking', ''),

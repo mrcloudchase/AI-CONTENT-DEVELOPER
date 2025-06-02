@@ -80,7 +80,8 @@ class CreateContentProcessor(BaseContentProcessor):
             {"role": "user", "content": prompt}
         ]
         
-        response = self._call_llm(messages, response_format="json_object")
+        response = self._call_llm(messages, response_format="json_object", 
+                                operation_name=f"Content Creation: {filename}")
         
         # Save interaction for debugging (Improvement #7)
         self.save_interaction(
