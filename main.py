@@ -11,6 +11,7 @@ from pathlib import Path
 from content_developer.models import Config
 from content_developer.orchestrator import ContentDeveloperOrchestrator
 from content_developer.display import display_results
+from content_developer.constants import MAX_PHASES
 
 
 def main():
@@ -46,7 +47,7 @@ def get_usage_examples() -> str:
     """Get formatted usage examples for help text"""
     return """
 Examples:
-  # Run all phases
+  # Run all phases by default (no --phases needed)
   python main.py https://github.com/user/repo "Create CNI docs" "Azure Kubernetes Service" material1.pdf material2.md
   
   # Run with specific audience
@@ -55,14 +56,14 @@ Examples:
   # Run for beginners
   python main.py https://github.com/user/repo "Create tutorial" "AKS" --audience "developers new to Kubernetes" --audience-level beginner tutorial.md
   
-  # Run specific phases
+  # Run specific phases only
   python main.py https://github.com/user/repo "Update networking guides" "AKS" --phases 12 material.docx
   
   # Auto-confirm selections
   python main.py https://github.com/user/repo "Create tutorials" "AKS" --auto-confirm tutorial.md
   
-  # Apply generated content
-  python main.py https://github.com/user/repo "Update docs" "AKS" --phases 3 --apply-changes
+  # Apply generated content and update TOC (phases 3-4)
+  python main.py https://github.com/user/repo "Update docs" "AKS" --phases 34 --apply-changes
         """
 
 
@@ -84,15 +85,17 @@ def add_optional_arguments(parser: argparse.ArgumentParser):
     parser.add_argument("--work-dir", type=Path, default=Path.cwd() / "work" / "tmp", help="Working directory")
     parser.add_argument("--max-depth", type=int, default=3, help="Max repository depth to analyze")
     parser.add_argument("--content-limit", type=int, default=15000, help="Content extraction limit")
-    parser.add_argument("--phases", default="3", help="Phases to run (1=analyze, 2=strategy, 3=generate)")
+    parser.add_argument("--phases", default="all", help="Phases to run (1-4, or 'all' for all phases)")
     parser.add_argument("--debug-similarity", action="store_true", help="Show similarity scoring details")
     parser.add_argument("--apply-changes", action="store_true", help="Apply generated content to repository")
+    parser.add_argument("--skip-toc", action="store_true", help="Skip TOC management (Phase 4) if TOC.yml is invalid")
 
 
 def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace):
     """Validate parsed arguments"""
-    if not all(phase in "123" for phase in args.phases):
-        parser.error("Phases must be combination of 1, 2, 3")
+    valid_phases = "".join(str(i) for i in range(1, MAX_PHASES + 1))
+    if args.phases != "all" and not all(phase in valid_phases for phase in args.phases):
+        parser.error(f"Phases must be combination of {', '.join(valid_phases)}, or 'all'")
 
 
 def create_config_from_args(args: argparse.Namespace) -> Config:
@@ -110,7 +113,8 @@ def create_config_from_args(args: argparse.Namespace) -> Config:
         content_limit=args.content_limit,
         phases=args.phases,
         debug_similarity=args.debug_similarity,
-        apply_changes=args.apply_changes
+        apply_changes=args.apply_changes,
+        skip_toc=args.skip_toc
     )
 
 

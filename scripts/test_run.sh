@@ -143,6 +143,45 @@ else
     echo "  ✗ Preview directory not found"
 fi
 
+# Phase 4 Test
+echo ""
+echo "=== Testing Phase 4: TOC Management ==="
+python main.py \
+    "$repo_url" \
+    "Document Cilium networking for AKS" \
+    "Azure Kubernetes Service" \
+    "$test_file" \
+    "$test_url" \
+    --phases 4 \
+    --auto-confirm
+
+phase4_result=$?
+
+if [ $phase4_result -eq 0 ]; then
+    echo "✅ Phase 4 completed successfully"
+else
+    echo "❌ Phase 4 failed with exit code: $phase4_result"
+fi
+
+# Check Phase 4 outputs
+echo ""
+echo "Checking Phase 4 outputs:"
+if [ -d "llm_outputs/toc_management" ]; then
+    echo "  ✓ TOC management directory created"
+    toc_count=$(ls -1 llm_outputs/toc_management/*.json 2>/dev/null | wc -l)
+    echo "  ✓ Found $toc_count TOC interaction file(s)"
+else
+    echo "  ✗ TOC management directory not found"
+fi
+
+if [ -d "llm_outputs/preview/toc" ]; then
+    echo "  ✓ TOC preview directory created"
+    toc_preview_count=$(ls -1 llm_outputs/preview/toc/*.yml 2>/dev/null | wc -l)
+    echo "  ✓ Found $toc_preview_count TOC preview file(s)"
+else
+    echo "  ✗ TOC preview directory not found"
+fi
+
 # Summary
 echo ""
 echo "=== Test Summary ==="
@@ -166,6 +205,13 @@ if [ $phase3_result -ne 0 ]; then
     ((total_errors++))
 else
     echo "✅ Phase 3: Passed"
+fi
+
+if [ $phase4_result -ne 0 ]; then
+    echo "❌ Phase 4: Failed"
+    ((total_errors++))
+else
+    echo "✅ Phase 4: Passed"
 fi
 
 echo ""

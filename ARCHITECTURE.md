@@ -2,7 +2,7 @@
 
 ## Overview
 
-AI Content Developer is a three-phase documentation generation system that analyzes repositories and creates or updates technical documentation based on support materials. The system uses OpenAI's GPT models for intelligent content analysis and generation.
+AI Content Developer is a three-phase documentation generation system that analyzes repositories and creates or updates technical documentation based on support materials. The system uses Azure OpenAI models with Microsoft Entra ID authentication for intelligent content analysis and generation.
 
 ## Architecture Components
 
@@ -103,7 +103,98 @@ content_developer/
     └── helpers.py    # Prompt formatting helpers
 ```
 
-### 5. Key Components
+### 5. Streamlit Frontend Architecture
+
+The application includes a modern web interface built with Streamlit that provides visual interaction capabilities while maintaining exact parity with the CLI functionality.
+
+#### Frontend Structure
+
+```
+frontend/
+├── app.py              # Main Streamlit application entry point
+├── runner.py           # Orchestrator integration and phase execution
+├── utils.py            # UI utilities, CSS styling, and helpers
+├── pages/
+│   ├── inputs.py       # Input collection page
+│   ├── progress.py     # Phase execution and progress display
+│   └── results.py      # Results viewing and content preview
+└── README.md           # Frontend documentation
+```
+
+#### Key Components
+
+**app.py**: Main application that manages page routing and session state. Implements a three-stage flow:
+- Input stage: Collect configuration
+- Progress stage: Execute phases with real-time updates
+- Results stage: Display generated content
+
+**runner.py**: Bridges the frontend with the core orchestrator:
+- Creates Config objects from UI inputs
+- Executes phases individually for interactive mode
+- Extracts thinking data from LLM outputs for display
+- Formats results for UI consumption
+
+**pages/inputs.py**: Handles user input collection:
+- Repository URL, content goal, and service area
+- File upload and URL input for materials
+- Execution mode selection (interactive vs auto-confirm)
+- Advanced settings configuration
+
+**pages/progress.py**: Manages phase execution display:
+- Real-time progress indicators
+- Thinking message extraction and display
+- Phase result summaries
+- Navigation between phases
+
+**pages/results.py**: Shows generation results:
+- Tabbed interface for content types
+- Syntax-highlighted markdown preview
+- File location information
+- Download/access instructions
+
+#### Integration Architecture
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌────────────────────┐
+│   Streamlit UI  │────▶│  ContentRunner   │────▶│   Orchestrator     │
+│   (Frontend)    │     │  (Adapter)      │     │   (Core Logic)     │
+└─────────────────┘     └──────────────────┘     └────────────────────┘
+         ▲                       │                          │
+         │                       ▼                          ▼
+         │              ┌──────────────────┐      ┌────────────────────┐
+         │              │ Thinking Extract │      │   LLM Outputs      │
+         │              │ (JSON Files)     │◀─────│   (./llm_outputs)  │
+         │              └──────────────────┘      └────────────────────┘
+         │                       │
+         └───────────────────────┘
+         Display thinking in UI
+```
+
+#### Session State Management
+
+The frontend uses Streamlit's session state to maintain:
+- User inputs across pages
+- Execution progress and phase results
+- Runner instance for continuous execution
+- UI stage (inputs → progress → results)
+
+#### Real-Time Thinking Display
+
+The frontend extracts AI thinking from LLM output files:
+1. Monitors `./llm_outputs/` directories for new JSON files
+2. Extracts `thinking` fields from LLM responses
+3. Formats and displays messages progressively
+4. Falls back to default messages if extraction fails
+
+#### Key Differences from CLI
+
+- **Preview Only**: Never applies changes directly (safety)
+- **Interactive by Default**: User controls phase progression
+- **Visual Progress**: Real-time updates and thinking display
+- **Session Persistence**: Maintains state across phases
+- **Material Handling**: Uploads files to temporary directory
+
+### 6. Key Components
 
 #### SmartProcessor Base Class
 All processors inherit from `SmartProcessor` which provides:
@@ -152,7 +243,7 @@ Intelligent markdown file chunking:
 - Tracks chunk relationships (prev/next)
 - Generates unique chunk IDs
 
-### 6. Configuration
+### 7. Configuration
 
 #### Config Dataclass
 ```python
@@ -181,7 +272,7 @@ Post-initialization:
 OPENAI_API_KEY=your-key  # Required
 ```
 
-### 7. Data Flow
+### 8. Data Flow
 
 ```
 User Input → Config → Orchestrator
@@ -204,7 +295,7 @@ User Input → Config → Orchestrator
                     Display Results
 ```
 
-### 8. LLM Integration
+### 9. LLM Integration
 
 The system uses specialized prompts for each operation:
 - **Material Summary**: Extracts key concepts, technologies, and summaries
@@ -219,7 +310,7 @@ Each LLM call:
 - Saves interactions to `llm_outputs/` for debugging
 - Handles errors gracefully
 
-### 9. Performance Features
+### 10. Performance Features
 
 - **Embeddings Cache**: Reuses embeddings across runs
 - **Incremental Processing**: Only processes changed files
@@ -228,7 +319,7 @@ Each LLM call:
 - **Smart Context Management**: Only loads necessary content for LLM calls
 - **Type-Safe Embeddings**: Ensures consistent float list format for vector operations
 
-### 10. Output Structure
+### 11. Output Structure
 
 ```
 llm_outputs/
@@ -246,7 +337,7 @@ llm_outputs/
     └── updates/            # Updated files (flat structure)
 ```
 
-### 11. Error Handling
+### 12. Error Handling
 
 - **Graceful Degradation**: Falls back to manual selection if LLM fails
 - **Validation Gates**: Checks prerequisites before each phase
@@ -260,7 +351,7 @@ llm_outputs/
   - Checks for dictionary types before accessing keys
   - Provides fallback values for missing data
 
-### 12. Content Generation Features
+### 13. Content Generation Features
 
 #### Markdown Block Extraction
 The system automatically extracts content from markdown code blocks that LLMs often wrap responses in:
@@ -290,7 +381,7 @@ The update format:
 }
 ```
 
-### 13. Future Enhancements
+### 14. Future Enhancements
 
 1. **Batch Processing**: Handle multiple content goals
 2. **TOC Management**: Automatic TOC.yml updates
@@ -340,3 +431,15 @@ The system automatically migrates legacy cache entries to the unified structure.
 ```
 
 ## Best Practices 
+
+## Technical Notes
+
+### Parallel Embeddings
+When enabled, splits documents into batches for parallel processing.
+
+### Python Version Compatibility
+- Requires Python 3.8-3.12
+- Python 3.13 is not yet supported due to dependencies (tiktoken, pydantic) requiring updates
+
+### Model Selection
+// ... existing code ... 

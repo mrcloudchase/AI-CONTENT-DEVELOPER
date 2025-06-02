@@ -1,11 +1,17 @@
 """
 Configuration model for AI Content Developer
 """
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
 
+# Load environment variables from .env file if it exists
+from dotenv import load_dotenv
+load_dotenv()
+
 from ..utils import mkdir
+from ..constants import DEFAULT_COMPLETION_MODEL, DEFAULT_EMBEDDING_MODEL
 
 
 @dataclass
@@ -29,22 +35,54 @@ class Config:
     phases: str = "3"
     debug_similarity: bool = False
     apply_changes: bool = False
+    skip_toc: bool = False
     
-    # API key loaded from environment
-    api_key: str = ""
+    # Azure OpenAI configuration
+    azure_endpoint: str = ""
+    api_version: str = "2024-08-01-preview"
+    
+    # Deployment names (instead of model names for Azure)
+    completion_deployment: str = ""
+    embedding_deployment: str = ""
+    
+    # Model names (for compatibility)
+    completion_model: str = ""
+    simple_model: str = ""
+    embedding_model: str = ""
+    
+    # Temperature settings
+    temperature: float = 0.3
+    creative_temperature: float = 0.7
     
     def __post_init__(self):
         """Post-initialization setup"""
-        self._validate_api_key()
+        self._validate_azure_config()
+        self._load_deployment_config()
         self._create_output_directories()
     
-    def _validate_api_key(self):
-        """Validate that OpenAI API key is available"""
-        import os
+    def _validate_azure_config(self):
+        """Validate Azure OpenAI configuration"""
+        self.azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "")
+        if not self.azure_endpoint:
+            raise ValueError("AZURE_OPENAI_ENDPOINT environment variable not set")
         
-        self.api_key = os.getenv("OPENAI_API_KEY", "")
-        if not self.api_key:
-            raise ValueError("OPENAI_API_KEY environment variable not set")
+        # API version can be overridden
+        self.api_version = os.getenv("AZURE_OPENAI_API_VERSION", self.api_version)
+    
+    def _load_deployment_config(self):
+        """Load deployment configuration from environment variables"""
+        # Primary deployments
+        self.completion_deployment = os.getenv("AZURE_OPENAI_COMPLETION_DEPLOYMENT", "gpt-4")
+        self.embedding_deployment = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", "text-embedding-3-small")
+        
+        # Set model names to deployment names for compatibility
+        self.completion_model = self.completion_deployment
+        self.simple_model = self.completion_deployment
+        self.embedding_model = self.embedding_deployment
+        
+        # Temperature settings
+        self.temperature = float(os.getenv("AZURE_OPENAI_TEMPERATURE", "0.3"))
+        self.creative_temperature = float(os.getenv("AZURE_OPENAI_CREATIVE_TEMPERATURE", "0.7"))
     
     def _create_output_directories(self):
         """Create all necessary output directories"""
@@ -59,7 +97,9 @@ class Config:
             "decisions/working_directory",
             "content_generation/create",
             "content_generation/update",
-            "content_discovery"
+            "content_discovery",
+            "toc_management",
+            "preview/toc"
         ]
         
         # Create each directory

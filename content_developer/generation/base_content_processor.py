@@ -211,4 +211,126 @@ class BaseContentProcessor(SmartProcessor):
         if additional_info:
             gap_report['missing_information'].extend(additional_info)
         
-        return gap_report 
+        return gap_report
+    
+    def _is_terminal_section(self, section_name: str, content_type_info: Dict) -> bool:
+        """Check if a section is terminal (must be last) for the given content type"""
+        terminal_sections = content_type_info.get('terminalSections', [])
+        
+        # Normalize section name for comparison
+        normalized_section = section_name.strip().lower()
+        
+        for terminal in terminal_sections:
+            if normalized_section == terminal.lower():
+                return True
+        
+        # Also check common terminal sections and variations
+        common_terminals = [
+            'next steps', 'next step', 'related content', 'see also', 
+            'conclusion', 'references', 'related documentation',
+            'additional resources', 'further reading', 'learn more',
+            'additional information'
+        ]
+        
+        # Check exact matches
+        if normalized_section in common_terminals:
+            return True
+            
+        # Check if section starts with "related" (covers many variations)
+        if normalized_section.startswith('related'):
+            return True
+            
+        # Check if section contains "next step" (covers variations)
+        if 'next step' in normalized_section:
+            return True
+            
+        # Check for "next" patterns that indicate moving forward
+        # Must be more than just containing "next" - needs context
+        next_patterns = [
+            "what's next", "whats next", "what next",
+            "next actions", "next tasks", "up next"
+        ]
+        if any(pattern in normalized_section for pattern in next_patterns):
+            return True
+            
+        # Check if it starts with "next" (but not "next generation" etc.)
+        if normalized_section.startswith('next '):
+            return True
+            
+        # Check for sections that are clearly navigational
+        navigation_keywords = ['see also', 'learn more', 'additional', 'further', 'more info']
+        if any(keyword in normalized_section for keyword in navigation_keywords):
+            return True
+            
+        return False
+    
+    def _find_section_position(self, section_name: str, content_type_info: Dict) -> int:
+        """Find the position value for a section in the content type's section order"""
+        section_order = content_type_info.get('sectionOrder', [])
+        normalized_name = section_name.strip().lower()
+        
+        for section in section_order:
+            # Check primary name
+            if section['name'].lower() == normalized_name:
+                return section['position']
+            
+            # Check alternate names
+            alternates = section.get('alternateNames', [])
+            if any(alt.lower() == normalized_name for alt in alternates):
+                return section['position']
+        
+        # Default position for unknown sections (before terminal)
+        return 50
+    
+    def _validate_section_placement(self, existing_sections: List[str], new_section: str, 
+                                   insertion_point: str, content_type_info: Dict) -> Dict:
+        """Validate if a new section can be placed at the specified insertion point"""
+        validation = {
+            'valid': True,
+            'reason': '',
+            'suggested_position': insertion_point
+        }
+        
+        # Check if insertion point is after a terminal section
+        if self._is_terminal_section(insertion_point, content_type_info):
+            validation['valid'] = False
+            validation['reason'] = f"Cannot add content after terminal section '{insertion_point}'"
+            
+            # Find last non-terminal section
+            for i in range(len(existing_sections) - 1, -1, -1):
+                if not self._is_terminal_section(existing_sections[i], content_type_info):
+                    validation['suggested_position'] = existing_sections[i]
+                    break
+            
+            return validation
+        
+        # Check section order rules
+        new_section_pos = self._find_section_position(new_section, content_type_info)
+        insertion_pos = self._find_section_position(insertion_point, content_type_info)
+        
+        # Find next section position
+        insertion_index = existing_sections.index(insertion_point) if insertion_point in existing_sections else -1
+        if insertion_index >= 0 and insertion_index < len(existing_sections) - 1:
+            next_section = existing_sections[insertion_index + 1]
+            next_pos = self._find_section_position(next_section, content_type_info)
+            
+            # Validate ordering
+            if new_section_pos >= next_pos and next_pos == 99:  # 99 is terminal position
+                validation['valid'] = False
+                validation['reason'] = f"Section '{new_section}' would be placed after terminal section"
+        
+        return validation
+    
+    def _extract_sections_from_content(self, content: str) -> List[str]:
+        """Extract section headings from markdown content"""
+        import re
+        
+        sections = []
+        lines = content.split('\n')
+        
+        for line in lines:
+            # Match H2 headings (##)
+            if match := re.match(r'^##\s+(.+)$', line.strip()):
+                sections.append(match.group(1).strip())
+        
+        return sections 

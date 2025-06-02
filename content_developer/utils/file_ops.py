@@ -7,8 +7,13 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 
-def read(path: Path, limit: Optional[int] = 15000) -> str:
-    """Read text file with optional limit"""
+def read(path: Path, limit: Optional[int] = None) -> str:
+    """Read text file with optional limit
+    
+    Args:
+        path: Path to file to read
+        limit: Maximum characters to read. None means read entire file.
+    """
     path = Path(path)
     content = path.read_text()
     return content[:limit] if limit else content

@@ -1,6 +1,8 @@
 # AI Content Developer
 
-An intelligent documentation generation tool that analyzes repositories and creates or updates documentation based on support materials using OpenAI's GPT models.
+An intelligent documentation generation tool that analyzes repositories and creates or updates documentation based on support materials using Azure OpenAI models.
+
+> **📢 Important Update**: This tool now uses **Azure OpenAI** with Microsoft Entra ID authentication instead of OpenAI API keys. If you're migrating from a previous version, please see the [Azure Migration Guide](docs/azure-migration-guide.md).
 
 ## Overview
 
@@ -25,32 +27,45 @@ flowchart TB
     end
     
     subgraph "Phase 1: Analysis"
-        E[Clone/Update Repo]
+        E[Clone Repository]
         F[Process Materials]
-        G[Detect Working Directory]
+        G[Analyze Structure]
+        H[Select Directory]
+        I[Confirm Selection]
     end
     
     subgraph "Phase 2: Strategy"
-        H[Discover Content]
-        I[Generate Embeddings]
-        J[Semantic Analysis]
-        K[Gap Analysis]
-        L[Create Strategy]
+        J[Discover Content]
+        K[Smart Chunking]
+        L[Store in Cache]
+        M[Generate Embeddings]
+        N[Semantic Analysis]
+        O[Gap Analysis]
+        P[Create Strategy]
     end
     
     subgraph "Phase 3: Generation"
-        M[Load Material Content]
-        N[Generate New Docs]
-        O[Update Existing Docs]
-        P[Preview/Apply Changes]
+        Q[Load Material Content]
+        R[Generate New Docs]
+        S[Update Existing Docs]
+        T[Preview/Apply Changes]
+    end
+    
+    subgraph "Phase 4: TOC Management"
+        U[Analyze TOC.yml]
+        V[Detect Missing Entries]
+        W[Update TOC Structure]
+        X[Preview TOC Changes]
     end
     
     A & B & C & D --> E
     E --> F --> G
-    G --> H --> I --> J
-    J --> K --> L
-    L --> M --> N & O
+    G --> H --> I
+    I --> J --> K
+    K --> L --> M --> N & O
     N & O --> P
+    P --> Q --> R --> S --> T
+    T --> U --> V --> W --> X
 ```
 
 ### Module Structure
@@ -132,16 +147,28 @@ stateDiagram-v2
         ApplyChanges --> [*]
     }
     
-    Phase3 --> [*]
+    Phase3 --> Phase4: generation_ready
+    
+    state Phase4 {
+        [*] --> LoadTOC
+        LoadTOC --> ExtractEntries
+        ExtractEntries --> IdentifyMissing
+        IdentifyMissing --> GenerateTOCUpdate
+        GenerateTOCUpdate --> PreviewTOC
+        PreviewTOC --> [*]
+    }
+    
+    Phase4 --> [*]
 ```
 
 ## Installation
 
 ### Prerequisites
 
-- Python 3.8+
-- Git
-- OpenAI API key
+- Python 3.12 or earlier (Python 3.13 has compatibility issues with some dependencies)
+- Azure OpenAI resource with deployed models
+- Azure CLI installed and authenticated (`az login`)
+- Git (for cloning repositories)
 
 ### Setup
 
@@ -156,10 +183,60 @@ cd ai-content-developer
 pip install -r requirements.txt
 ```
 
-3. Set your OpenAI API key:
+3. Configure Azure OpenAI:
 ```bash
-export OPENAI_API_KEY="your-api-key-here"
+# Copy the example environment file
+cp env.example .env
+
+# Edit .env and add your Azure OpenAI configuration
+nano .env
 ```
+
+4. Authenticate with Azure:
+```bash
+# Login with Azure CLI (used by DefaultAzureCredential)
+az login
+
+# Set your subscription if you have multiple
+az account set --subscription "Your Subscription Name"
+```
+
+### Azure OpenAI Configuration
+
+The application uses Azure OpenAI with Microsoft Entra ID authentication (via DefaultAzureCredential). Configure the following environment variables in your `.env` file:
+
+```bash
+# Required
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+
+# Deployment names (required)
+AZURE_OPENAI_COMPLETION_DEPLOYMENT=gpt-4  # Used for all LLM operations
+AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-3-small
+
+# Optional
+AZURE_OPENAI_API_VERSION=2024-08-01-preview
+AZURE_OPENAI_TEMPERATURE=0.3
+AZURE_OPENAI_CREATIVE_TEMPERATURE=0.7
+```
+
+**Authentication Methods:**
+- Azure CLI (recommended): `az login`
+- Managed Identity (when running in Azure)
+- Environment variables (service principal)
+- VS Code Azure extension
+- Azure PowerShell
+
+See [DefaultAzureCredential documentation](https://docs.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential) for all supported authentication methods.
+
+### Model Configuration
+
+The application uses configurable Azure OpenAI deployments for different operations. See [Azure Model Configuration Guide](docs/azure-model-configuration.md) for details.
+
+Default deployments:
+- **Completion**: `gpt-4` (for all LLM operations)
+- **Embeddings**: `text-embedding-3-small` (for similarity search)
+
+You can customize these in your `.env` file.
 
 ## Usage
 
@@ -173,7 +250,8 @@ python main.py <repo_url> "<content_goal>" "<service_area>" [materials...]
 
 #### Full Pipeline (All Phases)
 ```bash
-python main.py https://github.com/Azure/azure-docs \
+# By default, all phases run automatically
+python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
     "Create Cilium networking documentation" \
     "Azure Kubernetes Service" \
     support-materials/cilium-overview.pdf \
@@ -182,7 +260,7 @@ python main.py https://github.com/Azure/azure-docs \
 
 #### Phase 1 Only (Analysis)
 ```bash
-python main.py https://github.com/Azure/azure-docs \
+python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
     "Analyze repository structure" \
     "AKS" \
     --phases 1
@@ -190,7 +268,7 @@ python main.py https://github.com/Azure/azure-docs \
 
 #### Phases 1 & 2 (Analysis + Strategy)
 ```bash
-python main.py https://github.com/Azure/azure-docs \
+python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
     "Plan networking documentation updates" \
     "AKS" \
     --phases 12 \
@@ -199,7 +277,7 @@ python main.py https://github.com/Azure/azure-docs \
 
 #### Auto-Confirm Mode
 ```bash
-python main.py https://github.com/Azure/azure-docs \
+python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
     "Update CNI documentation" \
     "AKS" \
     --auto-confirm \
@@ -208,11 +286,44 @@ python main.py https://github.com/Azure/azure-docs \
 
 #### Apply Changes Directly
 ```bash
-python main.py https://github.com/Azure/azure-docs \
+python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
     "Create new tutorials" \
     "AKS" \
     --apply-changes \
     tutorial-content.md
+```
+
+#### Phase 4: TOC Management
+```bash
+# Run generation and TOC update together
+python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
+    "Create Cilium documentation" \
+    "AKS" \
+    --phases 34 \
+    --apply-changes \
+    cilium-guide.pdf
+
+# Run all phases including TOC management  
+python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
+    "Update networking guides" \
+    "AKS" \
+    --phases 1234 \
+    --auto-confirm \
+    networking-updates.docx
+
+# Run only TOC update (if files were previously generated)
+python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
+    "Update TOC for new content" \
+    "AKS" \
+    --phases 4 \
+    --auto-confirm
+
+# Skip TOC update if TOC.yml has issues
+python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
+    "Create documentation" \
+    "AKS" \
+    --skip-toc \
+    materials.pdf
 ```
 
 ### Command Line Options
@@ -229,9 +340,71 @@ python main.py https://github.com/Azure/azure-docs \
 | `--work-dir` | Working directory for repos | `./work/tmp` |
 | `--max-depth` | Max repository depth to analyze | 3 |
 | `--content-limit` | Content extraction limit (chars) | 15000 |
-| `--phases` | Phases to run (1, 2, 3, 12, 13, 23, 123) | "3" |
+| `--phases` | Phases to run (1, 2, 3, 4, 12, 13, 14, 23, 24, 34, 123, 124, 134, 234, 1234, or 'all') | "all" |
 | `--debug-similarity` | Show similarity scoring details | False |
 | `--apply-changes` | Apply generated content to repository | False |
+| `--skip-toc` | Skip TOC management (Phase 4) if TOC.yml is invalid | False |
+
+## Streamlit Web Interface
+
+AI Content Developer includes a modern web interface built with Streamlit that provides an intuitive alternative to the command line.
+
+### Running the Web Interface
+
+```bash
+# Using the provided script
+./run_frontend.sh
+
+# Or manually
+export PYTHONPATH=$PYTHONPATH:$(pwd)
+streamlit run frontend/app.py
+```
+
+The interface will open in your browser at http://localhost:8501
+
+### Web Interface Features
+
+#### 1. **Interactive Input Collection**
+- Visual form for entering repository URL, content goal, and service area
+- Drag-and-drop file upload for support materials
+- URL input for online documentation references
+- Advanced settings in an expandable panel
+
+#### 2. **Execution Modes**
+- **Interactive Mode**: Review results after each phase before continuing
+- **Auto-Confirm Mode**: Run all phases automatically without interruptions
+
+#### 3. **Real-Time Progress Display**
+- Phase indicator showing current progress
+- Live "thinking" messages from the AI as it processes
+- Status updates and progress bars
+- Detailed results after each phase
+
+#### 4. **Content Preview**
+- Tabbed interface for viewing generated content
+- Syntax-highlighted markdown preview
+- Separate tabs for created files, updated files, and TOC changes
+- File paths for accessing generated content
+
+#### 5. **Key Differences from CLI**
+- No direct file application (preview only for safety)
+- Materials are optional with visual feedback
+- Real-time display of AI reasoning process
+- Persistent session state during generation
+- Modern, responsive UI design
+
+### Example Workflow
+
+1. **Start the Interface**: Run `./run_frontend.sh`
+2. **Enter Details**: Fill in repository URL, goal, and service area
+3. **Add Materials** (Optional): Upload files or paste URLs
+4. **Select Mode**: Choose Interactive or Auto-Confirm
+5. **Start Generation**: Click "Start Content Generation"
+6. **Monitor Progress**: Watch AI thinking and phase completion
+7. **Review Results**: Browse generated content in preview tabs
+8. **Access Files**: Find generated files in `./llm_outputs/preview/`
+
+The web interface provides the same powerful functionality as the CLI with a more user-friendly experience, making it ideal for users who prefer visual interaction over command-line operations.
 
 ## Features
 
@@ -270,6 +443,23 @@ python main.py https://github.com/Azure/azure-docs \
 - **Intelligent Updates**: Preserves existing content while adding new sections
 - **RAG-Based Generation**: Uses Retrieval-Augmented Generation to prevent hallucination
 
+### Phase 4: TOC Management
+
+- **Automatic TOC Analysis**: Reads and parses existing TOC.yml structure
+- **Smart Entry Detection**: Identifies which generated files are missing from TOC
+- **Intelligent Placement**: Determines optimal placement for new entries based on:
+  - Content type (How-To, Tutorial, Concept, etc.)
+  - Topic relationships
+  - Existing TOC organization patterns
+  - Directory structure hints
+- **Large TOC Handling**: Automatically condenses very large TOC files (>20KB) for efficient processing
+- **Hierarchical Structure Preservation**: Maintains proper nesting and organization
+- **Entry Naming**: Generates meaningful display names from document titles
+- **Preview Mode**: Shows proposed TOC changes before applying
+- **Validation**: Ensures YAML syntax correctness and structural integrity
+
+**Note**: Phase 4 requires a valid TOC.yml file in the working directory. If the TOC has YAML syntax errors, use `--skip-toc` to skip this phase or fix the TOC using the provided scripts.
+
 ## Output Structure
 
 ```
@@ -283,10 +473,12 @@ python main.py https://github.com/Azure/azure-docs \
 ├── content_generation/
 │   └── create/                 # New content generation logs
 ├── generation/                 # Content update logs
+├── toc_management/             # TOC update logs
 └── preview/
-    └── [repo]/[directory]/
-        ├── create/             # Preview of new files
-        └── updates/            # Preview of updated files
+    ├── [repo]/[directory]/
+    │   ├── create/             # Preview of new files
+    │   └── updates/            # Preview of updated files
+    └── toc/                    # Preview of TOC changes
 ```
 
 ## Module Structure
@@ -304,7 +496,8 @@ content_developer/
 │   ├── discovery.py           # Content discovery
 │   ├── strategy.py            # Strategy generation
 │   ├── strategy_debug.py      # Debug visualization
-│   └── strategy_helpers.py    # Helper methods
+│   ├── strategy_helpers.py    # Helper methods
+│   └── toc_processor.py       # TOC management
 ├── generation/                 # Content generation
 │   ├── base_content_processor.py  # Base class for processors
 │   ├── material_loader.py     # Load full content
@@ -331,6 +524,7 @@ content_developer/
 │   ├── directory.py           # Directory selection
 │   ├── strategy.py            # Strategy generation  
 │   ├── generation.py          # Content generation
+│   ├── toc.py                 # TOC management
 │   └── helpers.py             # Formatting helpers
 ├── utils/                      # Utilities
 │   ├── core_utils.py          # Core utilities
@@ -338,7 +532,7 @@ content_developer/
 │   ├── imports.py             # Dynamic imports
 │   └── logging.py             # Logging setup
 └── orchestrator/               # Main orchestrator
-    └── orchestrator.py        # 3-phase workflow
+    └── orchestrator.py        # 4-phase workflow
 ```
 
 ## Advanced Usage
@@ -417,6 +611,23 @@ This shows:
 4. **"Import error"**
    - Run `pip install -r requirements.txt`
    - Ensure Python 3.8+ is installed
+
+5. **"Failed to parse TOC.yml"**
+   - The repository's TOC.yml may have invalid YAML syntax
+   - Use `--skip-toc` flag to skip Phase 4: `python main.py <args> --skip-toc`
+   - Validate TOC syntax: `python scripts/validate_toc.py <path-to-TOC.yml>`
+   - Try to fix common issues: `python scripts/fix_toc_yaml.py <path-to-TOC.yml>`
+   - Check for:
+     - Missing colons after keys
+     - Incorrect indentation (should use 2 spaces, not tabs)
+     - Duplicate keys at the same level
+     - Missing required fields (name or href)
+
+6. **"Invalid parameter: 'response_format' not supported with this model"**
+   - This occurs when using an OpenAI model that doesn't support JSON response format
+   - The tool now uses `gpt-4o` which supports JSON output
+   - If you see this error, ensure you have the latest code
+   - See `docs/json-response-format-models.md` for model compatibility details
 
 ### Debug Mode
 

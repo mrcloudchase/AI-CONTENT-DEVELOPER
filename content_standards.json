@@ -19,6 +19,13 @@
         "Details", 
         "Next Steps/Related content"
       ],
+      "sectionOrder": [
+        {"name": "Introduction", "position": 1, "required": true},
+        {"name": "Categories/Features", "position": 2, "required": true, "allowMultiple": true},
+        {"name": "Details", "position": 3, "required": false},
+        {"name": "Next Steps", "position": 99, "required": true, "terminal": true, "alternateNames": ["Related content", "Next step"]}
+      ],
+      "terminalSections": ["Next Steps", "Related content", "Next step"],
       "markdownTemplate": "---\ntitle: [Follow SEO guidance at https://review.learn.microsoft.com/en-us/help/platform/seo-meta-title]\ndescription: \"[Article description].\"\nauthor: [your GitHub alias]\nms.author: [your Microsoft alias or a team alias]\nms.service: [the approved service name]\nms.topic: overview #Don't change\nms.date: [mm/dd/yyyy]\n\n#customer intent: As a <role>, I want <what> so that <why>.\n\n---\n\n# What is [product or service]?\n\n[Introduce and explain the purpose of the article.]\n\n## [Feature section]\n\n[Introduce a section that describes a feature.]\n\n## Related content\n\n- [Related article title](link.md)\n- [Related article title](link.md)\n- [Related article title](link.md)"
     },
     {
@@ -36,6 +43,13 @@
         "Concept Sections", 
         "Related Content"
       ],
+      "sectionOrder": [
+        {"name": "Introduction", "position": 1, "required": true},
+        {"name": "Prerequisites", "position": 2, "required": false},
+        {"name": "Concept Sections", "position": 3, "required": true, "allowMultiple": true},
+        {"name": "Related content", "position": 99, "required": true, "terminal": true, "alternateNames": ["Next steps", "See also"]}
+      ],
+      "terminalSections": ["Related content", "Next steps", "See also"],
       "markdownTemplate": "---\ntitle: [Follow SEO guidance at https://review.learn.microsoft.com/en-us/help/platform/seo-meta-title]\ndescription: \"[Article description].\"\nauthor: [your GitHub alias]\nms.author: [your Microsoft alias or a team alias]\nms.service: [the approved service name]\nms.topic: concept-article #Don't change.\nms.date: [mm/dd/yyyy]\n\n#customer intent: As a <role>, I want <what> so that <why>.\n\n---\n\n# [noun phrase] concept(s)\n\nor\n\n# [noun] overview\n\n[Introduce and explain the purpose of the article.]\n\n## Prerequisites\n\n## [Main idea]\n\n[Describe a main idea.]\n\n## Related content\n\n- [Related article title](link.md)\n- [Related article title](link.md)\n- [Related article title](link.md)"
     },
     {
@@ -56,6 +70,15 @@
         "Cleanup", 
         "Next Steps"
       ],
+      "sectionOrder": [
+        {"name": "Introduction", "position": 1, "required": true},
+        {"name": "Prerequisites", "position": 2, "required": true},
+        {"name": "Procedure", "position": 3, "required": true, "allowMultiple": true},
+        {"name": "Validation", "position": 4, "required": false},
+        {"name": "Clean up resources", "position": 5, "required": true, "alternateNames": ["Cleanup", "Clean up"]},
+        {"name": "Next step", "position": 99, "required": true, "terminal": true, "alternateNames": ["Next steps", "Related content"]}
+      ],
+      "terminalSections": ["Next step", "Next steps", "Related content"],
       "markdownTemplate": "---\ntitle: [Follow SEO guidance at https://review.learn.microsoft.com/en-us/help/platform/seo-meta-title]\ndescription: \"[Article description].\"\nauthor: [your GitHub alias]\nms.author: [your Microsoft alias or a team alias]\nms.service: [the approved service name]\nms.topic: quickstart  #Don't change\nms.date: [mm/dd/yyyy]\n\n#customer intent: As a <role>, I want <what> so that <why>.\n\n---\n\n# Quickstart: [verb] * [noun]\n\n[Introduce and explain the purpose of the article.]\n\nIf you don't have a service subscription, create a free\ntrial account . . .\n\n## Prerequisites\n\n## Open [Cloud Shell, Azure CLI, or PowerShell]\n\n## [verb] * [noun]\n\n[Introduce a task and its role in completing the process.]\n\n1. Procedure step\n1. Procedure step\n1. Procedure step\n\n## Clean up resources\n\n## Next step -or- Related content\n\n> [!div class=\"nextstepaction\"]\n> [Next sequential article title](link.md)\n\n-or-\n\n- [Related article title](link.md)\n- [Related article title](link.md)\n- [Related article title](link.md)"
     },
     {
@@ -75,6 +98,14 @@
         "Verification", 
         "Next Steps"
       ],
+      "sectionOrder": [
+        {"name": "Introduction", "position": 1, "required": true},
+        {"name": "Prerequisites", "position": 2, "required": true},
+        {"name": "Steps", "position": 3, "required": true, "alternateNames": ["Procedure", "Instructions"], "allowMultiple": true},
+        {"name": "Verification", "position": 4, "required": false},
+        {"name": "Next Steps", "position": 99, "required": true, "terminal": true, "alternateNames": ["Related content", "See also"]}
+      ],
+      "terminalSections": ["Next Steps", "Related content", "See also"],
       "markdownTemplate": "---\ntitle: [Follow SEO guidance at https://review.learn.microsoft.com/en-us/help/platform/seo-meta-title]\ndescription: \"[Article description].\"\nauthor: [your GitHub alias]\nms.author: [your Microsoft alias or a team alias]\nms.service: [the approved service name]\nms.topic: how-to #Don't change.\nms.date: [mm/dd/yyyy]\n\n#customer intent: As a <role>, I want <what> so that <why>.\n\n---\n\n# How to [complete a task]\n\n[Introduce and explain the purpose of the article.]\n\n## Prerequisites\n\n## Steps\n\n1. Step one\n1. Step two\n1. Step three\n\n## Related content\n\n- [Related article title](link.md)\n- [Related article title](link.md)\n- [Related article title](link.md)"
     },
     {
@@ -94,6 +125,14 @@
         "Cleanup", 
         "Next Steps"
       ],
+      "sectionOrder": [
+        {"name": "Introduction", "position": 1, "required": true},
+        {"name": "Prerequisites", "position": 2, "required": true},
+        {"name": "Learning Steps", "position": 3, "required": true, "allowMultiple": true},
+        {"name": "Clean up resources", "position": 4, "required": true, "alternateNames": ["Cleanup"]},
+        {"name": "Next step", "position": 99, "required": true, "terminal": true, "alternateNames": ["Next steps", "Related content"]}
+      ],
+      "terminalSections": ["Next step", "Next steps", "Related content"],
       "markdownTemplate": "---\ntitle: [Follow SEO guidance at https://review.learn.microsoft.com/en-us/help/platform/seo-meta-title]\ndescription: \"[Article description].\"\nauthor: [your GitHub alias]\nms.author: [your Microsoft alias or a team alias]\nms.service: [the approved service name]\nms.topic: tutorial  #Don't change.\nms.date: [mm/dd/yyyy]\n\n#customer intent: As a <role>, I want <what> so that <why>.\n\n---\n\n# Tutorial: [verb] * [noun]\n\n[Introduce and explain the purpose of the article.]\n\nIn this tutorial, you:\n\n> [!div class=\"checklist\"]\n> * [Tell the user what they'll do in the tutorial]\n> * [Each of these bullet points align with a key H2]\n> * [Use these green checkmarks]\n\nIf you don't have a service subscription, create a free\ntrial account . . .\n\n## Prerequisites\n\n## Open [Cloud Shell, Azure CLI, or PowerShell]\n\n## [verb] * [noun]\n\n[Introduce a task and its role in completing the process.]\n\n1. Procedure step\n1. Procedure step\n1. Procedure step\n\n## Clean up resources\n\n## Next step -or- Related content\n\n> [!div class=\"nextstepaction\"]\n> [Next sequential article title](link.md)\n\n-or-\n\n* [Related article title](link.md)\n* [Related article title](link.md)\n* [Related article title](link.md)"
     }
   ],
@@ -285,5 +324,51 @@
     "Apply tab groups for multiple interfaces or decision paths",
     "Follow all guidelines for SEO, security, code samples, and localization",
     "Include customer intent statement in front matter following the user story format"
-  ]
+  ],
+  
+  "templateEnforcementRules": [
+    {
+      "rule": "Section Order Enforcement",
+      "description": "All sections must appear in the order specified by the content type's sectionOrder",
+      "enforcement": "strict"
+    },
+    {
+      "rule": "Terminal Section Protection",
+      "description": "No content may be added after terminal sections (Next Steps, Related content, See also)",
+      "enforcement": "strict",
+      "terminalSections": ["Next Steps", "Next steps", "Next step", "Related content", "See also", "Conclusion", "Related Documentation", "Additional Resources", "Further Reading", "Learn More", "References"]
+    },
+    {
+      "rule": "Required Section Validation",
+      "description": "All required sections must be present in the document",
+      "enforcement": "strict"
+    },
+    {
+      "rule": "Section Naming Consistency",
+      "description": "Use the primary section name from sectionOrder, not alternates",
+      "enforcement": "recommended"
+    },
+    {
+      "rule": "Content Placement Rules",
+      "description": "New content must be placed in appropriate existing sections or as new sections before terminal sections",
+      "enforcement": "strict"
+    }
+  ],
+  
+  "sectionPlacementGuidelines": {
+    "forUpdates": [
+      "Identify the content type of the existing document",
+      "Check the sectionOrder for that content type",
+      "Never add content after terminal sections",
+      "Place new sections based on their position value",
+      "If adding to an existing section, preserve its position",
+      "Terminal sections must remain at the end of the document"
+    ],
+    "forCreation": [
+      "Follow the exact sectionOrder for the content type",
+      "Include all required sections",
+      "Place optional sections in their designated positions",
+      "Always end with the terminal section"
+    ]
+  }
 } 

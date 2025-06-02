@@ -53,6 +53,16 @@ IMPORTANT WARNINGS:
     # Get Microsoft formatting guidelines
     formatting_section = format_microsoft_elements(content_standards) if content_standards else ""
     
+    # Build section order information
+    section_order_info = ""
+    if content_type_info.get('sectionOrder'):
+        section_order = content_type_info['sectionOrder']
+        section_order_info = f"""
+REQUIRED SECTION ORDER:
+{chr(10).join(f"{s['position']}. {s['name']} {'(REQUIRED)' if s.get('required') else '(Optional)'} {'[TERMINAL - Must be last]' if s.get('terminal') else ''}" 
+              for s in sorted(section_order, key=lambda x: x['position']))}
+"""
+    
     return f"""Content Generation Task:
 
 ACTION: CREATE new documentation
@@ -80,7 +90,16 @@ FRONTMATTER REQUIREMENTS:
 - description: {content_type_info.get('frontMatter', {}).get('description', '1-2 sentence summary')}
 - ms.topic: {content_type_info.get('frontMatter', {}).get('ms.topic', action.get('ms_topic', 'how-to'))}
 
+{section_order_info}
+
 TASK: Generate comprehensive technical documentation based on the materials provided.
+
+CRITICAL SECTION ORDER RULES:
+1. Follow the EXACT section order shown above
+2. Include ALL required sections
+3. Terminal sections (marked with [TERMINAL]) MUST be the last section
+4. NEVER add any content after terminal sections
+5. Optional sections should be included if relevant content exists in materials
 
 AUDIENCE ADAPTATION:
 - Write specifically for: {config.audience}
@@ -137,6 +156,44 @@ INSTRUCTION HIERARCHY:
 4. FOURTH: Apply the CONTENT TYPE template structure
 5. FIFTH: Use MICROSOFT DOCUMENTATION FORMATTING for professional presentation
 
+CRITICAL TEMPLATE ENFORCEMENT RULES:
+
+DOCUMENT STRUCTURE CONCEPT:
+Every technical document follows a logical flow:
+1. **Introduction/Context** - Sets up what the reader will learn
+2. **Main Content** - The core information, procedures, or concepts
+3. **Conclusion/Navigation** - Wraps up and guides readers to next steps
+
+TERMINAL SECTIONS EXPLAINED:
+Terminal sections are the FINAL sections that conclude the document and help readers navigate to related content. They:
+- Summarize what was covered
+- Suggest logical next steps in the learning journey
+- Provide links to related documentation
+- Offer additional resources for deeper learning
+
+Think of them as the "exit doors" of your document - they help readers leave gracefully and know where to go next.
+
+IDENTIFYING TERMINAL SECTIONS:
+Terminal sections typically have names that indicate conclusion or navigation:
+- Contains "Next" → suggests future actions (Next Steps, What's Next)
+- Contains "Related" → links to related content (Related Articles, Related Documentation)
+- Contains "See also", "Learn more", "Additional", "Further" → provides extra resources
+- Contains "References", "Resources" → lists additional materials
+- Contains "Conclusion", "Summary" → wraps up the content
+
+SECTION ORDERING RULES:
+1. ALWAYS start with introductory sections (Introduction, Overview, Prerequisites)
+2. Place main content in the middle (procedures, concepts, examples)
+3. ALWAYS end with terminal sections (Next Steps, Related content)
+4. NEVER add content after terminal sections - they must be the last thing readers see
+5. Terminal sections should feel like a natural conclusion, not an abrupt end
+
+PLACEMENT PRINCIPLES:
+- If the template shows a section with position 99, it's terminal
+- If a section primarily contains links to other docs, it's likely terminal
+- If a section tells readers what to do after this document, it's terminal
+- When creating content, reserve the end for navigation and conclusion
+
 FORMATTING BEST PRACTICES:
 - Use [!NOTE] for important information that helps understanding
 - Use [!WARNING] for critical safety or data loss scenarios
@@ -168,6 +225,14 @@ QUALITY STANDARDS:
 - Proper code formatting and syntax highlighting
 - Clear headings and logical flow
 - Actionable steps and examples
+
+STRUCTURAL INTEGRITY CHECK:
+Before finalizing your content, verify:
+□ Does the document follow the template's section order?
+□ Are all required sections present?
+□ Does the document flow from introduction → main content → conclusion?
+□ Are terminal sections (Next Steps, Related content) at the very end?
+□ Is there a clear narrative arc that guides the reader?
 
 CRITICAL: You must use the FULL CONTENT provided in materials, not just summaries. Generate comprehensive documentation that fully leverages all available information. Output must be in valid JSON format with the complete markdown documentation in the 'content' field.
 
@@ -205,8 +270,11 @@ def get_update_content_prompt(
     
     # Build content type requirements section
     content_type_section = ""
+    template_enforcement_section = ""
     if content_type_info:
         required_sections = content_type_info.get('requiredSections', [])
+        terminal_sections = content_type_info.get('terminalSections', [])
+        
         content_type_section = f"""
 === DOCUMENT TYPE REQUIREMENTS ===
 Content Type: {content_type_info.get('name', 'Unknown')}
@@ -216,10 +284,22 @@ MS.Topic: {content_type_info.get('frontMatter', {}).get('ms.topic', 'N/A')}
 REQUIRED SECTIONS (maintain these):
 {chr(10).join(f"- {section}" for section in required_sections)}
 
+TERMINAL SECTIONS (must remain last):
+{chr(10).join(f"- {section}" for section in terminal_sections)}
+
 DOCUMENT STRUCTURE:
 - This is a {content_type_info.get('name', 'document')} that must maintain its structural integrity
 - Required sections must remain present and in the correct order
 - Any new content must fit within the existing structure
+- CRITICAL: No content may be added after terminal sections
+"""
+        
+        # Add template enforcement rules
+        if content_standards and 'templateEnforcementRules' in content_standards:
+            rules = content_standards['templateEnforcementRules']
+            template_enforcement_section = f"""
+=== TEMPLATE ENFORCEMENT RULES ===
+{chr(10).join(f"- {rule['rule']}: {rule['description']}" for rule in rules if rule.get('enforcement') == 'strict')}
 """
     
     # Build content brief section for updates
@@ -260,6 +340,7 @@ TARGET AUDIENCE: {config.audience}
 AUDIENCE LEVEL: {config.audience_level}
 {content_brief_section}
 {content_type_section}
+{template_enforcement_section}
 {formatting_section}
 
 SPECIFIC SECTIONS TO UPDATE:
@@ -276,10 +357,20 @@ RELEVANT MATERIAL CONTENT:
 RELATED DOCUMENTATION CONTEXT:
 {chunk_context}
 
-CRITICAL REMINDER:
+DOCUMENT STRUCTURE REMINDER:
+Technical documents follow a three-part structure:
+1. **Opening** (Introduction, Prerequisites) - Sets context
+2. **Body** (Main procedures, concepts) - Core content  
+3. **Closing** (Next Steps, Related docs) - Navigation away
+
+The closing sections MUST remain at the end. They are the reader's "exit" from this document.
+
+CRITICAL REMINDERS:
 - Follow the UPDATE INSTRUCTIONS (Content Brief) exactly - these are your primary directives
 - Maintain the document's content type structure - do not remove required sections
 - Make ONLY the specified changes - do not reorganize or rewrite unrelated sections
+- Preserve the document's natural flow: opening → body → closing
+- Terminal/closing sections must remain at the very end of the document
 - Ensure all updates maintain the appropriate technical depth for {config.audience} at {config.audience_level} level
 
 Return the changes in the specified JSON format."""
@@ -307,6 +398,39 @@ DOCUMENT TYPE COMPLIANCE:
 - ENSURE new content fits logically within the existing structure
 - PRESERVE the document's purpose and intended audience
 
+CRITICAL SECTION PLACEMENT RULES:
+
+TERMINAL SECTIONS CONCEPT:
+Terminal sections are sections that MUST appear at the END of a document. They serve as the document's conclusion and navigation to other resources. Common characteristics:
+- They contain navigation links to other documents
+- They suggest what the reader should do next
+- They provide references or additional resources
+- They conclude the document's main content
+
+HOW TO IDENTIFY TERMINAL SECTIONS:
+1. Look for sections with names containing:
+   - "Next" (Next Steps, What's Next, Next Actions)
+   - "Related" (Related content, Related Documentation, Related Articles)
+   - "See also", "Learn more", "Additional", "Further", "References"
+2. Check if the section contains primarily links to other documents
+3. Check if the section suggests future actions or learning paths
+4. Look at the document's current structure - terminal sections are typically the last 1-2 sections
+
+ENFORCEMENT RULES:
+1. SCAN the existing document to identify its terminal sections BEFORE making changes
+2. NEVER add new sections after identified terminal sections
+3. If instructed to add content "at the end", place it BEFORE terminal sections
+4. If adding to a terminal section itself, add WITHIN that section only
+5. When in doubt, place new content before what appears to be concluding sections
+
+PLACEMENT ALGORITHM:
+Before adding any new section:
+1. List all existing sections in order
+2. Identify which sections appear to be terminal (using criteria above)
+3. Find the last non-terminal section
+4. Place new content after that section but before terminal sections
+5. NEVER create new sections after sections that navigate away from the current document
+
 FORMATTING CONSISTENCY:
 - Match the existing document's use of Notes, Warnings, and Tips
 - Maintain consistent code block language syntax
@@ -320,6 +444,14 @@ EDITING PRINCIPLES:
 - When modifying sections, preserve what the brief says to preserve
 - Maintain the document's narrative flow and coherence
 - Apply Microsoft formatting elements when adding new content
+
+PLACEMENT VALIDATION CHECKLIST:
+Before finalizing any change, verify:
+□ Have I identified all terminal sections in the document?
+□ Am I adding content BEFORE these terminal sections?
+□ Does the document still end with its original concluding sections?
+□ Is the logical flow preserved (main content → conclusion → navigation)?
+□ Have I maintained the document's structural integrity?
 
 IMPORTANT INSTRUCTIONS:
 1. Only modify the sections that need updating based on the new materials
@@ -344,4 +476,6 @@ Return your response in the following JSON format:
 
 For 'add' actions, 'original' should be null.
 For 'replace' actions, include the exact original text to be replaced.
-For 'modify' actions, include the original text and the modified version.""" 
+For 'modify' actions, include the original text and the modified version.
+
+CRITICAL REMINDER: Terminal sections mark the END of main content. Any section that navigates readers away or concludes the document must remain at the end. Think of documents as having three parts: Introduction → Main Content → Conclusion/Navigation. Never disrupt this flow.""" 

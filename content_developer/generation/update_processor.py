@@ -32,7 +32,7 @@ class UpdateContentProcessor(BaseContentProcessor):
             return self._create_error_result(action, f"File not found: {filename}")
         
         # Read existing content
-        existing_content = read(file_path)
+        existing_content = read(file_path, limit=None)
         
         # Check for missing information
         gap_report = self._check_for_gaps(action, materials_content)
@@ -126,7 +126,7 @@ class UpdateContentProcessor(BaseContentProcessor):
         ]
         
         try:
-            result = self._call_llm(messages, model="gpt-4o", response_format="json_object")
+            result = self._call_llm(messages, model=self.config.completion_model, response_format="json_object")
             
             # Save interaction for debugging
             self.save_interaction(
@@ -152,6 +152,14 @@ class UpdateContentProcessor(BaseContentProcessor):
             return original_content
         
         updated_content = original_content
+        
+        # Extract content type for validation
+        doc_info = self._extract_content_type_from_document(original_content)
+        content_standards = self._load_content_standards()
+        content_type_info = self._get_content_type_info(content_standards, doc_info['content_type'])
+        
+        # Extract existing sections for validation
+        existing_sections = self._extract_sections_from_content(original_content)
         
         # Sort changes by action type to handle adds last
         sorted_changes = sorted(changes, key=lambda x: 0 if x.get('action') != 'add' else 1)
@@ -185,17 +193,33 @@ class UpdateContentProcessor(BaseContentProcessor):
                 section = change.get('section', '')
                 new_content = change.get('updated', '')
                 
+                # Validate section placement
+                if section and section in existing_sections:
+                    validation = self._validate_section_placement(
+                        existing_sections, section, section, content_type_info
+                    )
+                    
+                    if not validation['valid']:
+                        logger.warning(f"Invalid placement: {validation['reason']}")
+                        if validation['suggested_position'] and validation['suggested_position'] != section:
+                            logger.info(f"Placing content after '{validation['suggested_position']}' instead")
+                            section = validation['suggested_position']
+                        else:
+                            logger.error(f"Cannot add content after terminal section '{section}'")
+                            continue
+                
                 # Try to find the section and add content after it
                 if section and new_content:
                     updated_content = self._insert_content_after_section(
-                        updated_content, section, new_content
+                        updated_content, section, new_content, content_type_info
                     )
                     logger.info(f"Added new content to section: {section}")
         
         return updated_content
     
-    def _insert_content_after_section(self, content: str, section: str, new_content: str) -> str:
-        """Insert new content after a specific section"""
+    def _insert_content_after_section(self, content: str, section: str, new_content: str, 
+                                    content_type_info: Dict) -> str:
+        """Insert new content after a specific section with terminal section validation"""
         lines = content.split('\n')
         
         # Find the section
@@ -206,9 +230,33 @@ class UpdateContentProcessor(BaseContentProcessor):
                 break
         
         if section_index == -1:
-            # If section not found, add at the end
-            logger.warning(f"Section '{section}' not found, adding content at the end")
-            return content + '\n\n' + new_content
+            # If section not found, check if we should add before terminal sections
+            logger.warning(f"Section '{section}' not found")
+            
+            # Find last non-terminal section
+            sections = self._extract_sections_from_content(content)
+            last_valid_index = -1
+            
+            for i in range(len(sections) - 1, -1, -1):
+                if not self._is_terminal_section(sections[i], content_type_info):
+                    # Find this section in the content
+                    for j, line in enumerate(lines):
+                        if sections[i].lower() in line.lower() and line.strip().startswith('#'):
+                            last_valid_index = j
+                            break
+                    break
+            
+            if last_valid_index >= 0:
+                section_index = last_valid_index
+                logger.info(f"Adding content after last non-terminal section")
+            else:
+                logger.error("Could not find appropriate place to add content")
+                return content
+        
+        # Check if this is a terminal section
+        if self._is_terminal_section(section, content_type_info):
+            logger.error(f"Cannot add content after terminal section '{section}'")
+            return content
         
         # Find the next section at the same level or higher
         section_level = len(lines[section_index].split()[0])  # Count # characters
@@ -220,6 +268,16 @@ class UpdateContentProcessor(BaseContentProcessor):
                 if level <= section_level:
                     insert_index = i
                     break
+        
+        # Validate that we're not inserting after a terminal section
+        if insert_index < len(lines):
+            # Check if the next section is terminal
+            next_section_match = re.match(r'^#+\s+(.+)$', lines[insert_index].strip())
+            if next_section_match:
+                next_section = next_section_match.group(1)
+                if self._is_terminal_section(next_section, content_type_info):
+                    # We're about to insert before a terminal section, which is OK
+                    logger.info(f"Inserting content before terminal section '{next_section}'")
         
         # Insert the new content
         lines.insert(insert_index, new_content)

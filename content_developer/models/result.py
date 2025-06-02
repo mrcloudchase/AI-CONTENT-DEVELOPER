@@ -37,4 +37,8 @@ class Result:
     
     # Phase 3 results
     generation_results: Optional[Dict] = None
-    generation_ready: bool = False 
+    generation_ready: bool = False
+    
+    # Phase 4 results
+    toc_results: Optional[Dict] = None
+    toc_ready: bool = False 

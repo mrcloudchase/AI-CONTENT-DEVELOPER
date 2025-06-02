@@ -5,17 +5,20 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-from openai import OpenAI
+from openai import AzureOpenAI
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
+from ..interactive.directory import DirectoryConfirmation
+from ..interactive.strategy import StrategyConfirmation
 from ..models import Config, Result
-from ..repository import RepositoryManager
 from ..processors import (
-    MaterialProcessor, DirectoryDetector, 
-    ContentDiscoveryProcessor, ContentStrategyProcessor
+    ContentDiscoveryProcessor, ContentStrategyProcessor, DirectoryDetector,
+    MaterialProcessor, TOCProcessor
 )
 from ..generation import ContentGenerator
-from ..interactive import DirectoryConfirmation, StrategyConfirmation
+from ..repository import RepositoryManager
 from ..utils import write, mkdir, setup_logging
+from ..constants import MAX_PHASES
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +28,19 @@ class ContentDeveloperOrchestrator:
     
     def __init__(self, config: Config):
         self.config = config
-        self.client = OpenAI(api_key=config.api_key)
+        
+        # Initialize Azure OpenAI client with Entra ID authentication
+        token_provider = get_bearer_token_provider(
+            DefaultAzureCredential(),
+            "https://cognitiveservices.azure.com/.default"
+        )
+        
+        self.client = AzureOpenAI(
+            azure_endpoint=config.azure_endpoint,
+            azure_ad_token_provider=token_provider,
+            api_version=config.api_version,
+        )
+        
         self.repo_manager = RepositoryManager()
         self.dir_confirmator = DirectoryConfirmation(config)
         self.strategy_confirmator = StrategyConfirmation(config)
@@ -33,10 +48,10 @@ class ContentDeveloperOrchestrator:
     
     def execute(self) -> Result:
         """Execute the content development workflow"""
-        logger.info(f"=== Content Developer: Phase(s) 1-{self.config.phases} ===")
-        
         # Parse phases configuration
         max_phase = self._parse_max_phase()
+        phase_display = self.config.phases if self.config.phases != "all" else f"1-{max_phase}"
+        logger.info(f"=== Content Developer: Phase(s) {phase_display} ===")
         
         # Execute Phase 1 (always runs)
         result = self._execute_phase1()
@@ -49,11 +64,25 @@ class ContentDeveloperOrchestrator:
         if max_phase >= 3 and result.strategy_ready:
             self._execute_phase3(result)
         
+        # Execute Phase 4 if requested
+        if max_phase >= 4 and result.generation_ready and not self.config.skip_toc:
+            self._execute_phase4(result)
+        elif max_phase >= 4 and self.config.skip_toc:
+            logger.info("=== Phase 4: TOC Management (SKIPPED) ===")
+            logger.info("TOC management skipped due to --skip-toc flag")
+        
         return result
     
     def _parse_max_phase(self) -> int:
         """Parse the maximum phase to execute from config"""
-        max_phase = int(self.config.phases) if self.config.phases.isdigit() else 1
+        if self.config.phases == "all":
+            max_phase = MAX_PHASES
+        elif self.config.phases.isdigit():
+            max_phase = int(self.config.phases)
+        else:
+            # Handle combinations like "123", "34", etc.
+            max_phase = max(int(p) for p in self.config.phases if p.isdigit()) if any(p.isdigit() for p in self.config.phases) else 1
+        
         logger.info(f"Phases parsing: config.phases='{self.config.phases}' -> max_phase={max_phase}")
         return max_phase
     
@@ -348,4 +377,77 @@ class ContentDeveloperOrchestrator:
             logger.warning(f"No markdown files found in {directory}")
             logger.info("This may indicate a non-content directory was selected (e.g., media/assets directory)")
             logger.info("Consider re-running with a different content goal or checking the selected directory")
-        return len(md_files) 
+        return len(md_files)
+    
+    def _execute_phase4(self, result: Result) -> None:
+        """Execute Phase 4: TOC Management"""
+        logger.info("=== Phase 4: TOC Management ===")
+        
+        try:
+            # Get working directory path
+            working_dir_path = Path(result.working_directory_full_path)
+            
+            # Run TOC management
+            toc_results = self._run_toc_phase(
+                working_dir_path,
+                result.generation_results.get('created_files', []),
+                result.generation_results.get('updated_files', []),
+                result.content_strategy
+            )
+            
+            # Update result
+            result.toc_results = toc_results
+            result.toc_ready = True
+            
+            # Apply TOC changes if requested and successful
+            if self.config.apply_changes and toc_results.get('success') and toc_results.get('changes_made'):
+                self._apply_toc_changes(toc_results, working_dir_path)
+                toc_results['applied'] = True
+            else:
+                toc_results['applied'] = False
+            
+            logger.info(f"Phase 4 completed: {toc_results.get('message', 'No message')}")
+            
+        except Exception as e:
+            self._handle_phase4_error(result, e)
+    
+    def _run_toc_phase(self, working_dir_path: Path, created_files: list, updated_files: list, 
+                      strategy: 'ContentStrategy') -> Dict:
+        """Run TOC management phase"""
+        toc_processor = TOCProcessor(self.client, self.config)
+        return toc_processor.process(
+            working_dir_path,
+            created_files,
+            updated_files,
+            {
+                'decisions': strategy.decisions if hasattr(strategy, 'decisions') else []
+            }
+        )
+    
+    def _apply_toc_changes(self, toc_results: Dict, working_dir_path: Path) -> None:
+        """Apply TOC changes to the repository"""
+        logger.info("Applying TOC changes to repository...")
+        
+        toc_path = working_dir_path / "TOC.yml"
+        
+        # The LLM should have returned the complete updated TOC content
+        updated_content = toc_results.get('content', '')
+        
+        if not updated_content:
+            logger.error("No TOC content to apply")
+            return
+        
+        # Write the updated TOC
+        write(toc_path, updated_content)
+        logger.info(f"Updated: TOC.yml")
+        
+        # Log which entries were added
+        entries_added = toc_results.get('entries_added', [])
+        if entries_added:
+            logger.info(f"Added {len(entries_added)} entries to TOC: {', '.join(entries_added)}")
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        result.toc_results = None
+        result.toc_ready = False 

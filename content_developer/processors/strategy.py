@@ -131,13 +131,13 @@ class ContentStrategyProcessor(SmartProcessor, StrategyDebugMixin, StrategyHelpe
     def _generate_intent_embedding(self, intent_text: str, cache: UnifiedCache, cache_key: str) -> List[float]:
         """Generate new intent embedding and cache it"""
         try:
-            response = self.client.embeddings.create(model="text-embedding-3-small", input=intent_text)
+            response = self.client.embeddings.create(model=self.config.embedding_model, input=intent_text)
             embedding = response.data[0].embedding
             
             # Store intent embedding with consistent structure
             intent_data = {
                 'embedding': embedding,
-                'embedding_model': 'text-embedding-3-small',
+                'embedding_model': self.config.embedding_model,
                 'embedding_generated_at': datetime.now().isoformat(),
                 'intent_text': intent_text,
                 'intent_text_preview': intent_text[:200]
@@ -258,7 +258,7 @@ class ContentStrategyProcessor(SmartProcessor, StrategyDebugMixin, StrategyHelpe
         """Generate new embedding using OpenAI API"""
         try:
             response = self.client.embeddings.create(
-                model="text-embedding-3-small",
+                model=self.config.embedding_model,
                 input=chunk.embedding_content[:8000]
             )
             embedding = response.data[0].embedding
@@ -284,7 +284,7 @@ class ContentStrategyProcessor(SmartProcessor, StrategyDebugMixin, StrategyHelpe
             if isinstance(chunk_data, dict):
                 # Update embedding fields
                 chunk_data['embedding'] = embedding
-                chunk_data['embedding_model'] = 'text-embedding-3-small'
+                chunk_data['embedding_model'] = self.config.embedding_model
                 chunk_data['embedding_generated_at'] = datetime.now().isoformat()
                 
                 # Update metadata
@@ -304,7 +304,7 @@ class ContentStrategyProcessor(SmartProcessor, StrategyDebugMixin, StrategyHelpe
         minimal_data = {
             'chunk_id': chunk.chunk_id,
             'embedding': embedding,
-            'embedding_model': 'text-embedding-3-small',
+            'embedding_model': self.config.embedding_model,
             'embedding_generated_at': datetime.now().isoformat(),
             'embedding_content': chunk.embedding_content,
             'file_path': chunk.file_path,
@@ -503,7 +503,7 @@ class ContentStrategyProcessor(SmartProcessor, StrategyDebugMixin, StrategyHelpe
         system = UNIFIED_CONTENT_STRATEGY_SYSTEM
         
         try:
-            result = self.llm_call(system, prompt, "gpt-4o")
+            result = self.llm_call(system, prompt)
             self.save_interaction(prompt, result, "content_strategy", "./llm_outputs/content_strategy")
             return ContentStrategy(
                 result.get('thinking', ''),

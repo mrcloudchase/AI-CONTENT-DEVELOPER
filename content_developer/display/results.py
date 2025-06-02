@@ -20,6 +20,9 @@ def display_results(result: Result):
     if result.generation_results:
         _display_generation_results(result.generation_results)
     
+    if result.toc_results:
+        _display_toc_results(result.toc_results)
+    
     _display_output_locations(result)
     _display_apply_reminder(result)
     _print_footer()
@@ -59,6 +62,7 @@ def _display_phase_status(result: Result):
     print(f"  ✅ Phase 1 - Repository Analysis: {'Complete' if result.directory_ready else 'Incomplete'}")
     print(f"  {'✅' if result.strategy_ready else '⏸️'} Phase 2 - Content Strategy: {'Complete' if result.strategy_ready else 'Incomplete'}")
     print(f"  {'✅' if result.generation_ready else '⏸️'} Phase 3 - Content Generation: {'Complete' if result.generation_ready else 'Incomplete'}")
+    print(f"  {'✅' if result.toc_ready else '⏸️'} Phase 4 - TOC Management: {'Complete' if result.toc_ready else 'Incomplete'}")
 
 
 def _display_strategy_summary(strategy):
@@ -167,6 +171,64 @@ def _display_output_locations(result: Result):
 
 def _display_apply_reminder(result: Result):
     """Display reminder about applying changes"""
-    if result.generation_ready and not result.generation_results.get('applied', False):
+    # Check if content generation is in preview mode
+    generation_preview = (result.generation_ready and 
+                         not result.generation_results.get('applied', False))
+    
+    # Check if TOC changes are in preview mode
+    toc_preview = (result.toc_ready and 
+                   result.toc_results.get('changes_made', False) and
+                   not result.toc_results.get('applied', False))
+    
+    if generation_preview or toc_preview:
         print(f"\n⚠️  Generated content is in preview mode!")
-        print(f"   To apply changes to the repository, run with --apply-changes flag") 
+        if generation_preview:
+            print(f"   • New/updated files are not applied")
+        if toc_preview:
+            print(f"   • TOC changes are not applied")
+        print(f"   To apply changes to the repository, run with --apply-changes flag")
+
+
+def _display_toc_results(toc_results: Dict):
+    """Display TOC management results"""
+    print(f"\n📑 TOC Management Results:")
+    print(f"  • Status: {toc_results.get('message', 'Unknown')}")
+    
+    if toc_results.get('changes_made'):
+        print(f"  • Changes Made: Yes")
+        
+        # Show if changes were applied
+        if toc_results.get('applied'):
+            print(f"  • Applied to Repository: ✅ Yes")
+        else:
+            print(f"  • Applied to Repository: ❌ No (preview mode)")
+        
+        # Show entries added
+        if entries_added := toc_results.get('entries_added', []):
+            print(f"  • Entries Added ({len(entries_added)}):")
+            for entry in entries_added[:5]:  # Show first 5
+                print(f"    - {entry}")
+            if len(entries_added) > 5:
+                print(f"    ... and {len(entries_added) - 5} more")
+        
+        # Show entries verified
+        if entries_verified := toc_results.get('entries_verified', []):
+            print(f"  • Entries Verified: {len(entries_verified)}")
+        
+        # Show preview path
+        if preview_path := toc_results.get('preview_path'):
+            print(f"  • TOC Preview: {preview_path}")
+    else:
+        print(f"  • Changes Made: No")
+        
+        # Show detailed error information if available
+        if error_details := toc_results.get('error_details'):
+            print(f"  • Error Details:\n{error_details}")
+        
+        # Show suggestion if available
+        if suggestion := toc_results.get('suggestion'):
+            print(f"  • ℹ️  Suggestion: {suggestion}")
+    
+    # Show any errors
+    if error := toc_results.get('error'):
+        print(f"  • ❌ Error: {error}") 

@@ -26,26 +26,34 @@ class SmartProcessor:
         """Abstract method to be implemented by subclasses"""
         raise NotImplementedError
     
-    def llm_call(self, system: str, user: str, model: str = "gpt-4o-mini") -> Dict:
+    def llm_call(self, system: str, user: str, model: str = None) -> Dict:
         """Make LLM API call with JSON response format"""
+        # Use configured completion model if not specified
+        if model is None:
+            model = self.config.completion_model
+            
         response = self.client.chat.completions.create(
             model=model,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user}
             ],
-            temperature=0.3,
+            temperature=self.config.temperature,
             response_format={"type": "json_object"}
         )
         return json.loads(response.choices[0].message.content)
     
     def _call_llm(self, messages: List[Dict[str, str]], 
-                  model: str = "gpt-4o", 
+                  model: str = None, 
                   response_format: Optional[str] = None) -> Dict:
         """Make LLM API call with messages format
         
         Used by generation processors for more control over conversation
         """
+        # Use configured model if not specified
+        if model is None:
+            model = self.config.completion_model
+            
         kwargs = self._build_llm_kwargs(messages, model, response_format)
         response = self.client.chat.completions.create(**kwargs)
         
@@ -57,7 +65,7 @@ class SmartProcessor:
         kwargs = {
             "model": model,
             "messages": messages,
-            "temperature": 0.3
+            "temperature": self.config.temperature
         }
         
         if response_format == "json_object":

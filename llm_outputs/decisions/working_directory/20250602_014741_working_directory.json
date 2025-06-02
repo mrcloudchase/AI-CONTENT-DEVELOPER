@@ -1,0 +1,12 @@
+{
+  "metadata": {
+    "timestamp": "2025-06-02T01:47:41.362386",
+    "operation": "working_directory"
+  },
+  "data": {
+    "thinking": "Step 1: I examined the repository structure and found that AKS-specific content is not organized under a dedicated 'aks' directory, but rather spread across related technology and service directories. Step 2: The materials context is focused on documenting Cilium integration with Azure CNI in Azure Kubernetes Service (AKS), emphasizing advanced networking, network policy enforcement, and observability\u2014core AKS networking topics. Step 3: I identified three candidate directories: 'articles/azure-arc/kubernetes', 'articles/azure-linux', and 'articles/container-registry'. Of these, 'articles/azure-arc/kubernetes' contains extensive Kubernetes-related documentation, including topics like networking, RBAC, extensions, and system requirements, and is the only directory with a strong focus on Kubernetes and AKS operational topics. Step 4: I verified that 'articles/azure-arc/kubernetes' exists exactly in the provided structure. Step 5: Given that Cilium for AKS is fundamentally about Kubernetes networking and the directory already contains similar conceptual and technical documentation, it is the optimal location for this content.",
+    "working_directory": "articles/azure-arc/kubernetes",
+    "justification": "This directory is dedicated to Kubernetes topics within Azure Arc, including AKS networking, extensions, and advanced configurations, making it the best fit for Cilium documentation as it relates to AKS networking enhancements.",
+    "confidence": 0.85
+  }
+}

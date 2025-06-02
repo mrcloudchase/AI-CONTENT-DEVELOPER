@@ -233,12 +233,27 @@ class ContentGenerator(SmartProcessor):
         create_success = sum(1 for result in create_results if result.get('success'))
         update_success = sum(1 for result in update_results if result.get('success'))
         
+        # Collect successfully created/updated file paths
+        created_files = [
+            result['action'].get('filename', '') 
+            for result in create_results 
+            if result.get('success') and result.get('action', {}).get('filename')
+        ]
+        
+        updated_files = [
+            result['action'].get('filename', '') 
+            for result in update_results 
+            if result.get('success') and result.get('action', {}).get('filename')
+        ]
+        
         logger.info(f"Content generation complete: {create_success}/{len(create_results)} created, "
                    f"{update_success}/{len(update_results)} updated")
         
         return {
             'create_results': create_results,
             'update_results': update_results,
+            'created_files': created_files,
+            'updated_files': updated_files,
             'summary': {
                 'total_actions': len(strategy.decisions),
                 'create_attempted': len(create_results),

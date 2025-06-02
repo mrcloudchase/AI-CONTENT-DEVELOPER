@@ -26,7 +26,7 @@ class DirectoryDetector(SmartProcessor):
         )
         system = DIRECTORY_SELECTION_SYSTEM
         
-        result = self.llm_call(system, prompt, "gpt-4o")
+        result = self.llm_call(system, prompt)
         
         # Validate the selected directory
         result = self._validate_directory_selection(result, repo_path)
