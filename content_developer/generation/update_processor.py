@@ -4,6 +4,8 @@ Update processor for modifying existing content
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional
+import re
+import json
 
 from ..models import DocumentChunk
 from ..utils import read, write, mkdir, extract_from_markdown_block
@@ -58,11 +60,49 @@ class UpdateContentProcessor(BaseContentProcessor):
         else:
             return self._create_error_result(action, "Failed to update content")
     
+    def _extract_content_type_from_document(self, content: str) -> Dict:
+        """Extract content type information from document frontmatter"""
+        # Extract frontmatter
+        frontmatter_match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+        if not frontmatter_match:
+            logger.warning("No frontmatter found in document")
+            return {'ms_topic': 'unknown', 'content_type': 'Unknown'}
+        
+        frontmatter = frontmatter_match.group(1)
+        
+        # Extract ms.topic
+        ms_topic_match = re.search(r'ms\.topic:\s*(\S+)', frontmatter)
+        ms_topic = ms_topic_match.group(1) if ms_topic_match else 'unknown'
+        
+        # Map ms.topic to content type
+        ms_topic_to_content_type = {
+            'overview': 'Overview',
+            'concept-article': 'Concept', 
+            'quickstart': 'Quickstart',
+            'how-to': 'How-To Guide',
+            'tutorial': 'Tutorial'
+        }
+        
+        content_type = ms_topic_to_content_type.get(ms_topic, 'Unknown')
+        
+        return {
+            'ms_topic': ms_topic,
+            'content_type': content_type
+        }
+    
     def _update_content(self, action: Dict, existing_content: str, 
                        materials: List[Dict], materials_content: Dict[str, str],
                        relevant_chunks: Dict[str, DocumentChunk],
                        chunks_with_context: Dict[str, Dict]) -> Optional[str]:
         """Generate updated content for the file"""
+        # Extract document content type
+        doc_info = self._extract_content_type_from_document(existing_content)
+        content_type = doc_info['content_type']
+        
+        # Load content standards and get content type info
+        content_standards = self._load_content_standards()
+        content_type_info = self._get_content_type_info(content_standards, content_type)
+        
         # Build context from relevant chunks
         chunk_context = self._build_chunk_context(relevant_chunks, chunks_with_context)
         
@@ -78,7 +118,9 @@ class UpdateContentProcessor(BaseContentProcessor):
             {
                 "role": "user",
                 "content": get_update_content_prompt(
-                    self.config, action, existing_content, material_context, chunk_context
+                    self.config, action, existing_content, material_context, chunk_context,
+                    content_type_info,  # Pass content type info
+                    content_standards   # Pass full standards for formatting
                 )
             }
         ]

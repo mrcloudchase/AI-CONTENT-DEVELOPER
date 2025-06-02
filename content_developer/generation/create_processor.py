@@ -65,9 +65,13 @@ class CreateContentProcessor(BaseContentProcessor):
                          reference_chunks_text: str, content_type_info: Dict,
                          filename: str) -> Dict:
         """Generate content using LLM"""
+        # Load full content standards
+        content_standards = self._load_content_standards()
+        
         # Get the prompt with all necessary information
         prompt = get_create_content_prompt(
-            self.config, action, materials_text, reference_chunks_text, content_type_info
+            self.config, action, materials_text, reference_chunks_text, content_type_info,
+            content_standards  # Pass full standards for formatting
         )
         
         # Call LLM for content generation
@@ -166,27 +170,4 @@ class CreateContentProcessor(BaseContentProcessor):
         preview_path = preview_dir / filename
         write(preview_path, content)
         
-        return preview_path
-    
-    def _load_content_standards(self) -> Dict:
-        """Load content standards from JSON file"""
-        standards_path = Path('content_standards.json')
-        if standards_path.exists():
-            try:
-                with open(standards_path, 'r') as f:
-                    return json.load(f)
-            except Exception as e:
-                logger.warning(f"Failed to load content standards: {e}")
-        return {}
-    
-    def _get_content_type_info(self, standards: Dict, content_type: str) -> Dict:
-        """Get content type information from standards"""
-        if not standards:
-            return {'name': content_type}
-        
-        content_types = standards.get('contentTypes', [])
-        for ct in content_types:
-            if ct.get('name') == content_type:
-                return ct
-        
-        return {'name': content_type} 
+        return preview_path 

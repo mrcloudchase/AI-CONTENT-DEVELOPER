@@ -222,4 +222,50 @@ def get_content_type_template(content_type: str, standards: Dict) -> str:
     for key, value in ct_info.get('frontMatter', {}).items():
         template += f"- {key}: {value}\n"
     
-    return template 
+    return template
+
+
+def format_microsoft_elements(content_standards: Dict) -> str:
+    """Format Microsoft-specific formatting elements for prompt inclusion"""
+    if not content_standards:
+        return ""
+    
+    formatting_elements = content_standards.get('formattingElements', [])
+    code_guidelines = content_standards.get('codeGuidelines', {})
+    
+    # Build formatting guide
+    lines = ["=== MICROSOFT DOCUMENTATION FORMATTING ===\n"]
+    
+    # Add special elements
+    lines.append("SPECIAL FORMATTING ELEMENTS:")
+    for element in formatting_elements:
+        lines.append(f"\n{element['name']}:")
+        lines.append(f"Format: {element['format']}")
+        if element['name'] in ['Note', 'Warning', 'Tip']:
+            lines.append(f"Use for: {element['name'].lower()} callouts that need reader attention")
+        elif element['name'] == 'Checklist':
+            lines.append("Use for: Tutorial objectives or feature lists")
+        elif element['name'] == 'Next step link':
+            lines.append("Use for: Prominent navigation to the next article in a series")
+    
+    # Add code language guidelines
+    lines.append("\n\nCODE BLOCK LANGUAGES:")
+    languages = code_guidelines.get('languages', [])
+    for lang in languages:
+        lines.append(f"- {lang['syntax']} - {lang['useFor']}")
+    
+    # Add common tab groups
+    tab_groups = content_standards.get('commonTabGroups', [])
+    if tab_groups:
+        lines.append("\n\nTAB GROUPS (for multiple approaches):")
+        lines.append("Format: #### [Tab Name](#tab/tab-id)")
+        lines.append("Common groups: Azure portal, Azure CLI, PowerShell, ARM template, Bicep")
+        lines.append("End with: ---")
+    
+    # Add security reminders
+    lines.append("\n\nSECURITY REQUIREMENTS:")
+    lines.append("- Use <placeholder-name> for all sensitive values")
+    lines.append("- NEVER include real credentials or secrets")
+    lines.append("- Show managed identity approaches when applicable")
+    
+    return "\n".join(lines) 

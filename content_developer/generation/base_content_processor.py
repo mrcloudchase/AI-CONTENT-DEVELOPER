@@ -4,10 +4,14 @@ Base class for content generation processors
 from abc import abstractmethod
 from pathlib import Path
 from typing import Dict, List, Optional
+import json
+import logging
 
 from ..models import DocumentChunk
 from ..processors.smart_processor import SmartProcessor
 from ..utils import write, mkdir
+
+logger = logging.getLogger(__name__)
 
 
 class BaseContentProcessor(SmartProcessor):
@@ -147,4 +151,64 @@ class BaseContentProcessor(SmartProcessor):
         """Check if materials contain reference documentation"""
         reference_keywords = ['api', 'reference', 'parameters', 'methods', 'properties']
         content_text = ' '.join(materials_content.values()).lower()
-        return any(keyword in content_text for keyword in reference_keywords) 
+        return any(keyword in content_text for keyword in reference_keywords)
+    
+    def _load_content_standards(self) -> Dict:
+        """Load content standards from JSON file"""
+        standards_path = Path('content_standards.json')
+        if standards_path.exists():
+            try:
+                with open(standards_path, 'r') as f:
+                    return json.load(f)
+            except Exception as e:
+                logger.warning(f"Failed to load content standards: {e}")
+        return {}
+    
+    def _get_content_type_info(self, standards: Dict, content_type: str) -> Dict:
+        """Get content type information from standards"""
+        if not standards:
+            return {'name': content_type}
+        
+        content_types = standards.get('contentTypes', [])
+        for ct in content_types:
+            if ct.get('name') == content_type:
+                return ct
+        
+        return {'name': content_type}
+    
+    def _create_gap_report(self, action: Dict, materials_content: Dict[str, str],
+                          relevant_chunks: Optional[Dict], error: str = None,
+                          additional_info: List[str] = None) -> Dict:
+        """Create a comprehensive gap report for missing information"""
+        gap_report = {
+            'requested_action': action.get('action', 'Unknown'),
+            'requested_file': action.get('filename', 'Unknown'),
+            'content_type': action.get('content_type', 'Unknown'),
+            'materials_provided': list(materials_content.keys()) if materials_content else [],
+            'has_relevant_chunks': bool(relevant_chunks),
+            'error': error,
+            'missing_information': [],
+            'recommendations': []
+        }
+        
+        # Check what's missing based on content type
+        content_type = action.get('content_type', '')
+        content_brief = action.get('content_brief', {})
+        
+        # Check for missing examples
+        if content_brief.get('code_examples_needed'):
+            has_examples = any('```' in content for content in materials_content.values())
+            if not has_examples:
+                gap_report['missing_information'].append("Code examples or configurations")
+                gap_report['recommendations'].append("Provide material with code samples")
+        
+        # Check for missing prerequisites
+        if content_brief.get('prerequisites_to_state'):
+            gap_report['missing_information'].append("Clear prerequisite information")
+            gap_report['recommendations'].append("Include setup or requirement details")
+        
+        # Add any additional info provided
+        if additional_info:
+            gap_report['missing_information'].extend(additional_info)
+        
+        return gap_report 

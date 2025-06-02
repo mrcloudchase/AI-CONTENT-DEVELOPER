@@ -1,0 +1,316 @@
+=== CONTENT_STRATEGY ===
+2025-06-01T20:21:01.691008
+==================================================
+
+Unified Content Strategy Analysis Task:
+
+CONTENT GOAL: document cilium for aks
+SERVICE AREA: aks
+TARGET AUDIENCE: platform engineers
+AUDIENCE LEVEL: intermediate
+
+USER MATERIALS ANALYSIS:
+• CiliumEndpointSlices in Azure CNI: This Product Requirement Document (PRD) outlines the integration of CiliumEndpointSlices with Azure CNI within Azure Kubernetes Service (AKS). The primary goal is to enhance networking capabilities, e
+• Azure CNI Powered by Cilium: This document serves as a comprehensive guide for configuring Azure CNI Powered by Cilium within Azure Kubernetes Service (AKS). It outlines the integration of Azure CNI's control plane with Cilium's 
+
+EXISTING CONTENT ANALYSIS:
+
+File: network-requirements.md
+Content Type: Concept (ms.topic: concept-article)
+Relevance: 0.89 - High coverage - existing content addresses most concepts
+Matched Sections: Azure Arc-enabled Kubernetes network requirements > Additional endpoints, Azure Arc-enabled Kubernetes network requirements, Azure Arc-enabled Kubernetes network requirements > Details
+
+File: identity-access-overview.md
+Content Type: Concept (ms.topic: concept-article)
+Relevance: 0.86 - High coverage - existing content addresses most concepts
+Matched Sections: Azure Arc-enabled Kubernetes identity and access overview > Next steps
+
+File: conceptual-agent-overview.md
+Content Type: Concept (ms.topic: concept-article)
+Relevance: 0.85 - High coverage - existing content addresses most concepts
+Matched Sections: Azure Arc-enabled Kubernetes agent overview
+
+File: conceptual-connectivity-modes.md
+Content Type: Concept (ms.topic: concept-article)
+Relevance: 0.84 - High coverage - existing content addresses most concepts
+Matched Sections: Azure Arc-enabled Kubernetes connectivity modes, Azure Arc-enabled Kubernetes connectivity modes > Next steps
+
+File: overview.md
+Content Type: Overview (ms.topic: overview)
+Relevance: 0.82 - High coverage - existing content addresses most concepts
+Matched Sections: What is Azure Arc-enabled Kubernetes? > Scenarios and enhanced functionality
+
+File: kubernetes-resource-view.md
+Content Type: How-To Guide (ms.topic: how-to)
+Relevance: 0.81 - High coverage - existing content addresses most concepts
+Matched Sections: Access Kubernetes resources from Azure portal > Next steps
+
+TOP RELEVANT CHUNKS (Individual chunks for reference):
+
+These are the most relevant individual content chunks from your repository:
+
+Chunk #1:
+  Chunk ID: c709fd41e335294afb792860f699adf246b88f1d0b86b791eb8624917b271ab4
+  File: network-requirements.md
+  Section: Azure Arc-enabled Kubernetes network requirements > Additional endpoints
+  Relevance Score: 0.900
+  Technologies: Azure, Kubernetes, Cluster
+  Preview: ## Additional endpoints  Depending on your scenario, you may need connectivity to other URLs, such as those used by the Azure portal, management tools...
+
+Chunk #2:
+  Chunk ID: 5e59d4cc634518b48e64efab299a16b5c01385fcfcbf5f1b19223bee516d6e51
+  File: network-requirements.md
+  Section: Azure Arc-enabled Kubernetes network requirements
+  Relevance Score: 0.880
+  Technologies: Azure, Kubernetes, Cluster
+  Preview: # Azure Arc-enabled Kubernetes network requirements  This topic describes the networking requirements for connecting a Kubernetes cluster to Azure Arc...
+
+Chunk #3:
+  Chunk ID: dfe4fb394fd849aa9235530ecc30fb0f3e5835622bf560f5f5bc9520bf1e1a71
+  File: network-requirements.md
+  Section: Azure Arc-enabled Kubernetes network requirements > Details
+  Relevance Score: 0.860
+  Technologies: Azure, Kubernetes, Cluster
+  Preview: ## Details  [!INCLUDE [network-requirement-principles](../includes/network-requirement-principles.md)]  [!INCLUDE [network-requirements](includes/netw...
+
+Chunk #4:
+  Chunk ID: dc966e6199d0a8337b0613726f03233056c4f15bf721003cb345a206dbcbc119
+  File: network-requirements.md
+  Section: Azure Arc-enabled Kubernetes network requirements > Next steps
+  Relevance Score: 0.840
+  Technologies: Azure, Kubernetes, Cluster
+  Preview: ## Next steps  - Understand [system requirements for Arc-enabled Kubernetes](system-requirements.md). - Use our [quickstart](quickstart-connect-cluste...
+
+Chunk #5:
+  Chunk ID: b67d9cc30eec41badadda6d266343302e64d6faadd45d4e46577484c706c83ad
+  File: identity-access-overview.md
+  Section: Azure Arc-enabled Kubernetes identity and access overview > Next steps
+  Relevance Score: 0.820
+  Technologies: Azure, Kubernetes, Cluster
+  Preview: ## Next steps  - Learn more about [Azure Microsoft Entra ID](/azure/active-directory/fundamentals/active-directory-whatis) and [Azure role-based acces...
+
+Chunk #6:
+  Chunk ID: 72fabda30a5c10eafd564af5091b681dd5d08365cbd794b8e18ecaf8edcbc56d
+  File: conceptual-agent-overview.md
+  Section: Azure Arc-enabled Kubernetes agent overview
+  Relevance Score: 0.800
+  Technologies: Azure, Kubernetes, Cluster
+  Preview: # Azure Arc-enabled Kubernetes agent overview  [Azure Arc-enabled Kubernetes](overview.md) provides a centralized, consistent control plane to manage ...
+
+Chunk #7:
+  Chunk ID: 77b43e1dc18bbb0fdab37a758edb3f257f30c46a7efa23d7051471925f5a6b72
+  File: conceptual-connectivity-modes.md
+  Section: Azure Arc-enabled Kubernetes connectivity modes
+  Relevance Score: 0.780
+  Technologies: Azure, Kubernetes, Cluster
+  Preview: # Azure Arc-enabled Kubernetes connectivity modes  Azure Arc-enabled Kubernetes requires deployment of Azure Arc agents on your Kubernetes clusters so...
+
+Chunk #8:
+  Chunk ID: d9d519efaab876e02e8e6faa35116042b714cb3e27be86b0d9d5d0db665d5002
+  File: conceptual-connectivity-modes.md
+  Section: Azure Arc-enabled Kubernetes connectivity modes > Next steps
+  Relevance Score: 0.760
+  Technologies: Azure, Kubernetes, Cluster
+  Preview: ## Next steps  - Walk through our quickstart to [connect a Kubernetes cluster to Azure Arc](./quickstart-connect-cluster.md). - Learn more about creat...
+
+Chunk #9:
+  Chunk ID: 924931d65129ea00e5887cf99867067ec6f1c419aed00ee065884468dfb44ea1
+  File: overview.md
+  Section: What is Azure Arc-enabled Kubernetes? > Scenarios and enhanced functionality
+  Relevance Score: 0.740
+  Technologies: Azure, Kubernetes, Container, Cluster, Service Mesh
+  Preview: ## Scenarios and enhanced functionality  Once your Kubernetes clusters are connected to Azure, at scale you can:  * View all connected Kubernetes clus...
+
+Chunk #10:
+  Chunk ID: ff5765674fad401681d3ba32031ab51f7ee9f9d02cf675abd23260cd76be4e67
+  File: kubernetes-resource-view.md
+  Section: Access Kubernetes resources from Azure portal > Next steps
+  Relevance Score: 0.720
+  Technologies: Azure, Kubernetes, Container, Cluster, Node
+  Preview: ## Next steps  - Learn how to [deploy Azure Monitor for containers](/azure/azure-monitor/containers/container-insights-enable-arc-enabled-clusters?toc...
+
+CONTENT CLUSTERS (Topic groupings for gap analysis):
+
+Existing content is organized into these main topics:
+
+📁 Azure Arc-enabled Kubernetes network requirements (4 chunks)
+  - network-requirements.md > Azure Arc-enabled Kubernetes network requirements > Additional endpoints
+    Chunk ID: c709fd41e335294afb792860f699adf246b88f1d0b86b791eb8624917b271ab4
+  - network-requirements.md > Azure Arc-enabled Kubernetes network requirements
+    Chunk ID: 5e59d4cc634518b48e64efab299a16b5c01385fcfcbf5f1b19223bee516d6e51
+  - network-requirements.md > Azure Arc-enabled Kubernetes network requirements > Details
+    Chunk ID: dfe4fb394fd849aa9235530ecc30fb0f3e5835622bf560f5f5bc9520bf1e1a71
+  ... and 1 more chunks
+
+📁 Azure Arc-enabled Kubernetes connectivity modes (2 chunks)
+  - conceptual-connectivity-modes.md > Azure Arc-enabled Kubernetes connectivity modes
+    Chunk ID: 77b43e1dc18bbb0fdab37a758edb3f257f30c46a7efa23d7051471925f5a6b72
+  - conceptual-connectivity-modes.md > Azure Arc-enabled Kubernetes connectivity modes > Next steps
+    Chunk ID: d9d519efaab876e02e8e6faa35116042b714cb3e27be86b0d9d5d0db665d5002
+
+📁 Azure Arc-enabled Kubernetes identity and access overview (1 chunks)
+  - identity-access-overview.md > Azure Arc-enabled Kubernetes identity and access overview > Next steps
+    Chunk ID: b67d9cc30eec41badadda6d266343302e64d6faadd45d4e46577484c706c83ad
+
+📁 Azure Arc-enabled Kubernetes agent overview (1 chunks)
+  - conceptual-agent-overview.md > Azure Arc-enabled Kubernetes agent overview
+    Chunk ID: 72fabda30a5c10eafd564af5091b681dd5d08365cbd794b8e18ecaf8edcbc56d
+
+📁 What is Azure Arc-enabled Kubernetes? (1 chunks)
+  - overview.md > What is Azure Arc-enabled Kubernetes? > Scenarios and enhanced functionality
+    Chunk ID: 924931d65129ea00e5887cf99867067ec6f1c419aed00ee065884468dfb44ea1
+
+📁 Access Kubernetes resources from Azure portal (1 chunks)
+  - kubernetes-resource-view.md > Access Kubernetes resources from Azure portal > Next steps
+    Chunk ID: ff5765674fad401681d3ba32031ab51f7ee9f9d02cf675abd23260cd76be4e67
+
+COVERAGE SUMMARY: 6 topics, 10 total chunks
+
+AVAILABLE CONTENT TYPES:
+- **Overview** (ms.topic: overview)
+  Purpose: For new customers. To explain the service, technology, or functionality from a technical point of view. It isn't intended to define benefits or value prop; that would be in marketing content.
+  Use when: An article explaining the service from a technical point of view. And/or an article comparing features across related services/projects.
+- **Concept** (ms.topic: concept-article)
+  Purpose: When you want to: - explain what something is and define its critical functions - describe how something works or what happens when something is done - provide guidelines for completing a job task in varied situations.
+  Use when: In-depth explanation of functionality related to a service(s) that are fundamental to understanding and use.
+- **Quickstart** (ms.topic: quickstart)
+  Purpose: When you can get the service, technology, or functionality into the hands of new customers in less than 10 minutes. Quickstarts are preferred, but not required if no meaningful functionality can be introduced to new users in under 10 minutes.
+  Use when: Fundamental day-1 instructions for new customers to quickly try out a specific product/service. The focus is on getting the product/service into the hands of customers so they can use it in their production environment.
+- **How-To Guide** (ms.topic: how-to)
+  Purpose: To provide the steps for completing a task. To help customers complete tasks in their own environment. How-to guides differ from tutorials in that they can include optional information, explanations, and information to help inform decisions.
+  Use when: Procedural articles that show the customer how to complete a task.
+- **Tutorial** (ms.topic: tutorial)
+  Purpose: To show the single best procedure for completing a customer task.
+  Use when: Scenario-based procedures for top customer tasks. The focus is on showing the customer how to do the task, not on helping them set up their own environment.
+
+TASK: Perform comprehensive gap analysis and generate content strategy with specific actions.
+
+AUDIENCE CONSIDERATIONS:
+- Target readers: platform engineers
+- Technical depth: intermediate level
+- Beginner: Include prerequisites, detailed explanations, basic concepts
+- Intermediate: Balance explanation with technical detail
+- Advanced: Focus on implementation, optimization, and edge cases
+
+ANALYSIS REQUIREMENTS:
+1. GAP ANALYSIS: Compare user materials against existing content considering:
+   - Content type mismatches (need how-to but only have overview)
+   - Coverage depth (surface mention vs comprehensive coverage)
+   - Missing features or concepts from materials
+   
+2. DECISION FRAMEWORK:
+   - If coverage < 30% OR wrong content type exists → CREATE new content
+   - If coverage 30-70% AND same content type needed → UPDATE with additions
+   - If coverage > 70% but missing key details → UPDATE with specific sections
+   
+3. FOR CREATE ACTIONS:
+   - Select appropriate content type based on user materials and goal
+   - Reference specific chunk_ids from TOP RELEVANT CHUNKS section
+   - Specify exact filename and comprehensive reason
+   - Create detailed content_brief with:
+     * Clear objective stating what reader will accomplish
+     * Specific topics from materials that must be covered
+     * Prerequisites based on existing content analysis
+     * Related docs from the repository to reference
+     * Logical next steps based on content progression
+     * Technical depth guidance based on audience level
+     * Specific examples from materials to include
+   
+4. FOR UPDATE ACTIONS:
+   - Identify current content type from ms.topic
+   - Specify exact sections/information to add
+   - Reference specific chunk_ids that show where to add content
+   - Provide specific change description
+   - Create detailed content_brief with:
+     * Update objective explaining the gap being filled
+     * Specific sections to add with placement guidance
+     * Sections to modify with clear preservation instructions
+     * New examples from materials to incorporate
+     * Additional links to connect updated content
+     * Style consistency requirements
+
+5. RELEVANT CHUNKS: Use ONLY chunk_ids from the provided TOP RELEVANT CHUNKS or from file's relevant_chunks
+
+OUTPUT FORMAT:
+{
+  "thinking": "Document your complete analysis process including gap identification, content type considerations, and decision rationale",
+  "decisions": [
+    {
+      "action": "CREATE",
+      "filename": "specific-name.md",
+      "content_type": "How-To Guide",
+      "ms_topic": "how-to",
+      "reason": "Detailed explanation of why this content is needed",
+      "priority": "high|medium|low",
+      "relevant_chunks": ["chunk_id_from_top_chunks", "another_chunk_id"],
+      "content_brief": {
+        "objective": "Clear statement of what the reader will achieve",
+        "key_points_to_cover": [
+          "Main topic or feature to explain",
+          "Important configuration or setup steps",
+          "Best practices or optimization tips"
+        ],
+        "prerequisites_to_state": [
+          "Required knowledge or setup",
+          "Tools or access needed"
+        ],
+        "related_docs_to_reference": [
+          "Path to prerequisite content",
+          "Path to related topics"
+        ],
+        "next_steps_to_suggest": [
+          "What reader might do next",
+          "Advanced topics to explore"
+        ],
+        "technical_depth": "Specific guidance on how deep to go technically",
+        "code_examples_needed": [
+          "Example commands or configurations",
+          "Sample outputs to show"
+        ],
+        "important_warnings": [
+          "Security considerations",
+          "Common pitfalls to highlight"
+        ]
+      }
+    },
+    {
+      "action": "UPDATE", 
+      "filename": "existing-file.md",
+      "current_content_type": "Overview",
+      "ms_topic": "overview",
+      "change_description": "Add new section 'Cilium Integration' after 'Network Plugins'",
+      "specific_sections": ["Cilium Benefits", "Architecture Overview"],
+      "reason": "Detailed explanation of what's missing",
+      "priority": "high|medium|low",
+      "relevant_chunks": ["chunk_id_from_that_file", "another_relevant_chunk_id"],
+      "content_brief": {
+        "update_objective": "What gap this update fills",
+        "sections_to_add": [
+          {
+            "section_name": "Section Title",
+            "content_focus": "What this section should cover",
+            "placement": "Where in document (after X section)"
+          }
+        ],
+        "sections_to_modify": [
+          {
+            "section_name": "Existing Section",
+            "modifications": "What to add or change",
+            "preserve": "What to keep unchanged"
+          }
+        ],
+        "new_examples_to_add": [
+          "Specific code or configuration examples"
+        ],
+        "links_to_add": [
+          "New related content to reference"
+        ],
+        "maintain_style": "Keep consistent with existing document tone and depth"
+      }
+    }
+  ],
+  "confidence": 0.85,
+  "summary": "Brief summary of overall strategy"
+}
+
+CRITICAL: Use ONLY real chunk_ids provided in the analysis above. Do NOT invent chunk identifiers. Return only valid JSON matching the exact format specified above.

@@ -19,6 +19,9 @@ This topic describes the networking requirements for connecting a Kubernetes clu
 
 [!INCLUDE [network-requirements](includes/network-requirements.md)]
 
+> [!NOTE]
+> When integrating Cilium with Azure CNI, ensure that your network configuration meets the specific requirements for CiliumEndpointSlices, including necessary connectivity for Azure Monitor and Log Analytics.
+
 ## Additional endpoints
 
 Depending on your scenario, you may need connectivity to other URLs, such as those used by the Azure portal, management tools, or other Azure services. In particular, review these lists to ensure that you allow connectivity to any necessary endpoints:
@@ -28,19 +31,39 @@ Depending on your scenario, you may need connectivity to other URLs, such as tho
 
 For a complete list of network requirements for Azure Arc features and Azure Arc-enabled services, see [Azure Arc network requirements](../network-requirements-consolidated.md).
 
-
-## Cilium Integration with Azure CNI
-
-Azure Kubernetes Service (AKS) now supports CiliumEndpointSlices with Azure CNI by Cilium, enhancing networking capabilities with dynamic endpoint management and advanced network policy enforcement. This integration allows for:
-
-- Dynamic grouping of service endpoints for rapid service discovery.
-- Utilization of Cilium’s native network policy engine for granular security rules.
-- Enhanced observability through Azure Monitor and Cilium tools.
-- Configurability during cluster provisioning via Azure Portal, CLI, and APIs.
-
-For more details on configuring Azure CNI powered by Cilium, refer to the [Azure CNI Powered by Cilium Configuration Guide](https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium).
 ## Next steps
 
 - Understand [system requirements for Arc-enabled Kubernetes](system-requirements.md).
 - Use our [quickstart](quickstart-connect-cluster.md) to connect your cluster.
 - Review [frequently asked questions](faq.md) about Arc-enabled Kubernetes.
+
+
+## Cilium Integration
+
+Cilium integrates with Azure CNI to enhance networking capabilities in Azure Kubernetes Service (AKS). This integration leverages Cilium's dynamic endpoint management and advanced network policy enforcement to provide several architectural benefits:
+
+- **Dynamic Endpoint Management**: CiliumEndpointSlices allow for automatic grouping and management of pod endpoints, resulting in faster service discovery and efficient load balancing.
+- **Advanced Network Policies**: Cilium's rich policy language enables fine-grained security policies across dynamic endpoint slices, aligning with enterprise compliance requirements.
+- **Improved Observability**: Integration with Azure Monitor and Cilium observability tools provides detailed logging, metrics, and diagnostic information, facilitating proactive troubleshooting and performance tuning.
+- **Operational Efficiency**: The integration reduces operational overhead by providing a seamless configuration experience via Azure Portal, CLI, and APIs.
+
+For practical implementation steps, refer to the [Cilium AKS How-To Guide](cilium-aks-how-to-guide.md).
+
+```yaml
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: "example-policy"
+spec:
+  endpointSelector:
+    matchLabels:
+      app: "my-app"
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: "frontend"
+    toPorts:
+    - ports:
+      - port: "80"
+        protocol: "TCP"
+```

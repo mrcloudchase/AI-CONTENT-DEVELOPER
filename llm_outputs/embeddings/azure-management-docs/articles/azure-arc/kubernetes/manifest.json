@@ -10058,15 +10058,14 @@
   },
   "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md": {
     "type": "file",
-    "hash": "41904d48dc13159796fcdba5a1ac229f0c5378da366d9bc341ea6e7e197d3447",
+    "hash": "f77d8dd10646b97c9c052c2e3381be09834e683cf1f4e3f28914007caa9ab30f",
     "chunk_ids": [
-      "b68ac6f0644bc17cfeaf40409b15fd470897e0a0db7203149377b3ef9c43ac6e",
-      "fb57c351d7028104c0bf3ab2fec527f229fda0e756c063e0d5aa86a3c6fd4502",
-      "193bb91209b44a8f40d3ab06d6bde6171e4f881b1dfa8b49458b48755e2d8673",
-      "60fc9f0909f062f8d2d690aaa9d1b59613e6bc1caec72b5011a1eb6b4644ee6d",
-      "3af33b67f1ecaa2b7e8ac26f70ec08aa7a2019c16b3dd87bba94f184f07f127e"
+      "5e59d4cc634518b48e64efab299a16b5c01385fcfcbf5f1b19223bee516d6e51",
+      "dfe4fb394fd849aa9235530ecc30fb0f3e5835622bf560f5f5bc9520bf1e1a71",
+      "c709fd41e335294afb792860f699adf246b88f1d0b86b791eb8624917b271ab4",
+      "dc966e6199d0a8337b0613726f03233056c4f15bf721003cb345a206dbcbc119"
     ],
-    "chunk_count": 5
+    "chunk_count": 4
   },
   "f77cce67a96561744bf1f6b6abcc3b29cef3561d4c33e224dcf13b765993de82": {
     "timestamp": "2025-06-01T16:24:14.254014",
@@ -11241,92 +11240,31 @@
       "text_preview": "Goal: document cilium for aks | Service: aks | Topics: CiliumEndpointSlices in AKS, Azure CNI Powere"
     }
   },
-  "b68ac6f0644bc17cfeaf40409b15fd470897e0a0db7203149377b3ef9c43ac6e": {
-    "timestamp": "2025-06-01T19:13:03.007703",
-    "meta": {
-      "type": "chunk",
-      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md",
-      "section": [
-        "Azure Arc-enabled Kubernetes network requirements"
-      ],
-      "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:13:02.999685"
-    }
-  },
-  "fb57c351d7028104c0bf3ab2fec527f229fda0e756c063e0d5aa86a3c6fd4502": {
-    "timestamp": "2025-06-01T19:13:03.383045",
-    "meta": {
-      "type": "chunk",
-      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md",
-      "section": [
-        "Azure Arc-enabled Kubernetes network requirements",
-        "Details"
-      ],
-      "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:13:03.374526"
-    }
-  },
-  "193bb91209b44a8f40d3ab06d6bde6171e4f881b1dfa8b49458b48755e2d8673": {
-    "timestamp": "2025-06-01T19:13:04.032107",
-    "meta": {
-      "type": "chunk",
-      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md",
-      "section": [
-        "Azure Arc-enabled Kubernetes network requirements",
-        "Additional endpoints"
-      ],
-      "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:13:04.023394"
-    }
-  },
-  "60fc9f0909f062f8d2d690aaa9d1b59613e6bc1caec72b5011a1eb6b4644ee6d": {
-    "timestamp": "2025-06-01T19:13:04.339592",
-    "meta": {
-      "type": "chunk",
-      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md",
-      "section": [
-        "Azure Arc-enabled Kubernetes network requirements",
-        "Cilium Integration with Azure CNI"
-      ],
-      "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:13:04.331673"
-    }
-  },
-  "3af33b67f1ecaa2b7e8ac26f70ec08aa7a2019c16b3dd87bba94f184f07f127e": {
-    "timestamp": "2025-06-01T19:13:04.645712",
-    "meta": {
-      "type": "chunk",
-      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md",
-      "section": [
-        "Azure Arc-enabled Kubernetes network requirements",
-        "Next steps"
-      ],
-      "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:13:04.637716"
-    }
-  },
   "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md": {
     "type": "file",
-    "hash": "6d1ae9cfd9291511de21c17cb3ebe2a86a56fb1cf4f83f5096c7b4cf4aacbf85",
+    "hash": "1aa18dd38e79a85aa687ca35d19baf7e0bf1ced0ae826e8f82bb32cb549e11f7",
     "chunk_ids": [
-      "0d0a41ada82927ae9b75ac6835df001d814bf7de90bf91ace1c8b06d5df0a80b",
-      "1d60fa16a36679b95abe8d89a59057a398a4ea2e0daeda3cb0ef25e4f2b66fbb",
-      "ef2957d5e8db6c988be2fbbfba812e1680dc7d3d8fbacfa551c988b7f9b95abf",
-      "f923f8680a44e5a9073858571d869de58610e048210aa2e232910d79fb6ce9ba",
-      "750727707fcc4040846f40889b623289778cd73bbc04263e4271087b40490fa3",
-      "0e4a63b1eeff47dfd85f1513c7b5ef6458c13532f5b45632410934de3e62ecc9",
-      "68216b9d8dc4e1b37b2f5993575320d26cb1b508dde54aa52f5bafb6c79aa93f",
-      "6bcbc9662b27ce4032c141b9693125ba6ae07b3cc75ab1d5447fbba001aa35e4",
-      "7d2223191537c0261add2cda53b69ac394321f9fdd249c269ba3810923c4c6f4",
-      "78dfcf76475ce2d4f922a0d3604c3f96fe18486ccbfd76642b9973b51a692546",
-      "21010c48fd29fa36d95494abf3faf064709f63a01d6651b32992826e17f01908",
-      "b0a1f19a50cbbae22ff22d96608a25833001af4c56448e76e4f72d4a465480cc",
-      "e5f1aa644868b858ed1893d9928cd82634aff4903cc29f45a99d581721ce6a13",
-      "7ec180443d50610c84fa89c9a218f738cd2398bc73c7e9680dcf2f5b333ed729",
-      "4a2ffcfde8faaea277933516656e888c57e6308942baf43e2f327cce07752d8a",
-      "3f26ddbe9ae49b2aa44188a0618cf6dd75edeb186adeb3e0659eea95a79e0987"
+      "2bad8360bd98ee032076dcead55aeaee4dff76efc62a4c601147e415dc6d10a1",
+      "8ed2bcf388565692a79520f8eb1b4aac9409f72b5f62fa089e993f0ddacb8fbe",
+      "0bc91d844a0c5cca22cf5a7aeddaa8973a5db24d14469296f36ac9e4e80c1587",
+      "af3dd91d55a19ac64f4f2a4ceed1822fcfc5d576e02eb0cb5e9367893bb4e793",
+      "d0c32629b834f643b64b01a2f2b9a4af33189565abc3266373a02767a3f89c13",
+      "5f9500fa0664eca9524fcadd525472429133ef4bf056ff3d7382c4f4549eb205",
+      "f8bc36167794e870d253b9ab6003e1453b6196993ca5271ea2576d2849854cea",
+      "be439278a34fced714f88834975d5db9169c1ebdb42796c7cd40ed12a6718867",
+      "5d9b6f63ffc324b7cdbbcc4ed298520f749a996bc0eed4d9fb545d8461bc39ee",
+      "60bd89870aab914bf011309ea4f3543482a846f10ea2b886c7d5ae55b8426e11",
+      "a7689e799dcbd591f8f74e6bc65b392ff79bb1d055182a28007fb6443d7cdee9",
+      "29e8d865e960323b42f36044ded7d9d5afbf87c6eb14e9fedd579deed1305b68",
+      "b0c8d8fb5b9f0a237bb0548136a806c63e36ae27cc4e7353733b6a22b12ffa95",
+      "6010e7ba46caa7d55a38a9d34834e1596c9237ce4fcf995882f1fe8da4c14989",
+      "162ea47836b7cb2d4f9d28956b90e17ed0b8508f4c4f4eae835975be97112c57",
+      "7cca6f4bd40891e92dfe29959303ec1580a2107f73b64522c745bb595fc4db98",
+      "cc573b415f076d5dc416b003e4315fcd763397092038372456b2ca137029adf8",
+      "a0870aaf466e320326ff19ae43458b20a4a7aaa8e973e149de78a298438c623f",
+      "1d33b67ba1ac854827e3ad6fa062e58ac149fc277bf03439a7bcd9ca5a776f8c"
     ],
-    "chunk_count": 16
+    "chunk_count": 19
   },
   "8375d0f45801717ddbda576bf37eb5b8fa03e22e34c880a08b9bccf55997dc1a": {
     "timestamp": "2025-06-01T19:13:02.258311",
@@ -11335,8 +11273,34 @@
       "text_preview": "Goal: document cilium for aks | Service: aks | Topics: Cilium Integration in AKS, Azure CNI Powered "
     }
   },
-  "0d0a41ada82927ae9b75ac6835df001d814bf7de90bf91ace1c8b06d5df0a80b": {
-    "timestamp": "2025-06-01T19:15:39.513145",
+  "738a02a54680fac34f5d74a3fb0f42ae6abe47bc3497bf6354f056e0d05d34e3": {
+    "timestamp": "2025-06-01T19:15:39.127798",
+    "meta": {
+      "type": "intent",
+      "text_preview": "Goal: document cilium for aks | Service: aks | Topics: Cilium Integration with AKS, Azure CNI Powere"
+    }
+  },
+  "ac52711fb6892cc1a01fb8c87498e839f0b1a8e743b388070a0a53a3afea17df": {
+    "timestamp": "2025-06-01T19:46:06.138810",
+    "meta": {
+      "type": "intent",
+      "text_preview": "Goal: document cilium for aks | Service: aks | Topics: CiliumEndpointSlices Integration in AKS, Azur"
+    }
+  },
+  "677a16bf85bfc99027840ebcd93fd1de6dac5ed98296158618d9078c7d1f14fe": {
+    "timestamp": "2025-06-01T19:58:23.327003",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-advanced-concepts.md",
+      "section": [
+        "Advanced Concepts of Cilium and Azure CNI Integration in AKS"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:23.320075"
+    }
+  },
+  "2bad8360bd98ee032076dcead55aeaee4dff76efc62a4c601147e415dc6d10a1": {
+    "timestamp": "2025-06-01T19:58:26.243725",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11344,11 +11308,24 @@
         "Configure Cilium with Azure CNI in AKS"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:39.508436"
+      "embedding_updated_at": "2025-06-01T19:58:26.235845"
     }
   },
-  "1d60fa16a36679b95abe8d89a59057a398a4ea2e0daeda3cb0ef25e4f2b66fbb": {
-    "timestamp": "2025-06-01T19:15:39.748841",
+  "0204471b3f41291259ddcd5e757509d4fc0933b77853542cf34a056d23185dcc": {
+    "timestamp": "2025-06-01T19:58:23.736221",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-advanced-concepts.md",
+      "section": [
+        "Advanced Concepts of Cilium and Azure CNI Integration in AKS",
+        "Introduction"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:23.727943"
+    }
+  },
+  "8ed2bcf388565692a79520f8eb1b4aac9409f72b5f62fa089e993f0ddacb8fbe": {
+    "timestamp": "2025-06-01T19:58:26.450598",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11357,11 +11334,24 @@
         "Introduction"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:39.743342"
+      "embedding_updated_at": "2025-06-01T19:58:26.442727"
     }
   },
-  "ef2957d5e8db6c988be2fbbfba812e1680dc7d3d8fbacfa551c988b7f9b95abf": {
-    "timestamp": "2025-06-01T19:15:39.955473",
+  "6303b596236ef48cb7aa2c94bc24da14ffad2d032fe6ea1b06d51637653b5bc6": {
+    "timestamp": "2025-06-01T19:58:23.967691",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-advanced-concepts.md",
+      "section": [
+        "Advanced Concepts of Cilium and Azure CNI Integration in AKS",
+        "Prerequisites"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:23.960420"
+    }
+  },
+  "0bc91d844a0c5cca22cf5a7aeddaa8973a5db24d14469296f36ac9e4e80c1587": {
+    "timestamp": "2025-06-01T19:58:26.892647",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11370,11 +11360,24 @@
         "Prerequisites"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:39.947296"
+      "embedding_updated_at": "2025-06-01T19:58:26.884727"
     }
   },
-  "f923f8680a44e5a9073858571d869de58610e048210aa2e232910d79fb6ce9ba": {
-    "timestamp": "2025-06-01T19:15:40.190209",
+  "a47df2eab0570cfe3dbe2a4ecce9831f6c3adea952e4d300be24bc05d8f1c2a3": {
+    "timestamp": "2025-06-01T19:58:24.155885",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-advanced-concepts.md",
+      "section": [
+        "Advanced Concepts of Cilium and Azure CNI Integration in AKS",
+        "Overview of eBPF Technology"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:24.152524"
+    }
+  },
+  "af3dd91d55a19ac64f4f2a4ceed1822fcfc5d576e02eb0cb5e9367893bb4e793": {
+    "timestamp": "2025-06-01T19:58:27.122359",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11383,11 +11386,24 @@
         "Steps"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:40.181253"
+      "embedding_updated_at": "2025-06-01T19:58:27.114067"
     }
   },
-  "750727707fcc4040846f40889b623289778cd73bbc04263e4271087b40490fa3": {
-    "timestamp": "2025-06-01T19:15:40.432939",
+  "5c1c8de148a7542289a1741f158456090566e0d8ea42128823e9ca3eb7a0e5f0": {
+    "timestamp": "2025-06-01T19:58:24.460927",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-advanced-concepts.md",
+      "section": [
+        "Advanced Concepts of Cilium and Azure CNI Integration in AKS",
+        "Integration of Cilium with Azure CNI"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:24.452286"
+    }
+  },
+  "d0c32629b834f643b64b01a2f2b9a4af33189565abc3266373a02767a3f89c13": {
+    "timestamp": "2025-06-01T19:58:27.478980",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11397,11 +11413,25 @@
         "Step 1: Choose a Network Model"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:40.424814"
+      "embedding_updated_at": "2025-06-01T19:58:27.469854"
     }
   },
-  "0e4a63b1eeff47dfd85f1513c7b5ef6458c13532f5b45632410934de3e62ecc9": {
-    "timestamp": "2025-06-01T19:15:40.655789",
+  "17064759e6b80b792170fe89a02dbc7f2f103657b96e9cea72a22631c54ec8cf": {
+    "timestamp": "2025-06-01T19:58:24.700152",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-advanced-concepts.md",
+      "section": [
+        "Advanced Concepts of Cilium and Azure CNI Integration in AKS",
+        "Integration of Cilium with Azure CNI",
+        "Advanced Network Policy Configurations"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:24.691904"
+    }
+  },
+  "5f9500fa0664eca9524fcadd525472429133ef4bf056ff3d7382c4f4549eb205": {
+    "timestamp": "2025-06-01T19:58:27.874282",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11411,11 +11441,24 @@
         "Step 2: Create a Resource Group and Virtual Network (if using Virtual Network)"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:40.648217"
+      "embedding_updated_at": "2025-06-01T19:58:27.864788"
     }
   },
-  "68216b9d8dc4e1b37b2f5993575320d26cb1b508dde54aa52f5bafb6c79aa93f": {
-    "timestamp": "2025-06-01T19:15:40.976917",
+  "c5d7b937657f24f160d04d9575d20b567652c8c03dd02537624ef06fc1ad1502": {
+    "timestamp": "2025-06-01T19:58:24.900717",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-advanced-concepts.md",
+      "section": [
+        "Advanced Concepts of Cilium and Azure CNI Integration in AKS",
+        "Code Examples"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:24.891959"
+    }
+  },
+  "f8bc36167794e870d253b9ab6003e1453b6196993ca5271ea2576d2849854cea": {
+    "timestamp": "2025-06-01T19:58:28.208000",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11423,11 +11466,25 @@
         "Create the resource group"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:40.968561"
+      "embedding_updated_at": "2025-06-01T19:58:28.200118"
     }
   },
-  "6bcbc9662b27ce4032c141b9693125ba6ae07b3cc75ab1d5447fbba001aa35e4": {
-    "timestamp": "2025-06-01T19:15:41.175352",
+  "70d9cd534136e636e44e53e21fe8b61a3434e346f079aabf3d966804cc130684": {
+    "timestamp": "2025-06-01T19:58:25.269707",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-advanced-concepts.md",
+      "section": [
+        "Advanced Concepts of Cilium and Azure CNI Integration in AKS",
+        "Code Examples",
+        "eBPF-based Network Policy Configuration"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:25.261437"
+    }
+  },
+  "be439278a34fced714f88834975d5db9169c1ebdb42796c7cd40ed12a6718867": {
+    "timestamp": "2025-06-01T19:58:28.656904",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11435,11 +11492,24 @@
         "Create a virtual network with a subnet for nodes and a subnet for pods"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:41.167016"
+      "embedding_updated_at": "2025-06-01T19:58:28.648307"
     }
   },
-  "7d2223191537c0261add2cda53b69ac394321f9fdd249c269ba3810923c4c6f4": {
-    "timestamp": "2025-06-01T19:15:41.372394",
+  "a3ae017440165d544314e070b5550477b94af917c13bbe9772f167f1b562dcd2": {
+    "timestamp": "2025-06-01T19:58:25.680506",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-advanced-concepts.md",
+      "section": [
+        "Advanced Concepts of Cilium and Azure CNI Integration in AKS",
+        "Important Warnings"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:25.671770"
+    }
+  },
+  "5d9b6f63ffc324b7cdbbcc4ed298520f749a996bc0eed4d9fb545d8461bc39ee": {
+    "timestamp": "2025-06-01T19:58:28.867413",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11448,11 +11518,24 @@
         "Step 3: Create an AKS Cluster with Cilium"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:41.363861"
+      "embedding_updated_at": "2025-06-01T19:58:28.858914"
     }
   },
-  "78dfcf76475ce2d4f922a0d3604c3f96fe18486ccbfd76642b9973b51a692546": {
-    "timestamp": "2025-06-01T19:15:41.602474",
+  "30743a4eb229e4979095d5437329a9bff92aa8ff10ddad98a16a5b18ff99ab9a": {
+    "timestamp": "2025-06-01T19:58:25.903701",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-advanced-concepts.md",
+      "section": [
+        "Advanced Concepts of Cilium and Azure CNI Integration in AKS",
+        "Next Steps"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:25.894774"
+    }
+  },
+  "60bd89870aab914bf011309ea4f3543482a846f10ea2b886c7d5ae55b8426e11": {
+    "timestamp": "2025-06-01T19:58:29.501177",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11462,11 +11545,11 @@
         "Option 1: Overlay Network"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:41.593951"
+      "embedding_updated_at": "2025-06-01T19:58:29.498847"
     }
   },
-  "21010c48fd29fa36d95494abf3faf064709f63a01d6651b32992826e17f01908": {
-    "timestamp": "2025-06-01T19:15:41.846364",
+  "a7689e799dcbd591f8f74e6bc65b392ff79bb1d055182a28007fb6443d7cdee9": {
+    "timestamp": "2025-06-01T19:58:29.726250",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11477,11 +11560,28 @@
         "Option 2: Virtual Network"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:41.838429"
+      "embedding_updated_at": "2025-06-01T19:58:29.721788"
     }
   },
-  "b0a1f19a50cbbae22ff22d96608a25833001af4c56448e76e4f72d4a465480cc": {
-    "timestamp": "2025-06-01T19:15:42.122380",
+  "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-advanced-concepts.md": {
+    "type": "file",
+    "hash": "03600465badd961f94d2aa6d49102a2d896720b551b832cfcf5750967ab36e99",
+    "chunk_ids": [
+      "677a16bf85bfc99027840ebcd93fd1de6dac5ed98296158618d9078c7d1f14fe",
+      "0204471b3f41291259ddcd5e757509d4fc0933b77853542cf34a056d23185dcc",
+      "6303b596236ef48cb7aa2c94bc24da14ffad2d032fe6ea1b06d51637653b5bc6",
+      "a47df2eab0570cfe3dbe2a4ecce9831f6c3adea952e4d300be24bc05d8f1c2a3",
+      "5c1c8de148a7542289a1741f158456090566e0d8ea42128823e9ca3eb7a0e5f0",
+      "17064759e6b80b792170fe89a02dbc7f2f103657b96e9cea72a22631c54ec8cf",
+      "c5d7b937657f24f160d04d9575d20b567652c8c03dd02537624ef06fc1ad1502",
+      "70d9cd534136e636e44e53e21fe8b61a3434e346f079aabf3d966804cc130684",
+      "a3ae017440165d544314e070b5550477b94af917c13bbe9772f167f1b562dcd2",
+      "30743a4eb229e4979095d5437329a9bff92aa8ff10ddad98a16a5b18ff99ab9a"
+    ],
+    "chunk_count": 10
+  },
+  "29e8d865e960323b42f36044ded7d9d5afbf87c6eb14e9fedd579deed1305b68": {
+    "timestamp": "2025-06-01T19:58:29.996053",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11491,11 +11591,11 @@
         "Step 4: Verify the Configuration"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:42.113734"
+      "embedding_updated_at": "2025-06-01T19:58:29.964222"
     }
   },
-  "e5f1aa644868b858ed1893d9928cd82634aff4903cc29f45a99d581721ce6a13": {
-    "timestamp": "2025-06-01T19:15:42.323625",
+  "b0c8d8fb5b9f0a237bb0548136a806c63e36ae27cc4e7353733b6a22b12ffa95": {
+    "timestamp": "2025-06-01T19:58:30.251136",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11504,11 +11604,11 @@
         "Code Examples"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:42.319338"
+      "embedding_updated_at": "2025-06-01T19:58:30.246914"
     }
   },
-  "7ec180443d50610c84fa89c9a218f738cd2398bc73c7e9680dcf2f5b333ed729": {
-    "timestamp": "2025-06-01T19:15:42.544465",
+  "6010e7ba46caa7d55a38a9d34834e1596c9237ce4fcf995882f1fe8da4c14989": {
+    "timestamp": "2025-06-01T19:58:30.498703",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11517,11 +11617,11 @@
         "Next Steps"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:42.536061"
+      "embedding_updated_at": "2025-06-01T19:58:30.490333"
     }
   },
-  "4a2ffcfde8faaea277933516656e888c57e6308942baf43e2f327cce07752d8a": {
-    "timestamp": "2025-06-01T19:15:42.800472",
+  "162ea47836b7cb2d4f9d28956b90e17ed0b8508f4c4f4eae835975be97112c57": {
+    "timestamp": "2025-06-01T19:58:30.765941",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11530,11 +11630,11 @@
         "Cilium Benefits"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:42.791056"
+      "embedding_updated_at": "2025-06-01T19:58:30.757253"
     }
   },
-  "3f26ddbe9ae49b2aa44188a0618cf6dd75edeb186adeb3e0659eea95a79e0987": {
-    "timestamp": "2025-06-01T19:15:43.002385",
+  "7cca6f4bd40891e92dfe29959303ec1580a2107f73b64522c745bb595fc4db98": {
+    "timestamp": "2025-06-01T19:58:30.964314",
     "meta": {
       "type": "chunk",
       "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
@@ -11543,14 +11643,126 @@
         "Architecture Overview"
       ],
       "has_embedding": true,
-      "embedding_updated_at": "2025-06-01T19:15:42.993830"
+      "embedding_updated_at": "2025-06-01T19:58:30.954236"
     }
   },
-  "738a02a54680fac34f5d74a3fb0f42ae6abe47bc3497bf6354f056e0d05d34e3": {
-    "timestamp": "2025-06-01T19:15:39.127798",
+  "cc573b415f076d5dc416b003e4315fcd763397092038372456b2ca137029adf8": {
+    "timestamp": "2025-06-01T19:58:31.208150",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
+      "section": [
+        "Create a virtual network with a subnet for nodes and a subnet for pods",
+        "Advanced Network Policy Configurations"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:31.199772"
+    }
+  },
+  "a0870aaf466e320326ff19ae43458b20a4a7aaa8e973e149de78a298438c623f": {
+    "timestamp": "2025-06-01T19:58:31.518302",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
+      "section": [
+        "Create a virtual network with a subnet for nodes and a subnet for pods",
+        "Advanced Network Policy Configurations"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:31.508805"
+    }
+  },
+  "1d33b67ba1ac854827e3ad6fa062e58ac149fc277bf03439a7bcd9ca5a776f8c": {
+    "timestamp": "2025-06-01T19:58:31.742620",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/cilium-aks-integration-howto.md",
+      "section": [
+        "Create a virtual network with a subnet for nodes and a subnet for pods",
+        "Advanced Network Policy Configurations",
+        "Steps to Configure Advanced Network Policies"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T19:58:31.734269"
+    }
+  },
+  "7dbf818c8e0f890d07fccd35c94de7fb859abdb9616891aeaf4b43fd40c93de8": {
+    "timestamp": "2025-06-01T19:58:22.889271",
     "meta": {
       "type": "intent",
-      "text_preview": "Goal: document cilium for aks | Service: aks | Topics: Cilium Integration with AKS, Azure CNI Powere"
+      "text_preview": "Goal: document cilium for aks | Service: aks | Topics: CiliumEndpointSlices in Azure AKS, Azure CNI "
+    }
+  },
+  "5e59d4cc634518b48e64efab299a16b5c01385fcfcbf5f1b19223bee516d6e51": {
+    "timestamp": "2025-06-01T20:08:49.410192",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md",
+      "section": [
+        "Azure Arc-enabled Kubernetes network requirements"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T20:08:49.400803"
+    }
+  },
+  "dfe4fb394fd849aa9235530ecc30fb0f3e5835622bf560f5f5bc9520bf1e1a71": {
+    "timestamp": "2025-06-01T20:08:49.714850",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md",
+      "section": [
+        "Azure Arc-enabled Kubernetes network requirements",
+        "Details"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T20:08:49.707203"
+    }
+  },
+  "c709fd41e335294afb792860f699adf246b88f1d0b86b791eb8624917b271ab4": {
+    "timestamp": "2025-06-01T20:08:49.925266",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md",
+      "section": [
+        "Azure Arc-enabled Kubernetes network requirements",
+        "Additional endpoints"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T20:08:49.916081"
+    }
+  },
+  "dc966e6199d0a8337b0613726f03233056c4f15bf721003cb345a206dbcbc119": {
+    "timestamp": "2025-06-01T20:08:50.437186",
+    "meta": {
+      "type": "chunk",
+      "file": "/Users/cloudchase/Desktop/Vibe_Coding/Cursor/ai-content-developer/work/tmp/azure-management-docs/articles/azure-arc/kubernetes/network-requirements.md",
+      "section": [
+        "Azure Arc-enabled Kubernetes network requirements",
+        "Next steps"
+      ],
+      "has_embedding": true,
+      "embedding_updated_at": "2025-06-01T20:08:50.429228"
+    }
+  },
+  "8eccc4526021e84c06bb53eb1f2d77c4b4f77ba73da3c133f4cd2a3358564bd2": {
+    "timestamp": "2025-06-01T20:08:48.727393",
+    "meta": {
+      "type": "intent",
+      "text_preview": "Goal: document cilium for aks | Service: aks | Topics: CiliumEndpointSlices in AKS, Azure CNI Cilium"
+    }
+  },
+  "8728585dc3adefb0a6e0d3b17aad80986ec7ab87e398b75c82a2ab54842145a3": {
+    "timestamp": "2025-06-01T20:18:16.686086",
+    "meta": {
+      "type": "intent",
+      "text_preview": "Goal: document cilium for aks | Service: aks | Topics: Cilium Integration with Azure CNI, Azure CNI "
+    }
+  },
+  "235b0f166916b50f0d3c94131aa8efdb29d20642114c10767036648ca173962f": {
+    "timestamp": "2025-06-01T20:20:49.716129",
+    "meta": {
+      "type": "intent",
+      "text_preview": "Goal: document cilium for aks | Service: aks | Topics: CiliumEndpointSlices in Azure CNI, Azure CNI "
     }
   }
 }

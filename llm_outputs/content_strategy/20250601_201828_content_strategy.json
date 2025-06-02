@@ -1,0 +1,95 @@
+{
+  "metadata": {
+    "timestamp": "2025-06-01T20:18:28.090922",
+    "operation": "content_strategy"
+  },
+  "data": {
+    "thinking": "The existing documentation for Azure Arc-enabled Kubernetes covers high-level concepts and requirements but lacks specific guidance on integrating Cilium with Azure Kubernetes Service (AKS). The user materials provide detailed instructions on configuring Cilium with Azure CNI, which is not adequately covered in the current documentation. The gap analysis reveals a need for a How-To Guide to address this specific integration process, as the current content focuses more on general concepts rather than detailed implementation steps.",
+    "decisions": [
+      {
+        "action": "CREATE",
+        "filename": "cilium-aks-integration-guide.md",
+        "content_type": "How-To Guide",
+        "ms_topic": "how-to",
+        "reason": "The existing content does not provide detailed, step-by-step instructions for integrating Cilium with Azure Kubernetes Service (AKS), which is crucial for technical professionals looking to enhance networking capabilities using Cilium.",
+        "priority": "high",
+        "relevant_chunks": [
+          "5e59d4cc634518b48e64efab299a16b5c01385fcfcbf5f1b19223bee516d6e51",
+          "c709fd41e335294afb792860f699adf246b88f1d0b86b791eb8624917b271ab4"
+        ],
+        "content_brief": {
+          "objective": "Guide users through the process of integrating Cilium with Azure Kubernetes Service (AKS) using Azure CNI.",
+          "key_points_to_cover": [
+            "Overview of Cilium and its benefits for AKS",
+            "Step-by-step configuration of Azure CNI with Cilium",
+            "Verification of integration and troubleshooting common issues"
+          ],
+          "prerequisites_to_state": [
+            "Basic understanding of Kubernetes and AKS",
+            "Access to an Azure account with permissions to configure AKS"
+          ],
+          "related_docs_to_reference": [
+            "network-requirements.md",
+            "conceptual-connectivity-modes.md"
+          ],
+          "next_steps_to_suggest": [
+            "Explore advanced Cilium features",
+            "Consider performance tuning for large clusters"
+          ],
+          "technical_depth": "Provide detailed configuration steps with explanations suitable for intermediate users.",
+          "code_examples_needed": [
+            "Azure CLI commands for setting up Cilium",
+            "Sample YAML configurations for Cilium deployment"
+          ],
+          "important_warnings": [
+            "Ensure compatibility with existing network policies",
+            "Be aware of potential impacts on cluster performance"
+          ]
+        }
+      },
+      {
+        "action": "UPDATE",
+        "filename": "network-requirements.md",
+        "current_content_type": "Concept",
+        "ms_topic": "concept-article",
+        "change_description": "Add a new section 'Cilium Integration with AKS' to provide context and benefits of using Cilium in AKS environments.",
+        "specific_sections": [
+          "Cilium Benefits",
+          "Architecture Overview"
+        ],
+        "reason": "The current document lacks specific information on the benefits and architecture of integrating Cilium with AKS, which is essential for users to understand the value of this integration.",
+        "priority": "medium",
+        "relevant_chunks": [
+          "5e59d4cc634518b48e64efab299a16b5c01385fcfcbf5f1b19223bee516d6e51",
+          "dfe4fb394fd849aa9235530ecc30fb0f3e5835622bf560f5f5bc9520bf1e1a71"
+        ],
+        "content_brief": {
+          "update_objective": "Provide a conceptual understanding of Cilium's role and benefits in AKS environments.",
+          "sections_to_add": [
+            {
+              "section_name": "Cilium Integration with AKS",
+              "content_focus": "Explain the benefits of using Cilium in AKS and provide an architectural overview.",
+              "placement": "After 'Azure Arc-enabled Kubernetes network requirements > Details'"
+            }
+          ],
+          "sections_to_modify": [
+            {
+              "section_name": "Azure Arc-enabled Kubernetes network requirements",
+              "modifications": "Include references to Cilium as a network plugin option.",
+              "preserve": "Existing details on Azure CNI and general network requirements"
+            }
+          ],
+          "new_examples_to_add": [
+            "Illustrative diagrams of Cilium architecture in AKS"
+          ],
+          "links_to_add": [
+            "Link to the new How-To Guide on Cilium integration"
+          ],
+          "maintain_style": "Keep consistent with existing document tone and depth"
+        }
+      }
+    ],
+    "confidence": 0.85,
+    "summary": "The strategy involves creating a new How-To Guide to provide detailed instructions on integrating Cilium with AKS and updating existing concept documentation to include the benefits and architecture of this integration. This approach ensures comprehensive coverage and practical guidance for intermediate technical professionals."
+  }
+}

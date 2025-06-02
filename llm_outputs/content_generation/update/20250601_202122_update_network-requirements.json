@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "timestamp": "2025-06-01T20:21:22.173818",
+    "operation": "update_network-requirements.md"
+  },
+  "data": {
+    "changes": [
+      {
+        "section": "Cilium Integration",
+        "action": "add",
+        "original": null,
+        "updated": "## Cilium Integration\n\nCilium integrates with Azure CNI to enhance networking capabilities in Azure Kubernetes Service (AKS). This integration leverages Cilium's dynamic endpoint management and advanced network policy enforcement to provide several architectural benefits:\n\n- **Dynamic Endpoint Management**: CiliumEndpointSlices allow for automatic grouping and management of pod endpoints, resulting in faster service discovery and efficient load balancing.\n- **Advanced Network Policies**: Cilium's rich policy language enables fine-grained security policies across dynamic endpoint slices, aligning with enterprise compliance requirements.\n- **Improved Observability**: Integration with Azure Monitor and Cilium observability tools provides detailed logging, metrics, and diagnostic information, facilitating proactive troubleshooting and performance tuning.\n- **Operational Efficiency**: The integration reduces operational overhead by providing a seamless configuration experience via Azure Portal, CLI, and APIs.\n\nFor practical implementation steps, refer to the [Cilium AKS How-To Guide](cilium-aks-how-to-guide.md).",
+        "reason": "Added a new section to explain the integration process and benefits of using Cilium with Azure CNI as per the update instructions."
+      },
+      {
+        "section": "Details",
+        "action": "modify",
+        "original": "[!INCLUDE [network-requirement-principles](../includes/network-requirement-principles.md)]\n\n[!INCLUDE [network-requirements](includes/network-requirements.md)]",
+        "updated": "[!INCLUDE [network-requirement-principles](../includes/network-requirement-principles.md)]\n\n[!INCLUDE [network-requirements](includes/network-requirements.md)]\n\n> [!NOTE]\n> When integrating Cilium with Azure CNI, ensure that your network configuration meets the specific requirements for CiliumEndpointSlices, including necessary connectivity for Azure Monitor and Log Analytics.",
+        "reason": "Included references to Cilium-specific network requirements to ensure technical accuracy and completeness."
+      },
+      {
+        "section": "Example of Cilium network policy configuration",
+        "action": "add",
+        "original": null,
+        "updated": "```yaml\napiVersion: \"cilium.io/v2\"\nkind: CiliumNetworkPolicy\nmetadata:\n  name: \"example-policy\"\nspec:\n  endpointSelector:\n    matchLabels:\n      app: \"my-app\"\n  ingress:\n  - fromEndpoints:\n    - matchLabels:\n        app: \"frontend\"\n    toPorts:\n    - ports:\n      - port: \"80\"\n        protocol: \"TCP\"\n```",
+        "reason": "Added an example of a Cilium network policy configuration to illustrate practical application of the integration."
+      }
+    ],
+    "summary": "Added a new 'Cilium Integration' section to explain the integration process and benefits of using Cilium with Azure CNI. Modified the 'Details' section to include Cilium-specific network requirements. Added an example of a Cilium network policy configuration for practical illustration."
+  }
+}

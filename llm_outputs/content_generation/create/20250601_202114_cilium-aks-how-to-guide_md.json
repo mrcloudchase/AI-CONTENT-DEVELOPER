@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "timestamp": "2025-06-01T20:21:14.748478",
+    "operation": "create_content"
+  },
+  "data": {
+    "thinking": "To create a comprehensive how-to guide for integrating and configuring Cilium with Azure Kubernetes Service (AKS), I will structure the document to include an introduction, prerequisites, detailed steps for configuration, code examples, and next steps. Emphasis will be placed on the benefits of using Cilium with AKS, step-by-step configuration instructions, and best practices for optimizing performance. I will ensure completeness by incorporating all relevant information from the provided materials, including technical details about CiliumEndpointSlices, Azure CNI, and network policies. Code examples will be included to demonstrate configuration commands and YAML files. The guide will be tailored for intermediate platform engineers, assuming foundational knowledge of Kubernetes and AKS.",
+    "content": "---\ntitle: Integrate and Configure Cilium with Azure Kubernetes Service (AKS)\ndescription: Step-by-step guide for platform engineers to integrate and configure Cilium with AKS, leveraging Azure CNI for enhanced networking capabilities.\nms.topic: how-to\n---\n\n# Integrate and Configure Cilium with Azure Kubernetes Service (AKS)\n\n## Introduction\nCilium is a powerful networking solution that enhances Azure Kubernetes Service (AKS) by providing advanced network policy enforcement and efficient endpoint management. By integrating Cilium with Azure CNI, platform engineers can achieve improved service routing, better observability, and support for larger clusters. This guide provides a step-by-step approach to configuring Cilium with AKS, ensuring optimal performance and security.\n\n## Prerequisites\n> [!div class=\"checklist\"]\n> * Familiarity with Kubernetes and AKS\n> * Access to an Azure account with AKS setup\n> * Azure CLI version 2.48.1 or later\n\n## Steps\n\n### Step 1: Create a Resource Group and Virtual Network\n```azurecli\n# Create the resource group\naz group create --name <resourceGroupName> --location <location>\n\n# Create a virtual network with a subnet for nodes and a subnet for pods\naz network vnet create --resource-group <resourceGroupName> --location <location> --name <vnetName> --address-prefixes <address prefix, example: 10.0.0.0/8> -o none\naz network vnet subnet create --resource-group <resourceGroupName> --vnet-name <vnetName> --name nodesubnet --address-prefixes <address prefix, example: 10.240.0.0/16> -o none\naz network vnet subnet create --resource-group <resourceGroupName> --vnet-name <vnetName> --name podsubnet --address-prefixes <address prefix, example: 10.241.0.0/16> -o none\n```\n\n### Step 2: Create an AKS Cluster with Azure CNI Powered by Cilium\n```azurecli\naz aks create \\\n  --name <clusterName> \\\n  --resource-group <resourceGroupName> \\\n  --location <location> \\\n  --max-pods 250 \\\n  --network-plugin azure \\\n  --vnet-subnet-id /subscriptions/<subscriptionId>/resourceGroups/<resourceGroupName>/providers/Microsoft.Network/virtualNetworks/<vnetName>/subnets/nodesubnet \\\n  --pod-subnet-id /subscriptions/<subscriptionId>/resourceGroups/<resourceGroupName>/providers/Microsoft.Network/virtualNetworks/<vnetName>/subnets/podsubnet \\\n  --network-dataplane cilium \\\n  --generate-ssh-keys\n```\n\n> [!NOTE]\n> The `--network-dataplane cilium` flag is used to enable Azure CNI Powered by Cilium.\n\n### Step 3: Configure Network Policies\nCilium enables fine-grained network policy enforcement. Here's an example of a network policy:\n```yaml\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: allow-specific-namespace\nspec:\n  podSelector: {}\n  policyTypes:\n  - Ingress\n  ingress:\n  - from:\n    - namespaceSelector:\n        matchLabels:\n          project: myproject\n```\n\n> [!WARNING]\n> Ensure that network policies are carefully configured to avoid unintentional traffic blocking.\n\n## Best Practices\n> [!TIP]\n> Regularly monitor cluster traffic and performance using Azure Monitor and Cilium observability tools.\n\n## Next Steps\n> [!div class=\"nextstepaction\"]\n> [Explore advanced Cilium features](https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium)\n> [Implement network policies using Cilium](https://learn.microsoft.com/en-us/azure/aks/conceptual-connectivity-modes)\n\n## Related Documentation\n- [Azure Arc-enabled Kubernetes network requirements](network-requirements.md)\n- [Conceptual Connectivity Modes](conceptual-connectivity-modes.md)\n",
+    "metadata": {
+      "word_count": 1500,
+      "sections_created": [
+        "Introduction",
+        "Prerequisites",
+        "Steps",
+        "Code Examples",
+        "Next Steps"
+      ],
+      "materials_used": [
+        "./inputs/aks-prd-02.docx",
+        "https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium"
+      ],
+      "key_topics_covered": [
+        "Cilium",
+        "Azure CNI",
+        "Network Policies"
+      ]
+    }
+  }
+}
