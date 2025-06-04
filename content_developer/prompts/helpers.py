@@ -5,17 +5,32 @@ from typing import Dict, List
 
 
 def format_semantic_matches(matches: List[Dict]) -> str:
-    """Format semantic matches for prompt display"""
+    """Format chunks for analysis in strategy prompt"""
     if not matches:
         return "No existing content found in the working directory."
     
-    formatted = []
-    for match in matches[:10]:  # Top 10 files
-        formatted.append(f"""
-File: {match['file']}
-Content Type: {match['content_type']} (ms.topic: {match['ms_topic']})
-Relevance: {match['relevance_score']:.2f} - {match['coverage_analysis']}
-Matched Sections: {', '.join(match['matched_sections'][:3])}""")
+    formatted = ["EXISTING CONTENT CHUNKS:"]
+    formatted.append(f"Found {len(matches)} chunks across documentation files.\n")
+    
+    for i, chunk in enumerate(matches[:15], 1):  # Top 15 chunks
+        formatted.append(f"Chunk {i}:")
+        formatted.append(f"  File: {chunk.get('file', 'Unknown')}")
+        formatted.append(f"  Content Type: {chunk.get('content_type', 'unknown')} (ms.topic: {chunk.get('ms_topic', 'unknown')})")
+        formatted.append(f"  Chunk ID: {chunk.get('chunk_id', 'unknown')}")
+        formatted.append(f"  Section: {chunk.get('section', 'Main')}")
+        
+        # Add content preview if available
+        if preview := chunk.get('content_preview', ''):
+            # Clean up preview for display
+            preview_clean = preview.replace('\n', ' ').strip()
+            if len(preview_clean) > 150:
+                preview_clean = preview_clean[:147] + "..."
+            formatted.append(f"  Preview: {preview_clean}")
+        
+        formatted.append("")  # Empty line between chunks
+    
+    if len(matches) > 15:
+        formatted.append(f"... and {len(matches) - 15} more chunks")
     
     return '\n'.join(formatted)
 
@@ -268,4 +283,178 @@ def format_microsoft_elements(content_standards: Dict) -> str:
     lines.append("- NEVER include real credentials or secrets")
     lines.append("- Show managed identity approaches when applicable")
     
-    return "\n".join(lines) 
+    return "\n".join(lines)
+
+
+def schema_to_example(schema: dict, include_descriptions: bool = False) -> dict:
+    """Convert JSON schema to example JSON for LLM prompts
+    
+    Args:
+        schema: JSON schema dictionary
+        include_descriptions: Whether to include field descriptions as comments
+        
+    Returns:
+        Example JSON that matches the schema
+    """
+    if not isinstance(schema, dict) or 'properties' not in schema:
+        return {}
+    
+    example = {}
+    properties = schema.get('properties', {})
+    
+    for field_name, field_schema in properties.items():
+        field_type = field_schema.get('type')
+        
+        if field_type == 'string':
+            # Generate example based on field name and constraints
+            if 'pattern' in field_schema:
+                if field_schema['pattern'] == '^1\\.':
+                    example[field_name] = "1. First analysis step...\n2. Second step...\n3. Final step..."
+                elif field_schema['pattern'] == '^[^/]+\\.md$':
+                    example[field_name] = "example-file.md"
+                else:
+                    example[field_name] = "example string"
+            elif 'enum' in field_schema:
+                example[field_name] = field_schema['enum'][0]
+            elif field_name == 'source':
+                example[field_name] = "./path/to/source"
+            elif field_name == 'working_directory':
+                example[field_name] = "articles/service-name"
+            elif 'summary' in field_name:
+                example[field_name] = "Comprehensive summary of the content covering key points and insights."
+            else:
+                max_length = field_schema.get('maxLength', 50)
+                example[field_name] = f"Example {field_name.replace('_', ' ')}"[:max_length]
+                
+        elif field_type == 'array':
+            # Generate array examples
+            if field_name == 'thinking':
+                example[field_name] = [
+                    "First, I'll analyze the provided content and understand the requirements",
+                    "Next, I'll identify key technical concepts and technologies mentioned",
+                    "Then, I'll structure the information according to the expected format",
+                    "Finally, I'll ensure all required fields are properly populated"
+                ]
+            elif field_name == 'technologies':
+                example[field_name] = ["Technology1", "Technology2", "Framework1"]
+            elif field_name == 'key_concepts':
+                example[field_name] = ["concept1", "concept2", "methodology1"]
+            elif field_name == 'microsoft_products':
+                example[field_name] = ["Azure Service1", "Azure Service2"]
+            elif 'chunks' in field_name:
+                example[field_name] = ["chunk_id_1", "chunk_id_2"]
+            else:
+                example[field_name] = ["item1", "item2", "item3"]
+                
+        elif field_type == 'number':
+            # Generate number examples based on constraints
+            minimum = field_schema.get('minimum', 0)
+            maximum = field_schema.get('maximum', 1)
+            if maximum <= 1:
+                example[field_name] = 0.85
+            else:
+                example[field_name] = (minimum + maximum) / 2
+                
+        elif field_type == 'integer':
+            example[field_name] = field_schema.get('minimum', 1)
+            
+        elif field_type == 'boolean':
+            example[field_name] = True
+            
+        elif field_type == 'object':
+            # Recursively handle nested objects
+            if 'properties' in field_schema:
+                example[field_name] = schema_to_example(field_schema, include_descriptions)
+            else:
+                example[field_name] = {"key": "value"}
+                
+        elif isinstance(field_type, list):  # Union types like ["string", "null"]
+            if "null" in field_type:
+                example[field_name] = None
+            else:
+                # Use the first non-null type
+                for t in field_type:
+                    if t != "null":
+                        field_schema_copy = field_schema.copy()
+                        field_schema_copy['type'] = t
+                        example[field_name] = schema_to_example(
+                            {'properties': {field_name: field_schema_copy}}, 
+                            include_descriptions
+                        )[field_name]
+                        break
+    
+    return example
+
+
+def extract_type_requirements(schema: dict) -> str:
+    """Extract human-readable type requirements from JSON schema
+    
+    Args:
+        schema: JSON schema dictionary
+        
+    Returns:
+        Formatted string describing type requirements
+    """
+    if not isinstance(schema, dict) or 'properties' not in schema:
+        return ""
+    
+    requirements = []
+    properties = schema.get('properties', {})
+    required_fields = schema.get('required', [])
+    
+    for field_name, field_schema in properties.items():
+        field_type = field_schema.get('type', 'any')
+        is_required = field_name in required_fields
+        
+        # Build requirement description
+        req_parts = [f"- {field_name}:"]
+        
+        # Add type information
+        if field_type == 'string':
+            req_parts.append("MUST be a STRING")
+            if 'pattern' in field_schema:
+                req_parts.append(f"(pattern: {field_schema['pattern']})")
+            if 'minLength' in field_schema:
+                req_parts.append(f"(min length: {field_schema['minLength']})")
+            if 'maxLength' in field_schema:
+                req_parts.append(f"(max length: {field_schema['maxLength']})")
+                
+        elif field_type == 'array':
+            req_parts.append("MUST be an ARRAY/LIST")
+            items_type = field_schema.get('items', {}).get('type', 'any')
+            req_parts.append(f"of {items_type}s")
+            if 'minItems' in field_schema:
+                req_parts.append(f"(min items: {field_schema['minItems']})")
+            if 'maxItems' in field_schema:
+                req_parts.append(f"(max items: {field_schema['maxItems']})")
+                
+        elif field_type == 'number':
+            req_parts.append("MUST be a NUMBER")
+            if 'minimum' in field_schema and 'maximum' in field_schema:
+                req_parts.append(f"(range: {field_schema['minimum']}-{field_schema['maximum']})")
+                
+        elif field_type == 'integer':
+            req_parts.append("MUST be an INTEGER")
+            if 'minimum' in field_schema:
+                req_parts.append(f"(min: {field_schema['minimum']})")
+                
+        elif field_type == 'boolean':
+            req_parts.append("MUST be a BOOLEAN (true/false)")
+            
+        elif field_type == 'object':
+            req_parts.append("MUST be an OBJECT")
+            if 'properties' in field_schema:
+                req_parts.append(f"with fields: {', '.join(field_schema['properties'].keys())}")
+                
+        elif isinstance(field_type, list):
+            types_str = " or ".join(t.upper() for t in field_type)
+            req_parts.append(f"MUST be {types_str}")
+        
+        if is_required:
+            req_parts.append("[REQUIRED]")
+        else:
+            req_parts.append("[OPTIONAL]")
+            
+        requirements.append(" ".join(req_parts))
+    
+    return "\n".join(requirements) 

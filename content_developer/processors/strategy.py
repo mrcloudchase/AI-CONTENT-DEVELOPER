@@ -10,9 +10,7 @@ from ..models import Config, ContentStrategy, DocumentChunk
 from ..utils import get_hash
 from ..prompts import (
     get_unified_content_strategy_prompt,
-    UNIFIED_CONTENT_STRATEGY_SYSTEM,
-    CHUNK_RANKING_SYSTEM,
-    get_chunk_ranking_prompt
+    UNIFIED_CONTENT_STRATEGY_SYSTEM
 )
 from .llm_native_processor import LLMNativeProcessor
 
@@ -24,60 +22,49 @@ class ContentStrategyProcessor(LLMNativeProcessor):
     
     def _process(self, chunks: List[DocumentChunk], materials: List[Dict], config: Config, 
                  repo_name: str, working_directory: str) -> ContentStrategy:
-        """Process content strategy generation using LLM-native approach"""
-        # Use LLM to understand content intent
-        intent_analysis = self.understand_content_intent(
-            materials=materials,
-            goal=config.content_goal,
-            operation_name="Content Intent Analysis"
+        """Process content strategy generation using LLM-native approach with integrated analysis"""
+        
+        # Get relevant chunks to analyze
+        chunks_to_analyze = self._get_chunks_to_analyze(
+            chunks, materials, config, repo_name, working_directory
         )
         
-        # Find relevant existing content using semantic understanding
-        relevant_chunks = self._find_relevant_content(
-            chunks, materials, config, intent_analysis, repo_name, working_directory
-        )
-        
-        # Generate strategy using unified prompt
-        strategy = self._generate_strategy(config, materials, relevant_chunks[:10])
+        # Generate strategy with integrated intent understanding and chunk ranking
+        strategy = self._generate_unified_strategy(config, materials, chunks_to_analyze)
         
         return strategy
     
-    def _find_relevant_content(self, chunks: List[DocumentChunk], materials: List[Dict], 
-                              config: Config, intent_analysis: Dict, repo_name: str,
-                              working_directory: str) -> List[DocumentChunk]:
-        """Find relevant chunks using LLM understanding instead of pure embeddings"""
+    def _get_chunks_to_analyze(self, chunks: List[DocumentChunk], materials: List[Dict], 
+                              config: Config, repo_name: str, working_directory: str) -> List[DocumentChunk]:
+        """Get chunks to analyze - either all for small sets or filtered by embeddings for large sets"""
         if not chunks:
             return []
         
-        # For small sets, analyze directly
-        if len(chunks) <= 20:
-            return self._analyze_chunks_directly(chunks, materials, config, intent_analysis)
+        # For small sets, analyze all chunks directly
+        if len(chunks) <= 30:
+            logger.info(f"Analyzing all {len(chunks)} chunks directly")
+            return chunks
         
-        # For larger sets, use embeddings as initial filter then LLM for ranking
+        # For larger sets, use embeddings as initial filter
+        logger.info(f"Using embeddings to filter {len(chunks)} chunks to top 30")
         cache_dir = Path(f"./llm_outputs/embeddings/{repo_name}/{working_directory}")
         cache = UnifiedCache(cache_dir)
         
-        # Create search embedding from intent
-        search_text = self._create_search_text(materials, config, intent_analysis)
+        # Create search embedding from materials and goal
+        search_text = self._create_search_text(materials, config)
         search_embedding = self._get_embedding(search_text, cache)
         
         # Get top candidates using embeddings
         candidates = self._get_embedding_candidates(chunks, search_embedding, cache, limit=30)
         
-        # Use LLM to rank candidates by actual relevance
-        if candidates:
-            ranked_chunks = self._rank_chunks_with_llm(candidates, materials, config, intent_analysis)
-            return ranked_chunks
-        
-        return chunks[:10]
+        return candidates
     
-    def _create_search_text(self, materials: List[Dict], config: Config, intent_analysis: Dict) -> str:
-        """Create search text from materials and intent"""
+    def _create_search_text(self, materials: List[Dict], config: Config) -> str:
+        """Create search text from materials and goal"""
         parts = [
             f"Goal: {config.content_goal}",
             f"Target audience: {config.audience}",
-            f"Intent: {intent_analysis.get('primary_intent', '')}",
-            f"Key topics: {', '.join(intent_analysis.get('key_topics', []))}"
+            f"Service area: {config.service_area}"
         ]
         
         # Add material topics
@@ -85,31 +72,15 @@ class ContentStrategyProcessor(LLMNativeProcessor):
         for material in materials:
             if topic := material.get('main_topic'):
                 topics.add(topic)
+            # Add key concepts too
+            if concepts := material.get('key_concepts'):
+                if isinstance(concepts, list):
+                    topics.update(concepts[:3])  # Top 3 concepts
+        
         if topics:
-            parts.append(f"Material topics: {', '.join(topics)}")
+            parts.append(f"Key topics: {', '.join(topics)}")
         
         return " | ".join(parts)
-    
-    def _analyze_chunks_directly(self, chunks: List[DocumentChunk], materials: List[Dict],
-                                config: Config, intent_analysis: Dict) -> List[DocumentChunk]:
-        """For small chunk sets, analyze relevance directly with LLM"""
-        # Prepare chunk descriptions
-        chunk_descriptions = []
-        for i, chunk in enumerate(chunks):
-            desc = f"{i}. File: {chunk.file_path}, Section: {' > '.join(chunk.heading_path or ['Root'])}"
-            chunk_descriptions.append(desc)
-        
-        # Ask LLM to identify relevant chunks
-        relevance_analysis = self.extract_key_information(
-            content="\n".join(chunk_descriptions),
-            extraction_purpose=f"Identify which documentation sections are most relevant for: {config.content_goal}. Return indices of top 10 most relevant sections.",
-            operation_name="Chunk Relevance Analysis"
-        )
-        
-        # Extract relevant indices
-        relevant_indices = relevance_analysis.get('relevant_indices', list(range(min(10, len(chunks)))))
-        
-        return [chunks[i] for i in relevant_indices if i < len(chunks)]
     
     def _get_embedding_candidates(self, chunks: List[DocumentChunk], search_embedding: List[float],
                                  cache: UnifiedCache, limit: int = 30) -> List[DocumentChunk]:
@@ -128,56 +99,6 @@ class ContentStrategyProcessor(LLMNativeProcessor):
         # Sort by score and return top candidates
         chunk_scores.sort(key=lambda x: x[1], reverse=True)
         return [chunk for chunk, _ in chunk_scores[:limit]]
-    
-    def _rank_chunks_with_llm(self, chunks: List[DocumentChunk], materials: List[Dict],
-                             config: Config, intent_analysis: Dict) -> List[DocumentChunk]:
-        """Use LLM to rank chunks by actual relevance"""
-        # Prepare chunk summaries
-        chunk_summaries = []
-        for i, chunk in enumerate(chunks):
-            summary = {
-                'index': i,
-                'file': chunk.file_path,
-                'section': ' > '.join(chunk.heading_path or ['Root']),
-                'preview': chunk.content[:200] + '...' if len(chunk.content) > 200 else chunk.content
-            }
-            chunk_summaries.append(f"{i}. {summary['file']} - {summary['section']}\n   Preview: {summary['preview']}")
-        
-        # Prepare chunks list text
-        chunks_list = "\n\n".join(chunk_summaries)
-        
-        # Ask LLM to rank by relevance
-        ranking_result = self._call_llm(
-            messages=[
-                {"role": "system", "content": CHUNK_RANKING_SYSTEM},
-                {"role": "user", "content": get_chunk_ranking_prompt(config.content_goal, chunks_list)}
-            ],
-            response_format="json_object",
-            operation_name="Chunk Ranking"
-        )
-        
-        # Extract rankings
-        rankings = ranking_result.get('rankings', [])
-        
-        # Sort by relevance score
-        rankings.sort(key=lambda x: x.get('relevance_score', 0), reverse=True)
-        
-        # Get the top chunks in order
-        ranked_chunks = []
-        for ranking in rankings[:10]:
-            try:
-                # Extract index from chunk_id (expecting format like "0", "1", etc)
-                idx = int(ranking['chunk_id'])
-                if 0 <= idx < len(chunks):
-                    ranked_chunks.append(chunks[idx])
-            except (ValueError, KeyError):
-                logger.warning(f"Invalid chunk ranking: {ranking}")
-        
-        # Fallback if no valid rankings
-        if not ranked_chunks:
-            return chunks[:10]
-        
-        return ranked_chunks
     
     def _get_embedding(self, text: str, cache: UnifiedCache) -> List[float]:
         """Get embedding for text with caching"""
@@ -252,11 +173,11 @@ class ContentStrategyProcessor(LLMNativeProcessor):
         
         return dot_product / (norm1 * norm2)
     
-    def _generate_strategy(self, config: Config, materials: List[Dict], 
-                          similar_chunks: List[DocumentChunk]) -> ContentStrategy:
-        """Generate content strategy using unified prompt"""
+    def _generate_unified_strategy(self, config: Config, materials: List[Dict], 
+                                  chunks_to_analyze: List[DocumentChunk]) -> ContentStrategy:
+        """Generate content strategy with integrated intent understanding and chunk ranking"""
         if self.console_display:
-            self.console_display.show_operation("Generating content strategy")
+            self.console_display.show_operation("Generating comprehensive content strategy")
         
         # Create a minimal content standards object
         content_standards = {
@@ -299,14 +220,11 @@ class ContentStrategyProcessor(LLMNativeProcessor):
         
         # Convert DocumentChunks to dictionaries for prompt formatting
         chunks_as_dicts = []
-        for chunk in similar_chunks:
+        for chunk in chunks_to_analyze:
             chunks_as_dicts.append({
                 'file': chunk.file_path,
                 'content_type': chunk.frontmatter.get('ms.topic', 'unknown') if chunk.frontmatter else 'unknown',
                 'ms_topic': chunk.frontmatter.get('ms.topic', 'unknown') if chunk.frontmatter else 'unknown',
-                'relevance_score': 0.9,  # Default score since we don't have it
-                'coverage_analysis': 'Related content',
-                'matched_sections': chunk.heading_path or ['Main'],
                 'chunk_id': chunk.chunk_id,
                 'section': ' > '.join(chunk.heading_path) if chunk.heading_path else 'Main',
                 'content_preview': chunk.content[:200] if chunk.content else ''
@@ -327,8 +245,12 @@ class ContentStrategyProcessor(LLMNativeProcessor):
             messages, 
             model=self.config.completion_model,
             response_format="json_object",
-            operation_name="Strategy Generation"
+            operation_name="Unified Strategy Generation"
         )
+        
+        # Extract thinking if available for console display
+        if self.console_display and 'thinking' in result:
+            self.console_display.show_thinking(result['thinking'], "🤔 AI Thinking - Strategy Development")
         
         # Build strategy object
         strategy = ContentStrategy(
@@ -341,9 +263,12 @@ class ContentStrategyProcessor(LLMNativeProcessor):
         # Add debug info if available
         if self.config.debug_similarity:
             strategy.debug_info = {
+                'intent_analysis': result.get('intent_analysis', {}),
+                'chunk_relevance': result.get('chunk_relevance', []),
+                'chunks_analyzed': len(chunks_to_analyze),
                 'similar_chunks': [
                     {'file': c.file_path, 'section': c.heading_path} 
-                    for c in similar_chunks
+                    for c in chunks_to_analyze[:10]
                 ]
             }
         

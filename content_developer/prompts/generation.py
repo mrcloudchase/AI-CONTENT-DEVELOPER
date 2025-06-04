@@ -1,135 +1,85 @@
 """
 Content generation prompts for AI Content Developer
 """
-from typing import Dict, List
+import json
+from typing import Dict, List, Optional
 
+from .schemas import CREATE_CONTENT_SCHEMA, UPDATE_CONTENT_SCHEMA
 from .helpers import (
     format_materials_with_content, format_chunks_for_reference,
-    get_content_type_template, format_microsoft_elements
+    get_content_type_template, format_microsoft_elements,
+    schema_to_example, extract_type_requirements
 )
 
 
 def get_create_content_prompt(
-    config,
-    action: Dict,
-    materials_text: str,
-    reference_chunks_text: str,
-    content_type_info: Dict,
-    content_standards: Dict = None
-) -> str:
-    """Get the prompt for generating new content based on CREATE action"""
+    config, action: Dict, materials_content: Dict[str, str], 
+    materials_summaries: List[Dict], related_chunks: List[Dict],
+    chunk_context: str, content_type_info: Dict, content_standards: Dict) -> str:
+    """Get the prompt for creating new content"""
     
-    content_type = action.get('content_type', 'How-To Guide')
-    content_brief = action.get('content_brief', {})
+    # Generate example from schema
+    example = schema_to_example(CREATE_CONTENT_SCHEMA)
     
-    # Build content brief section if available
-    content_brief_section = ""
-    if content_brief:
-        content_brief_section = f"""
-=== CONTENT BRIEF (Your Instructions) ===
-OBJECTIVE: {content_brief.get('objective', 'Create comprehensive documentation')}
-
-KEY POINTS TO COVER:
-{chr(10).join(f"- {point}" for point in content_brief.get('key_points_to_cover', []))}
-
-PREREQUISITES TO STATE:
-{chr(10).join(f"- {prereq}" for prereq in content_brief.get('prerequisites_to_state', []))}
-
-RELATED DOCS TO REFERENCE:
-{chr(10).join(f"- {doc}" for doc in content_brief.get('related_docs_to_reference', []))}
-
-NEXT STEPS TO SUGGEST:
-{chr(10).join(f"- {step}" for step in content_brief.get('next_steps_to_suggest', []))}
-
-TECHNICAL DEPTH: {content_brief.get('technical_depth', 'Appropriate for audience level')}
-
-CODE EXAMPLES NEEDED:
-{chr(10).join(f"- {example}" for example in content_brief.get('code_examples_needed', []))}
-
-IMPORTANT WARNINGS:
-{chr(10).join(f"- {warning}" for warning in content_brief.get('important_warnings', []))}
-"""
+    # Extract type requirements
+    type_requirements = extract_type_requirements(CREATE_CONTENT_SCHEMA)
     
-    # Get Microsoft formatting guidelines
-    formatting_section = format_microsoft_elements(content_standards) if content_standards else ""
+    # Format materials with full content
+    materials_info = format_materials_with_content(materials_content, materials_summaries)
     
-    # Build section order information
-    section_order_info = ""
-    if content_type_info.get('sectionOrder'):
-        section_order = content_type_info['sectionOrder']
-        section_order_info = f"""
-REQUIRED SECTION ORDER:
-{chr(10).join(f"{s['position']}. {s['name']} {'(REQUIRED)' if s.get('required') else '(Optional)'} {'[TERMINAL - Must be last]' if s.get('terminal') else ''}" 
-              for s in sorted(section_order, key=lambda x: x['position']))}
-"""
+    # Format related chunks for reference
+    chunks_reference = format_chunks_for_reference(related_chunks)
     
-    return f"""Content Generation Task:
-
-ACTION: CREATE new documentation
-FILENAME: {action.get('filename', 'new-content.md')}
-CONTENT TYPE: {content_type}
-MS.TOPIC: {action.get('ms_topic', 'how-to')}
-REASON: {action.get('reason', 'No reason provided')}
+    # Get content type specific template
+    content_template = get_content_type_template(action['content_type'], content_standards)
+    
+    # Get Microsoft elements formatting guide
+    ms_elements = format_microsoft_elements(content_standards)
+    
+    audience_level_info = ""
+    if config.audience and config.audience_level:
+        audience_level_info = f"""
 TARGET AUDIENCE: {config.audience}
-AUDIENCE LEVEL: {config.audience_level}
-{content_brief_section}
-{formatting_section}
+AUDIENCE LEVEL: {config.audience_level}"""
+    
+    return f"""Create a new {action['content_type']} based on the following materials and guidelines.
 
-=== MATERIAL SOURCES (Full Content) ===
-{materials_text}
+FILE TO CREATE: {action['filename']}
+CONTENT TYPE: {action['content_type']}
+MS.TOPIC: {action['ms_topic']}
+SERVICE AREA: {config.service_area}{audience_level_info}
 
-=== REFERENCE CHUNKS ===
-{reference_chunks_text}
+=== CREATION INSTRUCTIONS (Content Brief) ===
+{action['content_brief']}
 
-=== CONTENT TYPE: {content_type} ===
-Purpose: {content_type_info.get('purpose', 'N/A')}
-Description: {content_type_info.get('description', 'N/A')}
+=== MATERIALS TO USE ===
+{materials_info}
 
-FRONTMATTER REQUIREMENTS:
-- title: {content_type_info.get('frontMatter', {}).get('title', 'Clear descriptive title')}
-- description: {content_type_info.get('frontMatter', {}).get('description', '1-2 sentence summary')}
-- ms.topic: {content_type_info.get('frontMatter', {}).get('ms.topic', action.get('ms_topic', 'how-to'))}
+=== RELATED DOCUMENTATION CONTEXT ===
+{chunks_reference}
 
-{section_order_info}
+{chunk_context}
 
-TASK: Generate comprehensive technical documentation based on the materials provided.
+=== CONTENT TYPE REQUIREMENTS ===
+{content_template}
 
-CRITICAL SECTION ORDER RULES:
-1. Follow the EXACT section order shown above
-2. Include ALL required sections
-3. Terminal sections (marked with [TERMINAL]) MUST be the last section
-4. NEVER add any content after terminal sections
-5. Optional sections should be included if relevant content exists in materials
+=== MICROSOFT DOCUMENTATION FORMATTING ===
+{ms_elements}
 
-AUDIENCE ADAPTATION:
-- Write specifically for: {config.audience}
-- Technical depth: {config.audience_level}
-- Beginner: Include prerequisites, explain all concepts, provide extra context
-- Intermediate: Balance technical detail with clarity, assume some foundational knowledge
-- Advanced: Focus on technical implementation, performance considerations, best practices
-
-REQUIREMENTS:
-1. STRUCTURE: Follow the exact template structure for {content_type}
-2. CONTENT: Use ALL relevant information from the FULL MATERIAL CONTENT
-3. ACCURACY: Every technical detail must be accurately represented from materials
-4. COMPLETENESS: Include all key concepts, technologies, and procedures from materials
-5. FRONTMATTER: Include proper Microsoft docs frontmatter with all required fields
-6. CODE EXAMPLES: Include all relevant code snippets from materials
-7. STYLE: Match the technical writing style shown in reference chunks
+TASK: Create a complete {action['content_type']} that:
+1. Addresses the objective stated in the content brief
+2. Incorporates relevant information from the provided materials
+3. Follows the content type template structure
+4. Maintains consistency with related documentation
+5. Uses proper Microsoft documentation formatting
 
 OUTPUT FORMAT:
-{{
-  "thinking": "1. Content planning: Document your content planning process and material organization.\n2. Section development: How you're organizing material content into sections.\n3. Audience adaptation: How you're adapting content for the target audience.\n4. Technical accuracy: How you're ensuring all technical details are accurate.\n5. Completeness validation: How you're ensuring all key materials are included.",
-  "content": "The complete markdown content with frontmatter and all sections",
-  "metadata": {{
-    "word_count": 1500,
-    "sections_created": ["Introduction", "Prerequisites", "Steps", "Code Examples", "Next Steps"],
-    "materials_used": ["material1.md", "material2.docx"],
-    "key_topics_covered": ["Cilium", "Azure CNI", "Network Policies"]
-  }}
-}}
+{json.dumps(example, indent=2)}
 
-CRITICAL: Generate production-ready documentation that fully leverages the provided materials."""
+TYPE REQUIREMENTS (MUST FOLLOW EXACTLY):
+{type_requirements}
+
+CRITICAL: Return the COMPLETE document content as a single string in the 'content' field. The document must be production-ready with proper frontmatter, sections, and formatting."""
 
 
 CREATE_CONTENT_SYSTEM = """You are an expert technical documentation writer specializing in Microsoft Azure documentation.
@@ -243,108 +193,54 @@ When information is missing:
 
 
 def get_update_content_prompt(
-    config,
-    action: Dict,
-    existing_content: str,
-    material_context: str,
-    chunk_context: str,
-    content_type_info: Dict = None,
-    content_standards: Dict = None
-) -> str:
-    """Get the prompt for updating existing content based on UPDATE action
+    config, action: Dict, existing_content: str, material_context: str,
+    chunk_context: str, content_type_info: Dict, content_standards: Dict) -> str:
+    """Get the prompt for updating existing content"""
     
-    Args:
-        config: Configuration object with audience settings
-        action: The update action details
-        existing_content: The current content of the file
-        material_context: Formatted material content
-        chunk_context: Related documentation context
-        content_type_info: Content type template information
-        content_standards: Full content standards including formatting
-        
-    Returns:
-        The formatted prompt string
-    """
-    sections_str = "\n".join(f"- {section}" for section in action.get('specific_sections', []))
-    content_brief = action.get('content_brief', {})
+    # Generate example from schema
+    example = schema_to_example(UPDATE_CONTENT_SCHEMA)
     
-    # Build content type requirements section
-    content_type_section = ""
-    template_enforcement_section = ""
+    # Extract type requirements
+    type_requirements = extract_type_requirements(UPDATE_CONTENT_SCHEMA)
+    
+    # Get Microsoft elements formatting guide
+    ms_elements = format_microsoft_elements(content_standards)
+    
+    # Get content type template info if available
+    content_template = ""
     if content_type_info:
-        required_sections = content_type_info.get('requiredSections', [])
-        terminal_sections = content_type_info.get('terminalSections', [])
-        
-        content_type_section = f"""
-=== DOCUMENT TYPE REQUIREMENTS ===
-Content Type: {content_type_info.get('name', 'Unknown')}
-Purpose: {content_type_info.get('purpose', 'N/A')}
-MS.Topic: {content_type_info.get('frontMatter', {}).get('ms.topic', 'N/A')}
-
-REQUIRED SECTIONS (maintain these):
-{chr(10).join(f"- {section}" for section in required_sections)}
-
-TERMINAL SECTIONS (must remain last):
-{chr(10).join(f"- {section}" for section in terminal_sections)}
-
-DOCUMENT STRUCTURE:
-- This is a {content_type_info.get('name', 'document')} that must maintain its structural integrity
-- Required sections must remain present and in the correct order
-- Any new content must fit within the existing structure
-- CRITICAL: No content may be added after terminal sections
-"""
-        
-        # Add template enforcement rules
-        if content_standards and 'templateEnforcementRules' in content_standards:
-            rules = content_standards['templateEnforcementRules']
-            template_enforcement_section = f"""
-=== TEMPLATE ENFORCEMENT RULES ===
-{chr(10).join(f"- {rule['rule']}: {rule['description']}" for rule in rules if rule.get('enforcement') == 'strict')}
-"""
+        content_template = get_content_type_template(
+            content_type_info.get('content_type', 'Unknown'),
+            content_standards
+        )
     
-    # Build content brief section for updates
-    content_brief_section = ""
-    if content_brief:
-        sections_to_add = content_brief.get('sections_to_add', [])
-        sections_to_modify = content_brief.get('sections_to_modify', [])
-        
-        content_brief_section = f"""
-=== UPDATE INSTRUCTIONS (Content Brief) ===
-UPDATE OBJECTIVE: {content_brief.get('update_objective', 'Fill identified gaps')}
-
-SECTIONS TO ADD:
-{chr(10).join(f"- {s['section_name']}: {s['content_focus']} (Place {s['placement']})" 
-              for s in sections_to_add)}
-
-SECTIONS TO MODIFY:
-{chr(10).join(f"- {s['section_name']}: {s['modifications']} (Preserve: {s['preserve']})" 
-              for s in sections_to_modify)}
-
-NEW EXAMPLES TO ADD:
-{chr(10).join(f"- {example}" for example in content_brief.get('new_examples_to_add', []))}
-
-LINKS TO ADD:
-{chr(10).join(f"- {link}" for link in content_brief.get('links_to_add', []))}
-
-STYLE REQUIREMENT: {content_brief.get('maintain_style', 'Keep consistent with existing document')}
-"""
-    
-    # Get Microsoft formatting guidelines
-    formatting_section = format_microsoft_elements(content_standards) if content_standards else ""
+    audience_level_info = ""
+    if config.audience and config.audience_level:
+        audience_level_info = f"""
+TARGET AUDIENCE: {config.audience}
+AUDIENCE LEVEL: {config.audience_level}"""
     
     return f"""Update the following documentation file based on the provided materials.
 
-FILE TO UPDATE: {action.get('filename')}
-CHANGE DESCRIPTION: {action.get('change_description')}
-TARGET AUDIENCE: {config.audience}
-AUDIENCE LEVEL: {config.audience_level}
-{content_brief_section}
-{content_type_section}
-{template_enforcement_section}
-{formatting_section}
+FILE TO UPDATE: {action.get('filename', 'unknown.md')}
+CHANGE DESCRIPTION: {action.get('change_description', 'No description provided')}
+TARGET AUDIENCE: {config.audience or 'technical professionals'}
+AUDIENCE LEVEL: {config.audience_level or 'intermediate'}
 
-SPECIFIC SECTIONS TO UPDATE:
-{sections_str}
+=== UPDATE INSTRUCTIONS (Content Brief) ===
+{action.get('content_brief', 'No specific brief provided')}
+
+=== DOCUMENT TYPE REQUIREMENTS ===
+{content_template if content_template else 'Content Type: ' + content_type_info.get('content_type', 'Unknown')}
+
+=== MICROSOFT DOCUMENTATION FORMATTING ===
+{ms_elements}
+
+=== TEMPLATE ENFORCEMENT RULES ===
+- Section Order Enforcement: All sections must appear in the order specified by the content type's sectionOrder
+- Terminal Section Protection: No content may be added after terminal sections (Next Steps, Related content, See also)
+- Required Section Validation: All required sections must be present in the document
+- Content Placement Rules: New content must be placed in appropriate existing sections or as new sections before terminal sections
 
 EXISTING CONTENT:
 ```markdown
@@ -354,28 +250,17 @@ EXISTING CONTENT:
 RELEVANT MATERIAL CONTENT:
 {material_context}
 
-RELATED DOCUMENTATION CONTEXT:
+EXISTING CHUNKS CONTEXT:
 {chunk_context}
 
-UPDATE TASK:
-1. Read and understand the entire existing document
-2. Follow the UPDATE INSTRUCTIONS (Content Brief) to make the requested changes
-3. Integrate new information from the materials naturally
-4. Preserve all valuable existing content
-5. Return the COMPLETE updated document
+SPECIFIC SECTIONS TO UPDATE:
+{', '.join(action.get('specific_sections', ['As determined by content brief']))}
 
 OUTPUT FORMAT:
-{{
-  "thinking": "1. Document analysis: Explain your update strategy and understanding of existing content.\n2. Change identification: What specific changes you're making and where.\n3. Content integration: How you're placing new content while preserving existing value.\n4. Structure preservation: How you're maintaining document integrity and flow.\n5. Quality assurance: How you're ensuring the updated document meets all requirements.",
-  "updated_document": "The COMPLETE updated markdown document with all changes integrated",
-  "changes_summary": "Brief summary of what was updated",
-  "metadata": {{
-    "sections_modified": ["List of sections that were changed"],
-    "sections_added": ["List of any new sections added"],
-    "word_count_before": estimated_original_count,
-    "word_count_after": estimated_new_count
-  }}
-}}
+{json.dumps(example, indent=2)}
+
+TYPE REQUIREMENTS (MUST FOLLOW EXACTLY):
+{type_requirements}
 
 CRITICAL: Return the ENTIRE updated document in the 'updated_document' field, not just the changes."""
 

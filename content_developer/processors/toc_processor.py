@@ -43,7 +43,7 @@ class TOCProcessor(LLMNativeProcessor):
         updated_files: List[str],
         strategy_results: Dict
     ) -> Dict:
-        """Internal processing logic using LLM-native approach"""
+        """Internal processing logic using LLM-native approach with integrated placement analysis"""
         toc_path = working_directory / "TOC.yml"
         
         # Check if TOC.yml exists
@@ -81,36 +81,34 @@ class TOCProcessor(LLMNativeProcessor):
         # Extract file descriptions from strategy results
         file_entries = self._prepare_file_entries(all_files, strategy_results)
         
-        # Use LLM to suggest TOC placements
+        # Generate updated TOC with integrated placement analysis
         if self.console_display:
-            self.console_display.show_operation("Analyzing TOC structure")
+            self.console_display.show_operation("Analyzing TOC and determining placements")
         
-        placement_suggestions = self.suggest_toc_placement(
-            toc_structure=toc_content,
-            new_entries=file_entries,
-            operation_name="TOC Placement Analysis"
-        )
-        
-        # Extract thinking if available
-        if self.console_display and 'thinking' in placement_suggestions:
-            self.console_display.show_thinking(placement_suggestions['thinking'], "🤔 AI Thinking - TOC Placement")
-        
-        # Generate updated TOC using LLM
-        updated_toc = self._generate_updated_toc(
+        updated_toc_result = self._generate_updated_toc_with_placement(
             toc_content, 
-            placement_suggestions,
+            created_files,
+            updated_files,
             file_entries
         )
         
-        if not updated_toc:
+        if not updated_toc_result:
             return {
                 'success': False,
                 'message': 'Failed to generate updated TOC',
                 'toc_path': str(toc_path)
             }
         
+        # Extract thinking if available
+        if self.console_display and 'thinking' in updated_toc_result:
+            self.console_display.show_thinking(updated_toc_result['thinking'], "🤔 AI Thinking - TOC Update")
+        
         # Save preview
-        preview_path = self._save_toc_preview(updated_toc['content'], working_directory)
+        preview_path = self._save_toc_preview(updated_toc_result['content'], working_directory)
+        
+        # Extract placement information
+        placement_analysis = updated_toc_result.get('placement_analysis', {})
+        placement_rationale = placement_analysis.get('placement_rationale', [])
         
         return {
             'success': True,
@@ -118,8 +116,10 @@ class TOCProcessor(LLMNativeProcessor):
             'changes_made': True,
             'toc_path': str(toc_path),
             'preview_path': str(preview_path),
-            'placements': placement_suggestions.get('placements', []),
-            'toc_suggestions': placement_suggestions.get('toc_suggestions', '')
+            'placements': placement_rationale,
+            'placement_decisions': updated_toc_result.get('placement_decisions', {}),
+            'entries_added': updated_toc_result.get('entries_added', []),
+            'toc_pattern': placement_analysis.get('toc_pattern', 'Unknown pattern')
         }
     
     def _prepare_file_entries(self, files: List[str], strategy_results: Dict) -> List[Dict[str, str]]:
@@ -152,16 +152,21 @@ class TOCProcessor(LLMNativeProcessor):
         
         return entries
     
-    def _generate_updated_toc(self, current_toc: str, placement_suggestions: Dict, 
-                             file_entries: List[Dict]) -> Optional[Dict]:
-        """Generate the updated TOC content using LLM"""
+    def _generate_updated_toc_with_placement(self, current_toc: str, 
+                                           created_files: List[str],
+                                           updated_files: List[str],
+                                           file_entries: List[Dict]) -> Optional[Dict]:
+        """Generate the updated TOC content with integrated placement analysis"""
         from ..prompts.toc import get_toc_update_prompt, TOC_UPDATE_SYSTEM
+        
+        # Create file descriptions mapping
+        file_descriptions = {entry['filename']: entry for entry in file_entries}
         
         prompt = get_toc_update_prompt(
             current_toc,
-            [entry['filename'] for entry in file_entries if 'filename' in entry],
-            [],  # No updated files distinction needed
-            {entry['filename']: entry for entry in file_entries}
+            created_files,
+            updated_files,
+            file_descriptions
         )
         
         messages = [
@@ -174,7 +179,7 @@ class TOCProcessor(LLMNativeProcessor):
                 messages,
                 model=self.config.completion_model,
                 response_format="json_object",
-                operation_name="TOC Generation"
+                operation_name="TOC Update with Placement Analysis"
             )
             
             return response

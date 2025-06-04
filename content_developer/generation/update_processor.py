@@ -18,18 +18,66 @@ logger = logging.getLogger(__name__)
 class UpdateContentProcessor(BaseContentProcessor):
     """Process UPDATE actions from content strategy"""
     
+    def _normalize_filename(self, filename: str, working_dir_path: Path, repo_name: str) -> str:
+        """Normalize filename by removing repository and path prefixes
+        
+        Examples:
+            - 'azure-aks-docs/articles/aks/file.md' -> 'file.md'
+            - '/articles/aks/file.md' -> 'file.md' 
+            - 'articles/aks/file.md' -> 'file.md'
+            - 'file.md' -> 'file.md'
+        """
+        # Convert to Path for easier manipulation
+        file_path = Path(filename)
+        
+        # Get the working directory relative to repo
+        working_dir_parts = working_dir_path.parts
+        
+        # Remove repo name if present at start
+        if file_path.parts and file_path.parts[0] == repo_name:
+            file_path = Path(*file_path.parts[1:])
+        
+        # Remove working directory path if present
+        if len(file_path.parts) > 1:
+            # Check if the file path contains the working directory structure
+            for i in range(len(file_path.parts)):
+                remaining_parts = file_path.parts[i:]
+                # If we find a valid file at this level, use it
+                test_path = working_dir_path / Path(*remaining_parts)
+                if test_path.exists() and test_path.is_file():
+                    logger.info(f"Normalized '{filename}' to '{Path(*remaining_parts)}'")
+                    return str(Path(*remaining_parts))
+        
+        # If no match found, try just the filename
+        if file_path.name and (working_dir_path / file_path.name).exists():
+            logger.info(f"Normalized '{filename}' to '{file_path.name}'")
+            return file_path.name
+            
+        # Otherwise return the original filename and let it fail naturally
+        logger.warning(f"Could not normalize filename '{filename}', using as-is")
+        return filename
+    
     def _process(self, action: Dict, materials: List[Dict], 
                        materials_content: Dict[str, str], chunks: List[DocumentChunk],
                        working_dir_path: Path, repo_name: str, working_directory: str,
                        relevant_chunks: Dict[str, DocumentChunk] = None,
                        chunks_with_context: Dict[str, Dict] = None) -> Dict:
         """Process a single UPDATE action"""
-        filename = action.get('filename', '')
+        original_filename = action.get('filename', '')
+        
+        # Normalize the filename to handle path issues
+        filename = self._normalize_filename(original_filename, working_dir_path, repo_name)
         
         # Load existing file content
         file_path = working_dir_path / filename
         if not file_path.exists():
-            return self._create_error_result(action, f"File not found: {filename}")
+            # Try one more time with just the base filename
+            base_filename = Path(original_filename).name
+            file_path = working_dir_path / base_filename
+            if file_path.exists():
+                filename = base_filename
+            else:
+                return self._create_error_result(action, f"File not found: {original_filename} (tried: {filename})")
         
         # Read existing content
         existing_content = read(file_path, limit=None)
@@ -132,7 +180,7 @@ class UpdateContentProcessor(BaseContentProcessor):
             
             # Extract and display thinking if available
             if self.console_display and 'thinking' in result:
-                self.console_display.show_thinking(result['thinking'], f"🤔 AI Thinking - Content Update: {filename}")
+                self.console_display.show_thinking(result['thinking'], f"🤔 AI Thinking - Content Update: {action.get('filename', 'unknown')}")
             
             # Get the complete updated document from the LLM response
             updated_document = result.get('updated_document', '')
@@ -169,7 +217,9 @@ class UpdateContentProcessor(BaseContentProcessor):
         preview_dir = Path("./llm_outputs/preview/update")
         mkdir(preview_dir)
         
-        preview_path = preview_dir / filename
+        # Use just the base filename for preview to avoid nested paths
+        base_filename = Path(filename).name
+        preview_path = preview_dir / base_filename
         write(preview_path, content)
         
         return str(preview_path) 

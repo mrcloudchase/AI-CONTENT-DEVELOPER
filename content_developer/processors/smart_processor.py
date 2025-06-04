@@ -178,12 +178,26 @@ class SmartProcessor:
             formatted_thinking = self._format_numbered_thinking(thinking)
             self.console_display.show_thinking(formatted_thinking, title)
     
-    def _format_numbered_thinking(self, thinking: str) -> str:
+    def _format_numbered_thinking(self, thinking) -> str:
         """Format thinking with proper numbered step formatting"""
         if not thinking:
-            return thinking
+            return ""
             
-        # Check if thinking already has numbered steps
+        # Handle different input types defensively
+        is_array_input = isinstance(thinking, list)
+        
+        if is_array_input:
+            # For array inputs, format each item as a separate line
+            formatted_lines = []
+            for i, item in enumerate(thinking, 1):
+                # Add bullet or number prefix for clarity
+                formatted_lines.append(f"[bold]{i}.[/bold] {str(item).strip()}")
+            return '\n'.join(formatted_lines)
+        elif not isinstance(thinking, str):
+            # Convert any other type to string
+            thinking = str(thinking)
+            
+        # For string inputs, handle as before
         lines = thinking.split('\n')
         formatted_lines = []
         

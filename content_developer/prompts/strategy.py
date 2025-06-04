@@ -1,58 +1,72 @@
 """
 Content strategy prompts for AI Content Developer
 """
+import json
 from typing import Dict, List
 
+from .schemas import CONTENT_STRATEGY_SCHEMA
 from .helpers import (
     format_semantic_matches, format_content_types,
-    format_top_chunks, format_chunk_clusters
+    format_top_chunks, format_chunk_clusters,
+    schema_to_example, extract_type_requirements
 )
 
 
 def get_unified_content_strategy_prompt(config, materials_summary: str, 
-semantic_matches: List[Dict], 
+existing_chunks: List[Dict], 
 content_standards: Dict,
 top_chunks: List[Dict] = None,
 chunk_clusters: Dict[str, List[Dict]] = None) -> str:
     """Get the prompt for unified content strategy with gap analysis and content type selection"""
     
-    # Format semantic matches for prompt
-    matches_info = format_semantic_matches(semantic_matches)
+    # Generate example from schema
+    example = schema_to_example(CONTENT_STRATEGY_SCHEMA)
+    
+    # Extract type requirements
+    type_requirements = extract_type_requirements(CONTENT_STRATEGY_SCHEMA)
+    
+    # Format existing chunks for prompt (using semantic matches formatter for backward compatibility)
+    chunks_info = format_semantic_matches(existing_chunks)
     
     # Format content type definitions
     content_types_info = format_content_types(content_standards)
     
     # Format top chunks if provided
-    chunks_info = format_top_chunks(top_chunks) if top_chunks else ""
+    top_chunks_info = ""
+    if top_chunks:
+        top_chunks_info = "\n\n" + format_top_chunks(top_chunks)
     
     # Format chunk clusters if provided
-    clusters_info = format_chunk_clusters(chunk_clusters) if chunk_clusters else ""
+    clusters_info = ""
+    if chunk_clusters:
+        clusters_info = "\n\n" + format_chunk_clusters(chunk_clusters)
     
+    audience_level_info = ""
+    if config.audience and config.audience_level:
+        audience_level_info = f"""
+TARGET AUDIENCE: {config.audience}
+AUDIENCE LEVEL: {config.audience_level}"""
+        
     return f"""Unified Content Strategy Analysis Task:
 
 CONTENT GOAL: {config.content_goal}
-SERVICE AREA: {config.service_area}
-TARGET AUDIENCE: {config.audience}
-AUDIENCE LEVEL: {config.audience_level}
+SERVICE AREA: {config.service_area}{audience_level_info}
 
 USER MATERIALS ANALYSIS:
 {materials_summary}
 
+
 EXISTING CONTENT ANALYSIS:
-{matches_info}
+{chunks_info}{top_chunks_info}{clusters_info}
 
-{chunks_info}
 
-{clusters_info}
-
-AVAILABLE CONTENT TYPES:
 {content_types_info}
 
 TASK: Perform comprehensive gap analysis and generate content strategy with specific actions.
 
 AUDIENCE CONSIDERATIONS:
-- Target readers: {config.audience}
-- Technical depth: {config.audience_level} level
+- Target readers: {config.audience or 'technical professionals'}
+- Technical depth: {config.audience_level or 'intermediate'} level
 - Beginner: Include prerequisites, detailed explanations, basic concepts
 - Intermediate: Balance explanation with technical detail
 - Advanced: Focus on implementation, optimization, and edge cases
@@ -97,88 +111,15 @@ ANALYSIS REQUIREMENTS:
 5. RELEVANT CHUNKS: Use ONLY chunk_ids from the provided TOP RELEVANT CHUNKS or from file's relevant_chunks
 
 OUTPUT FORMAT:
-{{
-  "thinking": "1. Gap analysis: Document your complete analysis process including gap identification.\n2. Content type evaluation: Explain content type considerations and selection rationale.\n3. Decision framework: Apply the decision criteria to determine CREATE vs UPDATE actions.\n4. Content brief development: Detail how you developed the specific content briefs.\n5. Final validation: Confirm all decisions align with user goals and existing content patterns.",
-  "decisions": [
-    {{
-      "action": "CREATE",
-      "filename": "specific-name.md",
-      "content_type": "How-To Guide",
-      "ms_topic": "how-to",
-      "reason": "Detailed explanation of why this content is needed",
-      "priority": "high|medium|low",
-      "relevant_chunks": ["chunk_id_from_top_chunks", "another_chunk_id"],
-      "content_brief": {{
-        "objective": "Clear statement of what the reader will achieve",
-        "key_points_to_cover": [
-          "Main topic or feature to explain",
-          "Important configuration or setup steps",
-          "Best practices or optimization tips"
-        ],
-        "prerequisites_to_state": [
-          "Required knowledge or setup",
-          "Tools or access needed"
-        ],
-        "related_docs_to_reference": [
-          "Path to prerequisite content",
-          "Path to related topics"
-        ],
-        "next_steps_to_suggest": [
-          "What reader might do next",
-          "Advanced topics to explore"
-        ],
-        "technical_depth": "Specific guidance on how deep to go technically",
-        "code_examples_needed": [
-          "Example commands or configurations",
-          "Sample outputs to show"
-        ],
-        "important_warnings": [
-          "Security considerations",
-          "Common pitfalls to highlight"
-        ]
-      }}
-    }},
-    {{
-      "action": "UPDATE", 
-      "filename": "existing-file.md",
-      "current_content_type": "Overview",
-      "ms_topic": "overview",
-      "change_description": "Add new section 'Cilium Integration' after 'Network Plugins'",
-      "specific_sections": ["Cilium Benefits", "Architecture Overview"],
-      "reason": "Detailed explanation of what's missing",
-      "priority": "high|medium|low",
-      "relevant_chunks": ["chunk_id_from_that_file", "another_relevant_chunk_id"],
-      "content_brief": {{
-        "update_objective": "What gap this update fills",
-        "sections_to_add": [
-          {{
-            "section_name": "Section Title",
-            "content_focus": "What this section should cover",
-            "placement": "Where in document (after X section)"
-          }}
-        ],
-        "sections_to_modify": [
-          {{
-            "section_name": "Existing Section",
-            "modifications": "What to add or change",
-            "preserve": "What to keep unchanged"
-          }}
-        ],
-        "new_examples_to_add": [
-          "Specific code or configuration examples"
-        ],
-        "links_to_add": [
-          "New related content to reference"
-        ],
-        "maintain_style": "Keep consistent with existing document tone and depth"
-      }}
-    }}
-  ],
-  "confidence": 0.85,
-  "summary": "Brief summary of overall strategy"
-}}
+{json.dumps(example, indent=2)}
 
-CRITICAL: Use ONLY real chunk_ids provided in the analysis above. Do NOT invent chunk identifiers. Return only valid JSON matching the exact format specified above."""
+TYPE REQUIREMENTS (MUST FOLLOW EXACTLY):
+{type_requirements}
+
+FILENAME REQUIREMENTS:
+- For CREATE actions: Use simple filenames like "my-guide.md" without any path prefixes
+- For UPDATE actions: Use ONLY the filename from the chunk data (e.g., "azure-cni-powered-by-cilium.md"), never include repository names or directory paths
+- NEVER include paths like "repo-name/articles/..." in filenames."""
 
 
 UNIFIED_CONTENT_STRATEGY_SYSTEM = """You are an expert content strategist specializing in technical documentation gap analysis and content planning.

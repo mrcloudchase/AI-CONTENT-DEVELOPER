@@ -1,7 +1,7 @@
 """
 Console display manager using Rich for beautiful output
 """
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 from contextlib import contextmanager
 import time
 
@@ -74,13 +74,21 @@ class ConsoleDisplay:
         """Show current operation with spinner"""
         self.console.print(f"  {emoji} {operation}", style="dim")
     
-    def show_thinking(self, thinking: str, title: str = "🤔 AI Thinking") -> None:
+    def show_thinking(self, thinking: Union[str, List[str]], title: str = "🤔 AI Thinking") -> None:
         """Display AI thinking in a formatted panel"""
         if not thinking:
             return
             
-        # Clean up thinking text
-        thinking = thinking.strip()
+        # Handle array input - convert to string
+        if isinstance(thinking, list):
+            # Format array items with numbers
+            formatted_lines = []
+            for i, item in enumerate(thinking, 1):
+                formatted_lines.append(f"{i}. {str(item).strip()}")
+            thinking = '\n'.join(formatted_lines)
+        else:
+            # Clean up thinking text for string input
+            thinking = thinking.strip()
         
         # Create a panel with the thinking
         thinking_panel = Panel(

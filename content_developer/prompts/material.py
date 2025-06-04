@@ -2,9 +2,22 @@
 Material processing prompts for AI Content Developer
 """
 
+import json
+from .schemas import MATERIAL_ANALYSIS_SCHEMA
+from .helpers import schema_to_example, extract_type_requirements
+
 
 def get_material_summary_prompt(source: str, content: str) -> str:
     """Get the prompt for technical document analysis and summarization"""
+    
+    # Generate example from schema
+    example = schema_to_example(MATERIAL_ANALYSIS_SCHEMA)
+    # Update source to match input
+    example['source'] = source
+    
+    # Extract type requirements
+    type_requirements = extract_type_requirements(MATERIAL_ANALYSIS_SCHEMA)
+    
     return f"""Technical Document Analysis Task:
 
 SOURCE: {source}
@@ -31,16 +44,21 @@ CRITICAL EXTRACTION REQUIREMENTS:
 - summary: Comprehensive overview (100-200 words covering purpose, scope, key insights)
 
 EXAMPLE OUTPUT FORMAT:
-{{
-  "thinking": "1. Document analysis: I systematically analyzed the Azure CNI documentation and identified this as a technical implementation guide focused on container networking.\n2. Technology extraction: I extracted specific technologies including Azure CNI, Cilium, Kubernetes, and eBPF.\n3. Concept identification: Key concepts include endpoint slices, network policies, and automatic configuration.\n4. Microsoft product mapping: Products mentioned are AKS, Azure Virtual Network, and Azure Resource Manager.\n5. Summary synthesis: The document provides comprehensive coverage of advanced networking configuration with specific implementation examples.",
-  "main_topic": "Azure CNI Cilium Integration",
-  "technologies": ["Azure CNI", "Cilium", "Kubernetes", "eBPF", "CiliumEndpointSlices"],
-  "key_concepts": ["network policies", "endpoint slices", "automatic configuration", "container networking"],
-  "microsoft_products": ["Azure Kubernetes Service", "Azure Virtual Network", "Azure Resource Manager"],
-  "document_type": "Technical Implementation Guide",
-  "summary": "Comprehensive guide covering Azure CNI integration with Cilium for advanced Kubernetes networking. Details automatic configuration of CiliumEndpointSlices, network policy implementation, and eBPF-based networking optimization. Provides specific configuration examples, troubleshooting steps, and best practices for production deployment in Azure Kubernetes Service environments.",
-  "source": "{source}"
-}}
+{json.dumps(example, indent=2)}
+
+TYPE REQUIREMENTS (MUST FOLLOW EXACTLY):
+{type_requirements}
+
+VALIDATION CHECKLIST:
+✓ thinking field is an ARRAY of analysis steps (not a single string)
+✓ main_topic is concise and specific
+✓ technologies array includes ALL technical tools mentioned
+✓ key_concepts array includes ALL important concepts
+✓ microsoft_products array includes ALL Microsoft/Azure references
+✓ document_type is specific classification
+✓ summary is comprehensive 100-200 word overview
+✓ source exactly matches input
+✓ All arrays contain relevant items (empty arrays only if nothing found)
 
 YOU MUST RETURN EXACTLY THIS JSON FORMAT. NO DEVIATIONS ALLOWED."""
 
@@ -64,7 +82,7 @@ PLANNING PROCESS ENFORCEMENT: You MUST plan extensively before generating your r
 7. Create comprehensive summary covering purpose, scope, and technical value
 
 JSON FORMAT ENFORCEMENT:
-- thinking: MUST be a STRING with numbered steps (1., 2., 3., etc.) documenting complete step-by-step analysis process (minimum 100 words)
+- thinking: MUST be an ARRAY of strings, each string representing one analysis step (minimum 3 steps)
 - main_topic: MUST be a STRING with concise primary subject (maximum 50 characters)
 - technologies: MUST be an ARRAY of strings listing technical tools/frameworks mentioned
 - key_concepts: MUST be an ARRAY of strings listing important concepts covered
@@ -75,14 +93,14 @@ JSON FORMAT ENFORCEMENT:
 
 TYPE VALIDATION:
 ✓ ALL fields must be present (no omissions)
-✓ thinking, main_topic, document_type, summary, source MUST be strings
-✓ thinking MUST use numbered steps (1., 2., 3., etc.)
+✓ thinking MUST be an array of strings
+✓ main_topic, document_type, summary, source MUST be strings
 ✓ technologies, key_concepts, microsoft_products MUST be arrays
 ✓ Arrays must contain strings only (not objects or numbers)
 ✓ Empty arrays [] are valid if nothing found (NOT null)
 
 VALIDATION CHECKLIST:
-✓ thinking field documents complete analysis methodology with numbered steps
+✓ thinking field is an ARRAY with each step as a separate string
 ✓ main_topic is concise and specific
 ✓ technologies array includes ALL technical tools mentioned
 ✓ key_concepts array includes ALL important concepts

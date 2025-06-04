@@ -2,7 +2,7 @@
 
 An intelligent documentation generation tool that analyzes repositories and creates or updates documentation based on support materials using Azure OpenAI models.
 
-> **📢 Important Update**: This tool now uses **Azure OpenAI** with Microsoft Entra ID authentication instead of OpenAI API keys. If you're migrating from a previous version, please see the [Azure Migration Guide](docs/azure-migration-guide.md).
+> **📢 Important**: This tool uses **Azure OpenAI** with Microsoft Entra ID authentication instead of OpenAI API keys.
 
 ## Overview
 
@@ -161,82 +161,342 @@ stateDiagram-v2
     Phase4 --> [*]
 ```
 
-## Installation
+## Prerequisites
 
-### Prerequisites
+### System Requirements
 
-- Python 3.12 or earlier (Python 3.13 has compatibility issues with some dependencies)
-- Azure OpenAI resource with deployed models
-- Azure CLI installed and authenticated (`az login`)
-- Git (for cloning repositories)
+- **Python 3.12 or earlier** (Python 3.13 has compatibility issues with some dependencies)
+- **Git** (for cloning repositories)
+- **Azure Subscription** with access to create Azure OpenAI resources
+- **Azure CLI** installed and configured
 
-### Setup
+### Required Azure Resources
 
-1. Clone the repository:
+1. **Azure OpenAI Service Resource** with:
+   - A completion model deployment (e.g., `gpt-4`, `gpt-4o`, or `gpt-4.1`)
+   - An embedding model deployment (e.g., `text-embedding-3-small`)
+
+2. **Required Permissions**:
+   - `Cognitive Services OpenAI User` role on the Azure OpenAI resource
+   - Or `Cognitive Services OpenAI Contributor` for full access
+
+## Installation & Setup
+
+### Step 1: Clone the Repository
+
 ```bash
-git clone https://github.com/yourusername/ai-content-developer.git
-cd ai-content-developer
+git clone https://github.com/chasedmicrosoft/AI-CONTENT-DEVELOPER.git
+cd AI-CONTENT-DEVELOPER
 ```
 
-2. Install dependencies:
+### Step 2: Set Up Python Virtual Environment
+
+Using a Python virtual environment is **strongly recommended** to avoid dependency conflicts.
+
+<details>
+<summary><b>macOS/Linux Instructions</b></summary>
+
 ```bash
+# Create virtual environment (use python3.12 if available)
+python3 -m venv venv
+# or specifically with Python 3.12
+python3.12 -m venv venv
+
+# Activate virtual environment
+source venv/bin/activate
+
+# Upgrade pip
+pip install --upgrade pip
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-3. Configure Azure OpenAI:
+</details>
+
+<details>
+<summary><b>Windows Instructions</b></summary>
+
+```cmd
+# Create virtual environment
+python -m venv venv
+# or specifically with Python 3.12
+py -3.12 -m venv venv
+
+# Activate virtual environment
+# For Command Prompt:
+venv\Scripts\activate.bat
+# For PowerShell:
+venv\Scripts\Activate.ps1
+
+# If you get an execution policy error in PowerShell:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Upgrade pip
+python -m pip install --upgrade pip
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+</details>
+
+### Step 3: Install and Configure Azure CLI
+
+The Azure CLI is required for authentication with Azure OpenAI.
+
+<details>
+<summary><b>Installation Instructions</b></summary>
+
+**macOS:**
+```bash
+brew update && brew install azure-cli
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+```
+
+**Windows:**
+Download and run the [MSI installer](https://aka.ms/installazurecliwindows)
+
+For other platforms, see the [Azure CLI installation guide](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
+
+</details>
+
+**Configure Azure CLI:**
+```bash
+# Login to Azure
+az login
+
+# If you have multiple subscriptions, set the one to use
+az account list --output table
+az account set --subscription "Your Subscription Name or ID"
+
+# Verify you're logged in
+az account show
+```
+
+### Step 4: Create Azure OpenAI Resource
+
+Follow the [official Azure OpenAI resource creation guide](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource) or use these quick steps:
+
+<details>
+<summary><b>Azure Portal Method</b></summary>
+
+1. Go to [Azure Portal](https://portal.azure.com)
+2. Click **Create a resource**
+3. Search for **Azure OpenAI** and select it
+4. Click **Create**
+5. Fill in the required fields:
+   - **Subscription**: Your Azure subscription
+   - **Resource group**: Create new or use existing
+   - **Region**: Choose based on [model availability](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#model-summary-table-and-region-availability)
+   - **Name**: Unique name for your resource
+   - **Pricing tier**: Standard S0
+6. Review and create the resource
+
+</details>
+
+<details>
+<summary><b>Azure CLI Method</b></summary>
+
+```bash
+# Create a resource group (if needed)
+az group create --name YourResourceGroup --location eastus
+
+# Create Azure OpenAI resource
+az cognitiveservices account create \
+    --name YourOpenAIResource \
+    --resource-group YourResourceGroup \
+    --location eastus \
+    --kind OpenAI \
+    --sku S0 \
+    --yes
+
+# Get the endpoint
+az cognitiveservices account show \
+    --name YourOpenAIResource \
+    --resource-group YourResourceGroup \
+    --query properties.endpoint \
+    --output tsv
+```
+
+</details>
+
+### Step 5: Deploy Required Models
+
+You need to deploy two models: one for completion and one for embeddings.
+
+<details>
+<summary><b>Azure Portal Method</b></summary>
+
+1. Go to your Azure OpenAI resource in the Azure Portal
+2. Navigate to **Model deployments** → **Manage Deployments**
+3. Click **Create new deployment**
+4. Deploy a completion model:
+   - **Model**: `gpt-4`, `gpt-4o`, or `gpt-4.1`
+   - **Deployment name**: `gpt-4.1` (or your preferred name)
+   - **Deployment type**: Standard
+5. Create another deployment for embeddings:
+   - **Model**: `text-embedding-3-small`
+   - **Deployment name**: `text-embedding-3-small`
+   - **Deployment type**: Standard
+
+</details>
+
+<details>
+<summary><b>Azure CLI Method</b></summary>
+
+```bash
+# Deploy GPT-4.1 model
+az cognitiveservices account deployment create \
+    --name YourOpenAIResource \
+    --resource-group YourResourceGroup \
+    --deployment-name gpt-4.1 \
+    --model-name gpt-4.1 \
+    --model-version "2024-05-13" \
+    --model-format OpenAI \
+    --sku-capacity 10 \
+    --sku-name Standard
+
+# Deploy embedding model
+az cognitiveservices account deployment create \
+    --name YourOpenAIResource \
+    --resource-group YourResourceGroup \
+    --deployment-name text-embedding-3-small \
+    --model-name text-embedding-3-small \
+    --model-version "1" \
+    --model-format OpenAI \
+    --sku-capacity 10 \
+    --sku-name Standard
+```
+
+</details>
+
+### Step 6: Configure Permissions
+
+Ensure your Azure account has the necessary permissions. See the [Azure OpenAI RBAC guide](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/role-based-access-control) for details.
+
+**Grant yourself access (if needed):**
+```bash
+# Get your user object ID
+az ad signed-in-user show --query id -o tsv
+
+# Assign Cognitive Services OpenAI User role
+az role assignment create \
+    --role "Cognitive Services OpenAI User" \
+    --assignee YOUR_USER_OBJECT_ID \
+    --scope /subscriptions/YOUR_SUBSCRIPTION_ID/resourceGroups/YOUR_RESOURCE_GROUP/providers/Microsoft.CognitiveServices/accounts/YOUR_OPENAI_RESOURCE
+```
+
+### Step 7: Configure Environment Variables
+
 ```bash
 # Copy the example environment file
 cp env.example .env
 
-# Edit .env and add your Azure OpenAI configuration
-nano .env
+# Edit .env with your configuration
+# macOS/Linux: nano .env or vim .env
+# Windows: notepad .env
 ```
 
-4. Authenticate with Azure:
-```bash
-# Login with Azure CLI (used by DefaultAzureCredential)
-az login
-
-# Set your subscription if you have multiple
-az account set --subscription "Your Subscription Name"
-```
-
-### Azure OpenAI Configuration
-
-The application uses Azure OpenAI with Microsoft Entra ID authentication (via DefaultAzureCredential). Configure the following environment variables in your `.env` file:
+Update your `.env` file with your Azure OpenAI details:
 
 ```bash
-# Required
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+# Azure OpenAI Configuration
+# Required: Your Azure OpenAI endpoint URL
+AZURE_OPENAI_ENDPOINT=https://your-resource-name.openai.azure.com/
 
-# Deployment names (required)
-AZURE_OPENAI_COMPLETION_DEPLOYMENT=gpt-4  # Used for all LLM operations
+# Deployment names (must match your deployed model names)
+AZURE_OPENAI_COMPLETION_DEPLOYMENT=gpt-4.1
 AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-3-small
 
-# Optional
+# Optional: API version (defaults to 2024-08-01-preview)
 AZURE_OPENAI_API_VERSION=2024-08-01-preview
+
+# Optional: Temperature settings
 AZURE_OPENAI_TEMPERATURE=0.3
 AZURE_OPENAI_CREATIVE_TEMPERATURE=0.7
 ```
 
-**Authentication Methods:**
-- Azure CLI (recommended): `az login`
-- Managed Identity (when running in Azure)
-- Environment variables (service principal)
-- VS Code Azure extension
-- Azure PowerShell
+If successful, you should see the tool analyzing the repository structure.
 
-See [DefaultAzureCredential documentation](https://docs.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential) for all supported authentication methods.
+## Virtual Environment Best Practices
 
-### Model Configuration
+1. **Always activate the virtual environment** before running the tool:
+   - macOS/Linux: `source venv/bin/activate`
+   - Windows: `venv\Scripts\activate`
 
-The application uses configurable Azure OpenAI deployments for different operations. See [Azure Model Configuration Guide](docs/azure-model-configuration.md) for details.
+2. **Keep dependencies updated:**
+```bash
+# Update all packages
+pip install --upgrade -r requirements.txt
 
-Default deployments:
-- **Completion**: `gpt-4` (for all LLM operations)
-- **Embeddings**: `text-embedding-3-small` (for similarity search)
+# Check for outdated packages
+pip list --outdated
+```
 
-You can customize these in your `.env` file.
+3. **Freeze dependencies** if you install new packages:
+```bash
+pip freeze > requirements.txt
+```
+
+4. **Use the correct Python version:**
+   - The tool works best with Python 3.12 or earlier
+   - Python 3.13 has compatibility issues with some dependencies
+
+5. **Troubleshooting virtual environment issues:**
+```bash
+# If venv is corrupted, recreate it
+rm -rf venv  # macOS/Linux
+rmdir /s venv  # Windows
+python -m venv venv
+
+# If packages fail to install, try upgrading pip and setuptools
+pip install --upgrade pip setuptools wheel
+```
+
+### Quick Start Scripts
+
+For convenience, you can create scripts to automate virtual environment setup:
+
+**macOS/Linux** (`setup_venv.sh`):
+```bash
+#!/bin/bash
+echo "Setting up Python virtual environment..."
+python3.12 -m venv venv || python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+cp env.example .env
+echo "Virtual environment ready! Don't forget to:"
+echo "1. Edit .env with your Azure OpenAI configuration"
+echo "2. Run 'az login' to authenticate"
+echo "3. Activate venv with: source venv/bin/activate"
+```
+
+**Windows** (`setup_venv.bat`):
+```batch
+@echo off
+echo Setting up Python virtual environment...
+py -3.12 -m venv venv 2>nul || python -m venv venv
+call venv\Scripts\activate.bat
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+copy env.example .env
+echo Virtual environment ready! Don't forget to:
+echo 1. Edit .env with your Azure OpenAI configuration
+echo 2. Run 'az login' to authenticate
+echo 3. Activate venv with: venv\Scripts\activate
+```
+
+Make the script executable (macOS/Linux):
+```bash
+chmod +x setup_venv.sh
+./setup_venv.sh
+```
 
 ## Usage
 
@@ -248,103 +508,199 @@ python main.py --repo <repo_url> --goal "<content_goal>" --service "<service_are
 
 ### Examples
 
-#### Full Pipeline (All Phases)
+#### Example 1: Create New Azure Kubernetes Service Documentation
 ```bash
-# By default, all phases run automatically
-python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
-    --goal "Create Cilium networking documentation" \
+# Create comprehensive AKS networking documentation from technical specifications
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Create comprehensive documentation for Azure CNI powered by Cilium, including architecture, deployment steps, and troubleshooting" \
     --service "Azure Kubernetes Service" \
-    -m support-materials/cilium-overview.pdf \
-       support-materials/azure-cni-guide.docx
+    -m azure-cni-cilium-spec.pdf cilium-architecture.docx \
+    --audience "cloud architects and DevOps engineers" \
+    --audience-level intermediate
 ```
 
-#### Phase 1 Only (Analysis)
+#### Example 2: Update Existing Storage Documentation
 ```bash
-python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
-    --goal "Analyze repository structure" \
-    --service "AKS" \
+# Update Azure Storage docs with new blob lifecycle management features
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-storage-docs \
+    --goal "Update blob storage documentation to include new lifecycle management policies and cost optimization strategies" \
+    --service "Azure Storage" \
+    -m blob-lifecycle-features.md cost-optimization-guide.pdf \
+    --auto-confirm \
+    --apply-changes
+```
+
+#### Example 3: Create API Reference Documentation
+```bash
+# Generate API reference docs from OpenAPI specification
+python main.py \
+    --repo https://github.com/Azure/azure-rest-api-specs \
+    --goal "Create detailed API reference documentation for the new Azure Container Apps management REST APIs" \
+    --service "Azure Container Apps" \
+    -m container-apps-openapi.yaml api-examples.json \
+    --audience "API developers" \
+    --audience-level advanced
+```
+
+#### Example 4: Add Troubleshooting Guides
+```bash
+# Add troubleshooting section to existing documentation
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-app-service-docs \
+    --goal "Add comprehensive troubleshooting guide for common App Service deployment failures and performance issues" \
+    --service "Azure App Service" \
+    -m support-tickets-analysis.xlsx common-errors.md \
+    --phases 234 \
+    --auto-confirm
+```
+
+#### Example 5: Create Migration Documentation
+```bash
+# Create migration guide from on-premises to Azure
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-migration-docs \
+    --goal "Create step-by-step migration guide for moving SQL Server workloads from on-premises to Azure SQL Database" \
+    --service "Azure SQL Database" \
+    -m sql-migration-assessment.pdf best-practices.docx prerequisites.md \
+    --audience "database administrators" \
+    --audience-level intermediate \
+    --apply-changes
+```
+
+### Phase-Specific Examples
+
+#### Phase 1 Only: Repository Analysis
+```bash
+# Analyze repository structure to understand documentation organization
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-cognitive-services-docs \
+    --goal "Analyze how AI/ML documentation is organized" \
+    --service "Azure Cognitive Services" \
     --phases 1 \
-    -m overview.md
+    -m sample-content.md
 ```
 
-#### Phases 1 & 2 (Analysis + Strategy)
+#### Phases 1-2: Analysis and Strategy Planning
 ```bash
-python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
-    --goal "Plan networking documentation updates" \
-    --service "AKS" \
+# Plan documentation updates without generating content
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-cosmos-db-docs \
+    --goal "Plan comprehensive update for Cosmos DB consistency levels documentation" \
+    --service "Azure Cosmos DB" \
     --phases 12 \
-    -m networking-guide.md
+    -m consistency-levels-deep-dive.pdf \
+    --debug-similarity
 ```
 
-#### Auto-Confirm Mode
+#### Phases 3-4: Content Generation and TOC Update
 ```bash
-python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
-    --goal "Update CNI documentation" \
-    --service "AKS" \
-    --auto-confirm \
-    -m cni-updates.pdf
-```
-
-#### Apply Changes Directly
-```bash
-python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
-    --goal "Create new tutorials" \
-    --service "AKS" \
-    --apply-changes \
-    -m tutorial-content.md
-```
-
-#### Clean Run (Fresh Start)
-```bash
-# Clear previous outputs and start fresh
-python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
-    --goal "Create documentation" \
-    --service "AKS" \
-    --clean \
-    -m guide.pdf
-
-# Combine with auto-confirm for fully automated fresh run
-python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
-    --goal "Update guides" \
-    --service "AKS" \
-    --clean --auto-confirm --apply-changes \
-    -m updates.docx
-```
-
-#### Phase 4: TOC Management
-```bash
-# Run generation and TOC update together
-python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
-    --goal "Create Cilium documentation" \
-    --service "AKS" \
+# Generate content and update TOC for existing repository
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-virtual-machines-docs \
+    --goal "Add new section on VM performance optimization and monitoring best practices" \
+    --service "Azure Virtual Machines" \
     --phases 34 \
-    --apply-changes \
-    -m cilium-guide.pdf
-
-# Run all phases including TOC management  
-python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
-    --goal "Update networking guides" \
-    --service "AKS" \
-    --phases 1234 \
-    --auto-confirm \
-    -m networking-updates.docx
-
-# Run all phases with multiple materials
-python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
-    --goal "Update TOC for new content" \
-    --service "AKS" \
-    --auto-confirm \
-    -m guide1.pdf guide2.md reference.docx
-
-# Skip TOC update if TOC.yml has issues
-python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
-    --goal "Create documentation" \
-    --service "AKS" \
-    --skip-toc \
-    -m materials.pdf
+    -m vm-performance-guide.pdf monitoring-tools.md \
+    --apply-changes
 ```
 
-### Command Line Options
+### Advanced Usage Examples
+
+#### Working with Multiple Materials and URLs
+```bash
+# Combine PDFs, Word docs, markdown files, and web resources
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-security-docs \
+    --goal "Create comprehensive security baseline documentation for Azure Landing Zones" \
+    --service "Azure Security" \
+    -m security-baseline.pdf \
+       compliance-requirements.docx \
+       https://docs.microsoft.com/azure/security/benchmarks/overview \
+       landing-zone-architecture.md \
+    --audience "security architects and compliance officers" \
+    --audience-level advanced
+```
+
+#### Clean Run with Full Automation
+```bash
+# Fresh start with automatic confirmation and direct application
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-monitor-docs \
+    --goal "Create complete observability guide including metrics, logs, and distributed tracing" \
+    --service "Azure Monitor" \
+    -m observability-patterns.pdf logs-best-practices.md metrics-guide.docx \
+    --clean \
+    --auto-confirm \
+    --apply-changes
+```
+
+#### Custom Working Directory
+```bash
+# Specify custom working directory for cloned repositories
+python main.py \
+    --repo https://github.com/Azure-Samples/azure-functions-samples \
+    --goal "Document serverless patterns and best practices for Azure Functions" \
+    --service "Azure Functions" \
+    -m serverless-patterns.pdf function-triggers.md \
+    --work-dir ./projects/azure-functions \
+    --max-depth 4
+```
+
+#### Skip TOC Update for Repositories with Complex TOC Structure
+```bash
+# Generate content but skip TOC.yml updates
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-iot-docs \
+    --goal "Add Edge computing scenarios and deployment patterns documentation" \
+    --service "Azure IoT Edge" \
+    -m iot-edge-patterns.pdf deployment-scenarios.docx \
+    --skip-toc \
+    --auto-confirm
+```
+
+### Real-World Scenarios
+
+#### Scenario 1: Documentation Sprint
+```bash
+# Quick documentation update during a sprint
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-container-instances-docs \
+    --goal "Document new GPU support features and pricing updates" \
+    --service "Azure Container Instances" \
+    -m gpu-support-announcement.md pricing-calculator.xlsx \
+    --phases 34 \
+    --auto-confirm \
+    --apply-changes
+```
+
+#### Scenario 2: Compliance Documentation
+```bash
+# Generate compliance and regulatory documentation
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-compliance-docs \
+    --goal "Create GDPR compliance guide for Azure data services including retention policies and data residency" \
+    --service "Azure Compliance" \
+    -m gdpr-requirements.pdf data-residency-matrix.xlsx \
+    --audience "compliance officers and data protection officers" \
+    --audience-level intermediate
+```
+
+#### Scenario 3: Architecture Documentation
+```bash
+# Create architecture decision records and design patterns
+python main.py \
+    --repo https://github.com/Azure/azure-architecture-center \
+    --goal "Document microservices design patterns and anti-patterns for Azure-based solutions" \
+    --service "Azure Architecture" \
+    -m microservices-patterns.pdf anti-patterns.md case-studies.docx \
+    --content-limit 25000 \
+    --audience "solution architects" \
+    --audience-level advanced
+```
+
+## Command Line Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
@@ -364,90 +720,65 @@ python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
 | `--apply-changes` | Apply generated content to repository | False |
 | `--skip-toc` | Skip TOC management (Phase 4) if TOC.yml is invalid | False |
 
-## Streamlit Web Interface
+## Authentication
 
-AI Content Developer includes a modern web interface built with Streamlit that provides an intuitive alternative to the command line.
+The AI Content Developer uses **DefaultAzureCredential** from the Azure Identity library, which supports multiple authentication methods:
 
-### Running the Web Interface
+### Authentication Methods (in order of precedence)
 
-```bash
-# Using the provided script
-./run_frontend.sh
+1. **Azure CLI** (Recommended for local development)
+   ```bash
+   az login
+   ```
 
-# Or manually
-export PYTHONPATH=$PYTHONPATH:$(pwd)
-streamlit run frontend/app.py
-```
+2. **Managed Identity** (For Azure-hosted environments)
+   - Automatically uses the managed identity assigned to your Azure resource
 
-The interface will open in your browser at http://localhost:8501
+3. **Environment Variables** (For service principals)
+   ```bash
+   export AZURE_CLIENT_ID="your-service-principal-id"
+   export AZURE_CLIENT_SECRET="your-service-principal-secret"
+   export AZURE_TENANT_ID="your-tenant-id"
+   ```
 
-### Web Interface Features
+4. **Visual Studio Code**
+   - Uses credentials from the Azure Account extension
 
-#### 1. **Interactive Input Collection**
-- Visual form for entering repository URL, content goal, and service area
-- Drag-and-drop file upload for support materials
-- URL input for online documentation references
-- Advanced settings in an expandable panel
+5. **Azure PowerShell**
+   ```powershell
+   Connect-AzAccount
+   ```
 
-#### 2. **Execution Modes**
-- **Interactive Mode**: Review results after each phase before continuing
-- **Auto-Confirm Mode**: Run all phases automatically without interruptions
+6. **Interactive Browser** (Fallback)
+   - Opens a browser for authentication if no other method works
 
-#### 3. **Real-Time Progress Display**
-- Phase indicator showing current progress
-- Live "thinking" messages from the AI as it processes
-- Status updates and progress bars
-- Detailed results after each phase
-
-#### 4. **Content Preview**
-- Tabbed interface for viewing generated content
-- Syntax-highlighted markdown preview
-- Separate tabs for created files, updated files, and TOC changes
-- File paths for accessing generated content
-
-#### 5. **Key Differences from CLI**
-- No direct file application (preview only for safety)
-- Materials are optional with visual feedback
-- Real-time display of AI reasoning process
-- Persistent session state during generation
-- Modern, responsive UI design
-
-### Example Workflow
-
-1. **Start the Interface**: Run `./run_frontend.sh`
-2. **Enter Details**: Fill in repository URL, goal, and service area
-3. **Add Materials** (Optional): Upload files or paste URLs
-4. **Select Mode**: Choose Interactive or Auto-Confirm
-5. **Start Generation**: Click "Start Content Generation"
-6. **Monitor Progress**: Watch AI thinking and phase completion
-7. **Review Results**: Browse generated content in preview tabs
-8. **Access Files**: Find generated files in `./llm_outputs/preview/`
-
-The web interface provides the same powerful functionality as the CLI with a more user-friendly experience, making it ideal for users who prefer visual interaction over command-line operations.
+For more details, see the [DefaultAzureCredential documentation](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential).
 
 ## Features
 
 ### Phase 1: Repository Analysis
 
-- **Material Processing**: Extracts and summarizes content from various formats:
+- **Material Processing**: Extracts and analyzes content from various formats:
   - PDF documents (.pdf)
   - Word documents (.docx, .doc)
   - Markdown files (.md)
   - Web URLs (http://, https://)
-  - Any other text files
+  - Plain text files (.txt)
 
 - **Intelligent Directory Detection**: Uses LLM to analyze repository structure and select the most appropriate working directory based on:
   - Content goal alignment
   - Service area relevance
   - Material context
-  - Existing directory purposes
+  - Repository organization patterns
+  - **NEW**: Validates selection is a directory, not a file
 
 ### Phase 2: Content Strategy
 
 - **Smart Document Chunking**: Preserves document structure while creating semantic chunks
-- **Embedding Generation**: Creates vector embeddings for semantic search
+- **Embedding Generation**: Creates vector embeddings for semantic search using Azure OpenAI
 - **Gap Analysis**: Identifies missing content by comparing materials against existing docs
 - **Strategic Planning**: Determines whether to CREATE new files or UPDATE existing ones
+- **Coverage Assessment**: Evaluates how well existing content covers the material topics
 
 ### Phase 3: Content Generation
 
@@ -458,9 +789,12 @@ The web interface provides the same powerful functionality as the CLI with a mor
   - Overviews
   - Quickstarts
   - Tutorials
+  - Reference
 
 - **Intelligent Updates**: Preserves existing content while adding new sections
+- **Material Validation**: Ensures sufficient information before generating
 - **RAG-Based Generation**: Uses Retrieval-Augmented Generation to prevent hallucination
+- **Gap Reporting**: Reports missing information if materials are insufficient
 
 ### Phase 4: TOC Management
 
@@ -470,14 +804,22 @@ The web interface provides the same powerful functionality as the CLI with a mor
   - Content type (How-To, Tutorial, Concept, etc.)
   - Topic relationships
   - Existing TOC organization patterns
-  - Directory structure hints
-- **Large TOC Handling**: Automatically condenses very large TOC files (>20KB) for efficient processing
+- **Large TOC Handling**: Automatically condenses very large TOC files (>20KB)
 - **Hierarchical Structure Preservation**: Maintains proper nesting and organization
 - **Entry Naming**: Generates meaningful display names from document titles
 - **Preview Mode**: Shows proposed TOC changes before applying
 - **Validation**: Ensures YAML syntax correctness and structural integrity
 
-**Note**: Phase 4 requires a valid TOC.yml file in the working directory. If the TOC has YAML syntax errors, use `--skip-toc` to skip this phase or fix the TOC using the provided scripts.
+**Note**: Phase 4 requires a valid TOC.yml file in the working directory. If the TOC has YAML syntax errors, use `--skip-toc` to skip this phase.
+
+### Enhanced Features
+
+- **AI Thinking Display**: Shows step-by-step AI reasoning in the terminal
+- **Progress Tracking**: Visual progress bars for each phase
+- **Error Recovery**: Graceful handling of insufficient materials or API errors
+- **Cache Management**: Efficient embedding caching by repository and directory
+- **Preview Mode**: Review all changes before applying to repository
+- **Clean Runs**: Option to clear previous outputs for fresh starts
 
 ## Output Structure
 
@@ -537,6 +879,7 @@ content_developer/
 │   ├── strategy.py            # Strategy confirmation
 │   └── selector.py            # Interactive selection
 ├── display/                    # Results display
+│   ├── console_display.py     # Rich terminal output
 │   └── results.py             # Formatted output
 ├── prompts/                    # LLM prompts
 │   ├── material.py            # Material analysis
@@ -544,7 +887,9 @@ content_developer/
 │   ├── strategy.py            # Strategy generation  
 │   ├── generation.py          # Content generation
 │   ├── toc.py                 # TOC management
-│   └── helpers.py             # Formatting helpers
+│   ├── llm_native.py          # LLM-native operations
+│   ├── helpers.py             # Formatting helpers
+│   └── schemas.py             # JSON response schemas
 ├── utils/                      # Utilities
 │   ├── core_utils.py          # Core utilities
 │   ├── file_ops.py            # File operations
@@ -554,120 +899,79 @@ content_developer/
     └── orchestrator.py        # 4-phase workflow
 ```
 
-## Advanced Usage
-
-### Custom Content Standards
-
-Create a `content_standards.json` file to define custom content types:
-
-```json
-{
-  "contentTypes": [
-    {
-      "name": "API Reference",
-      "frontMatter": {
-        "ms.topic": "reference",
-        "ms.service": "api"
-      },
-      "purpose": "Technical API documentation",
-      "description": "Detailed API endpoint documentation",
-      "structure": [
-        "Overview",
-        "Authentication",
-        "Endpoints",
-        "Examples",
-        "Error Codes"
-      ]
-    }
-  ]
-}
-```
-
-### Debugging Similarity Scores
-
-Use `--debug-similarity` to see detailed scoring information:
-
-```bash
-python main.py https://github.com/repo "goal" "service" \
-    --debug-similarity \
-    --phases 2
-```
-
-This shows:
-- Base similarity scores
-- File-level relevance analysis
-- Boost calculations
-- Score transformations
-- Strategy insights
-- Chunk-level matching details
-
-## Best Practices
-
-1. **Start with Phase 1**: Run phase 1 first to understand repository structure
-2. **Review Strategy**: Always review the content strategy before generation
-3. **Use Support Materials**: Provide comprehensive materials for better results
-4. **Review Before Applying**: Always review generated content in preview before using `--apply-changes`
-5. **Backup Important Files**: Always maintain your own backups before running content updates
-6. **Incremental Updates**: Work on one section at a time for large documentation sets
-
 ## Troubleshooting
 
 ### Common Issues
 
-1. **"No materials provided"**
+1. **Authentication Errors**
+   ```
+   "DefaultAzureCredential failed to retrieve a token"
+   ```
+   - Ensure you're logged in: `az login`
+   - Check your subscription: `az account show`
+   - Verify you have access to the Azure OpenAI resource
+
+2. **Model Deployment Errors**
+   ```
+   "The API deployment for this resource does not exist"
+   ```
+   - Verify deployment names in `.env` match your actual deployments
+   - Check deployments: `az cognitiveservices account deployment list --name YourResource --resource-group YourRG`
+
+3. **Insufficient Materials Error**
+   ```
+   "Missing: Detailed explanation and configuration steps..."
+   ```
+   - The provided materials don't contain enough information
+   - Add more comprehensive documentation or technical guides
+   - Check that materials are being read correctly
+
+4. **Directory Selection Issues**
+   ```
+   "Markdown Files: 0"
+   ```
+   - The system selected a file instead of a directory
+   - This has been fixed in the latest version
+   - Ensure you're using the updated code
+
+5. **"No materials provided"**
    - Ensure you provide at least one support material file or URL
    - Check that file paths are correct
+   - Verify URLs are accessible
 
-2. **"No markdown files found"**
-   - Ensure the selected directory contains `.md` files
-   - Check if you need a different working directory
-
-3. **"Strategy generation failed"**
-   - Verify your OpenAI API key is set correctly
-   - Check API rate limits
-   - Ensure materials are readable
-
-4. **"Import error"**
-   - Run `pip install -r requirements.txt`
-   - Ensure Python 3.8+ is installed
-
-5. **"Failed to parse TOC.yml"**
+6. **Failed to parse TOC.yml**
    - The repository's TOC.yml may have invalid YAML syntax
-   - Use `--skip-toc` flag to skip Phase 4: `python main.py <args> --skip-toc`
-   - Validate TOC syntax: `python scripts/validate_toc.py <path-to-TOC.yml>`
-   - Try to fix common issues: `python scripts/fix_toc_yaml.py <path-to-TOC.yml>`
-   - Check for:
+   - Use `--skip-toc` flag to skip Phase 4
+   - Common YAML issues:
      - Missing colons after keys
-     - Incorrect indentation (should use 2 spaces, not tabs)
+     - Incorrect indentation (use 2 spaces, not tabs)
      - Duplicate keys at the same level
-     - Missing required fields (name or href)
 
-6. **"Invalid parameter: 'response_format' not supported with this model"**
-   - This occurs when using an OpenAI model that doesn't support JSON response format
-   - The tool now uses `gpt-4o` which supports JSON output
-   - If you see this error, ensure you have the latest code
-   - See `docs/json-response-format-models.md` for model compatibility details
+7. **Rate Limiting**
+   ```
+   "Rate limit reached"
+   ```
+   - Azure OpenAI has rate limits per deployment
+   - Wait a moment and retry
+   - Consider increasing TPM (Tokens Per Minute) in Azure Portal
 
 ### Debug Mode
 
 Enable detailed logging:
 
 ```bash
-export PYTHONPATH=$PYTHONPATH:$(pwd)
-python -m logging.basicConfig level=DEBUG main.py ...
+# Set environment variable
+export AI_CONTENT_DEBUG=true
+
+# Or use debug flag
+python main.py --debug-similarity ...
 ```
 
-Or in code:
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-```
+### Validation & Testing Tools
 
-## Validation & Testing Tools
+#### Health Check Script
 
-### Health Check Script
-
-Run a comprehensive health check to ensure your environment is properly configured:
+Run a comprehensive health check:
 
 ```bash
 ./scripts/health_check.sh
@@ -675,29 +979,23 @@ Run a comprehensive health check to ensure your environment is properly configur
 
 This checks:
 - Python installation and version
-- OpenAI API key configuration
+- Azure CLI configuration
 - Required dependencies
 - Directory structure
-- Network connectivity
-- File permissions
+- Azure connectivity
+- Model deployments
 
-### Test Run Script
+#### Test Run Script
 
-Validate the application is working correctly with a minimal test:
+Validate the application is working:
 
 ```bash
 ./scripts/test_run.sh
 ```
 
-This script:
-- Tests all three phases independently
-- Uses minimal inputs for quick validation
-- Verifies output creation
-- Reports pass/fail status for each phase
+#### Reset Tool
 
-### Reset Tool
-
-Clean up outputs or perform various reset operations:
+Clean up outputs or perform reset operations:
 
 ```bash
 # Show help
@@ -709,37 +1007,26 @@ Clean up outputs or perform various reset operations:
 # Clear outputs but keep cache
 ./scripts/reset.sh outputs
 
-# Clear preview files only
-./scripts/reset.sh preview
-
 # Full reset (removes all outputs)
 ./scripts/reset.sh full
-
-# Reinstall dependencies
-./scripts/reset.sh deps
 ```
 
-### Quick Validation
+### Getting Help
 
-After installation or when experiencing issues:
+1. **Check the logs**: Look in `./llm_outputs/` for detailed operation logs
+2. **Enable debug mode**: Use `--debug-similarity` for detailed scoring info
+3. **Review prerequisites**: Ensure all Azure resources are properly configured
+4. **Check permissions**: Verify you have the correct RBAC roles
+5. **File an issue**: Report bugs on the GitHub repository
 
-1. **Check environment**:
-   ```bash
-   ./scripts/health_check.sh
-   ```
+## Best Practices
 
-2. **Run test**:
-   ```bash
-   ./scripts/test_run.sh
-   ```
-
-3. **If issues persist, reset and retry**:
-   ```bash
-   ./scripts/reset.sh full
-   ./scripts/test_run.sh
-   ```
-
-For detailed troubleshooting steps and error resolution, see the comprehensive [Validation & Troubleshooting Guide](./docs/validation-troubleshooting.md) in the documentation.
+1. **Start with Phase 1**: Run phase 1 first to understand repository structure
+2. **Review Strategy**: Always review the content strategy before generation
+3. **Use Comprehensive Materials**: Provide detailed technical documentation
+4. **Preview Before Applying**: Always review generated content before using `--apply-changes`
+5. **Backup Important Files**: Maintain backups before running content updates
+6. **Monitor Costs**: Azure OpenAI usage incurs costs - monitor your usage
 
 ## Contributing
 
@@ -761,4 +1048,4 @@ MIT License - see LICENSE file for details
 
 ---
 
-For more information, issues, or contributions, visit the [GitHub repository](https://github.com/yourusername/ai-content-developer).
+For more information, issues, or contributions, visit the [GitHub repository](https://github.com/chasedmicrosoft/ai-content-developer).

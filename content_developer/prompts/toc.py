@@ -1,104 +1,98 @@
 """
-TOC (Table of Contents) management prompts
+TOC management prompts for AI Content Developer
 """
+import json
 from typing import List, Dict
+
+from .schemas import TOC_UPDATE_SCHEMA
+from .helpers import schema_to_example, extract_type_requirements
 
 
 def get_toc_update_prompt(
-    existing_toc: str,
-    missing_created_files: List[str],
-    missing_updated_files: List[str],
-    file_descriptions: Dict[str, Dict]
+    toc_content: str,
+    files_to_add: List[str],
+    content_metadata: Dict[str, Dict],
+    working_directory: str
 ) -> str:
-    """Generate prompt for updating TOC.yml"""
+    """Get the prompt for updating TOC.yml"""
     
-    # Build file context
-    created_context = ""
-    if missing_created_files:
-        created_context = "\n=== NEWLY CREATED FILES (Need TOC entries) ===\n"
-        for filepath in missing_created_files:
-            desc = file_descriptions.get(filepath, {})
-            created_context += f"\nFile: {filepath}\n"
-            created_context += f"Content Type: {desc.get('content_type', 'Unknown')}\n"
-            created_context += f"Purpose: {desc.get('reason', 'No description available')}\n"
-            
-            # Add directory hint if available
-            if 'directory_hint' in desc:
-                created_context += f"Location Hint: {desc['directory_hint']}\n"
-            
-            # Add content brief info if available
-            brief = desc.get('content_brief', {})
-            if brief.get('objective'):
-                created_context += f"Objective: {brief['objective']}\n"
+    # Generate example from schema
+    example = schema_to_example(TOC_UPDATE_SCHEMA)
     
-    updated_context = ""
-    if missing_updated_files:
-        updated_context = "\n=== UPDATED FILES (Missing from TOC) ===\n"
-        for filepath in missing_updated_files:
-            desc = file_descriptions.get(filepath, {})
-            updated_context += f"\nFile: {filepath}\n"
-            updated_context += f"Content Type: {desc.get('content_type', 'Unknown')}\n"
-            updated_context += f"Changes: {desc.get('reason', 'File was updated')}\n"
+    # Extract type requirements
+    type_requirements = extract_type_requirements(TOC_UPDATE_SCHEMA)
     
-    # Check if TOC was condensed
-    toc_note = ""
-    if "... [TOC continues with more entries] ..." in existing_toc:
-        toc_note = """
-NOTE: The TOC shown below has been condensed due to its large size. 
-The actual TOC has many more entries between the sections shown.
-Please focus on the overall structure and place new entries appropriately.
-"""
+    # Format files to add with metadata
+    files_info_lines = []
+    for file in files_to_add:
+        metadata = content_metadata.get(file, {})
+        title = metadata.get('title', 'Untitled')
+        content_type = metadata.get('content_type', 'unknown')
+        ms_topic = metadata.get('ms_topic', 'unknown')
+        
+        files_info_lines.append(
+            f"  - File: {file}\n"
+            f"    Title: {title}\n"
+            f"    Content Type: {content_type}\n"
+            f"    MS.Topic: {ms_topic}"
+        )
     
-    return f"""Update the TOC.yml file to include proper entries for new and updated documentation files.
+    files_to_add_str = "\n".join(files_info_lines)
+    
+    return f"""Update the TOC.yml file to include new documentation files.
 
-{toc_note}
-CURRENT TOC.yml:
+WORKING DIRECTORY: {working_directory}
+
+CURRENT TOC CONTENT:
 ```yaml
-{existing_toc}
+{toc_content}
 ```
 
-{created_context}
-{updated_context}
+FILES TO ADD:
+{files_to_add_str}
 
-TASK: Create a complete updated TOC.yml file that includes all existing entries PLUS the new entries for the missing files. The output should be the ENTIRE TOC.yml content that can be written directly to replace the current file.
+TOC UPDATE REQUIREMENTS:
+1. PLACEMENT ANALYSIS: Analyze the TOC structure to understand organization patterns
+2. LOGICAL PLACEMENT: Place new files in the most logical location based on:
+   - Content type (how-to, concept, tutorial, etc.)
+   - Topic area (networking, security, deployment, etc.)
+   - Existing related content
+   - TOC hierarchy and organization
 
-REQUIREMENTS:
-1. Return the COMPLETE TOC.yml file content (not just new entries)
-2. Preserve ALL existing TOC entries exactly as they are
-3. Add new entries in appropriate locations based on content type and topic
-4. Use proper YAML formatting with correct indentation
-5. Ensure all file paths are relative and correct
-6. Add meaningful display names that match the document titles
-7. Group related content together logically
-8. Maintain alphabetical or logical ordering within sections
+3. FORMATTING RULES:
+   - Use proper YAML formatting with correct indentation
+   - File references use 'href: filename.md' format
+   - Display names use 'name: Display Title' format
+   - Maintain consistent style with existing entries
+   - Use proper nesting under appropriate parent sections
 
-TOC ENTRY FORMAT:
-- name: Display Name
-  href: relative/path/to/file.md
-  items: # Optional, for nested structure
-    - name: Nested Item
-      href: path/to/nested.md
+4. HIERARCHY GUIDELINES:
+   - How-to guides typically go under operational/task sections
+   - Concepts go under overview/understanding sections
+   - Tutorials go under getting-started or learning sections
+   - Keep related topics together
 
-PLACEMENT GUIDELINES:
-- How-to guides: Place with other procedural content
-- Concepts: Group with architectural/conceptual docs
-- Quickstarts: Place at the beginning of relevant sections
-- Tutorials: Group with learning materials
-- Overview: Typically first in a section
-
-IMPORTANT: Return the ENTIRE updated TOC.yml file content, not just the sections with changes. The 'content' field should contain the complete TOC.yml that will replace the existing file.
+EXAMPLE TOC ENTRY FORMAT:
+- name: Section Name
+  items:
+  - name: Subsection Name
+    items:
+    - name: Document Title
+      href: document-file.md
+    - name: Another Document
+      href: another-file.md
 
 OUTPUT FORMAT:
-{{
-  "thinking": "1. Structure analysis: Explain your reasoning for placement decisions.\n2. Content categorization: How you categorized the new files.\n3. Placement strategy: Where and why you placed each entry.\n4. Integration approach: How you're maintaining the existing structure.\n5. Validation: Confirm the complete TOC maintains logical flow.",
-  "content": "<COMPLETE updated TOC.yml content from first line to last line>",
-  "entries_added": ["file1.md", "file2.md"],
-  "entries_verified": ["existing1.md", "existing2.md"],
-  "placement_decisions": {{
-    "file1.md": "Placed under 'Getting Started' because it's a quickstart guide",
-    "file2.md": "Added to 'Configuration' section with other how-to guides"
-  }}
-}}"""
+{json.dumps(example, indent=2)}
+
+TYPE REQUIREMENTS (MUST FOLLOW EXACTLY):
+{type_requirements}
+
+CRITICAL: 
+- Return the COMPLETE updated TOC.yml content in the 'content' field
+- Ensure all existing entries are preserved
+- New entries must be properly integrated, not just appended
+- The placement_analysis must justify WHY files were placed where they were"""
 
 
 TOC_UPDATE_SYSTEM = """You are an expert documentation architect specializing in Microsoft Learn documentation structure and navigation.

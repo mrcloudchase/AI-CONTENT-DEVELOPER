@@ -36,8 +36,6 @@ from .toc import (
 
 # LLM-Native prompts
 from .llm_native import (
-    DOCUMENT_STRUCTURE_SYSTEM,
-    get_document_structure_prompt,
     CONTENT_PLACEMENT_SYSTEM,
     get_content_placement_prompt,
     TERMINAL_SECTION_SYSTEM,
@@ -46,10 +44,6 @@ from .llm_native import (
     get_content_quality_prompt,
     INFORMATION_EXTRACTION_SYSTEM,
     get_information_extraction_prompt,
-    TOC_PLACEMENT_SYSTEM,
-    get_toc_placement_prompt,
-    CONTENT_INTENT_SYSTEM,
-    get_content_intent_prompt,
     CHUNK_RANKING_SYSTEM,
     get_chunk_ranking_prompt
 )
@@ -59,7 +53,25 @@ from .helpers import (
     format_materials_with_content,
     format_chunks_for_reference,
     get_content_type_template,
-    format_microsoft_elements
+    format_microsoft_elements,
+    schema_to_example,
+    extract_type_requirements
+)
+
+# JSON Schemas
+from .schemas import (
+    MATERIAL_ANALYSIS_SCHEMA,
+    DIRECTORY_SELECTION_SCHEMA,
+    CONTENT_STRATEGY_SCHEMA,
+    CREATE_CONTENT_SCHEMA,
+    UPDATE_CONTENT_SCHEMA,
+    TOC_UPDATE_SCHEMA,
+    CONTENT_PLACEMENT_SCHEMA,
+    TERMINAL_SECTION_SCHEMA,
+    CONTENT_QUALITY_SCHEMA,
+    CHUNK_RANKING_SCHEMA,
+    INFORMATION_EXTRACTION_BASE_SCHEMA,
+    get_information_extraction_schema
 )
 
 __all__ = [
@@ -86,8 +98,6 @@ __all__ = [
     'TOC_UPDATE_SYSTEM',
     
     # LLM-Native
-    'DOCUMENT_STRUCTURE_SYSTEM',
-    'get_document_structure_prompt',
     'CONTENT_PLACEMENT_SYSTEM',
     'get_content_placement_prompt',
     'TERMINAL_SECTION_SYSTEM',
@@ -96,10 +106,6 @@ __all__ = [
     'get_content_quality_prompt',
     'INFORMATION_EXTRACTION_SYSTEM',
     'get_information_extraction_prompt',
-    'TOC_PLACEMENT_SYSTEM',
-    'get_toc_placement_prompt',
-    'CONTENT_INTENT_SYSTEM',
-    'get_content_intent_prompt',
     'CHUNK_RANKING_SYSTEM',
     'get_chunk_ranking_prompt',
     
@@ -107,5 +113,21 @@ __all__ = [
     'format_materials_with_content',
     'format_chunks_for_reference',
     'get_content_type_template',
-    'format_microsoft_elements'
+    'format_microsoft_elements',
+    'schema_to_example',
+    'extract_type_requirements',
+    
+    # Schemas
+    'MATERIAL_ANALYSIS_SCHEMA',
+    'DIRECTORY_SELECTION_SCHEMA',
+    'CONTENT_STRATEGY_SCHEMA',
+    'CREATE_CONTENT_SCHEMA',
+    'UPDATE_CONTENT_SCHEMA',
+    'TOC_UPDATE_SCHEMA',
+    'CONTENT_PLACEMENT_SCHEMA',
+    'TERMINAL_SECTION_SCHEMA',
+    'CONTENT_QUALITY_SCHEMA',
+    'CHUNK_RANKING_SCHEMA',
+    'INFORMATION_EXTRACTION_BASE_SCHEMA',
+    'get_information_extraction_schema'
 ]

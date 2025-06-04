@@ -8,8 +8,6 @@ from pathlib import Path
 
 from .smart_processor import SmartProcessor
 from ..prompts import (
-    DOCUMENT_STRUCTURE_SYSTEM,
-    get_document_structure_prompt,
     CONTENT_PLACEMENT_SYSTEM,
     get_content_placement_prompt,
     TERMINAL_SECTION_SYSTEM,
@@ -17,11 +15,7 @@ from ..prompts import (
     get_content_quality_system,
     get_content_quality_prompt,
     INFORMATION_EXTRACTION_SYSTEM,
-    get_information_extraction_prompt,
-    TOC_PLACEMENT_SYSTEM,
-    get_toc_placement_prompt,
-    CONTENT_INTENT_SYSTEM,
-    get_content_intent_prompt
+    get_information_extraction_prompt
 )
 
 logger = logging.getLogger(__name__)
@@ -29,28 +23,6 @@ logger = logging.getLogger(__name__)
 
 class LLMNativeProcessor(SmartProcessor):
     """Enhanced base class for LLM-native processing"""
-    
-    def analyze_document_structure(self, content: str, operation_name: str = "Document Analysis") -> Dict:
-        """Let LLM understand document structure naturally"""
-        response = self._call_llm(
-            messages=[
-                {"role": "system", "content": DOCUMENT_STRUCTURE_SYSTEM},
-                {"role": "user", "content": get_document_structure_prompt(content)}
-            ],
-            response_format="json_object",
-            operation_name=operation_name
-        )
-        
-        # Define expected types
-        expected_types = {
-            'sections': list,
-            'terminal_sections': list,
-            'content_flow': str,  # This MUST be a string
-            'key_topics': list
-        }
-        
-        # Validate and coerce types
-        return self._validate_response_types(response, expected_types)
     
     def suggest_content_placement(self, document: str, new_content_description: str, 
                                  content_type: str = None, operation_name: str = "Content Placement") -> Dict:
@@ -138,50 +110,6 @@ class LLMNativeProcessor(SmartProcessor):
             response = self._validate_response_types(response, {'is_valid': bool})
         
         return response
-    
-    def suggest_toc_placement(self, toc_structure: str, new_entries: List[Dict[str, str]],
-                             operation_name: str = "TOC Placement") -> Dict:
-        """Suggest where to place new entries in a TOC"""
-        response = self._call_llm(
-            messages=[
-                {"role": "system", "content": TOC_PLACEMENT_SYSTEM},
-                {"role": "user", "content": get_toc_placement_prompt(toc_structure, new_entries)}
-            ],
-            response_format="json_object",
-            operation_name=operation_name
-        )
-        
-        # Define expected types
-        expected_types = {
-            'placements': list,  # List of dicts
-            'toc_suggestions': list
-        }
-        
-        return self._validate_response_types(response, expected_types)
-    
-    def understand_content_intent(self, materials: List[Dict], goal: str,
-                                 operation_name: str = "Content Intent Analysis") -> Dict:
-        """Understand the intent behind content creation request"""
-        response = self._call_llm(
-            messages=[
-                {"role": "system", "content": CONTENT_INTENT_SYSTEM},
-                {"role": "user", "content": get_content_intent_prompt(materials, goal)}
-            ],
-            response_format="json_object",
-            operation_name=operation_name
-        )
-        
-        # Define expected types
-        expected_types = {
-            'primary_intent': str,
-            'content_types_needed': list,
-            'target_audience': str,
-            'key_topics': list,
-            'coverage_depth': str,
-            'style_guidelines': list
-        }
-        
-        return self._validate_response_types(response, expected_types)
     
     def _ensure_float_list(self, value: Any) -> List[float]:
         """Ensure value is a list of floats for embeddings"""
