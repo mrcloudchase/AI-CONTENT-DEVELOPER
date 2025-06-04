@@ -48,6 +48,10 @@ class MaterialProcessor(SmartProcessor):
             source_name = Path(source).name
             result = self.llm_call(system, prompt, operation_name=f"Material Analysis: {source_name}")
             
+            # Display thinking if available
+            if self.console_display and 'thinking' in result:
+                self.console_display.show_thinking(result['thinking'], f"🤔 AI Thinking - Material Analysis: {source_name}")
+            
             # save_interaction is now handled automatically by llm_call
             return result
         except Exception as e:

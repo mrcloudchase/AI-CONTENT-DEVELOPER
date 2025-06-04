@@ -89,7 +89,8 @@ class TOCProcessor(LLMNativeProcessor):
             toc_content, 
             created_files,
             updated_files,
-            file_entries
+            file_entries,
+            working_directory
         )
         
         if not updated_toc_result:
@@ -142,11 +143,24 @@ class TOCProcessor(LLMNativeProcessor):
                 decision = decision_map[file]
                 entry['description'] = decision.get('reason', '')
                 entry['content_type'] = decision.get('content_type', '')
+                entry['ms_topic'] = decision.get('ms_topic', '')  # Add ms_topic
                 
-                # Extract key topic from content brief if available
+                # Extract title from filename or content brief
                 content_brief = decision.get('content_brief', {})
                 if content_brief.get('objective'):
                     entry['objective'] = content_brief['objective']
+                
+                # Generate title from filename if not provided
+                # Remove .md extension and convert hyphens to spaces
+                title = file.replace('.md', '').replace('-', ' ')
+                # Capitalize words for title case
+                entry['title'] = ' '.join(word.capitalize() for word in title.split())
+            else:
+                # Default values for files not in strategy
+                entry['description'] = ''
+                entry['content_type'] = 'unknown'
+                entry['ms_topic'] = 'unknown'
+                entry['title'] = file.replace('.md', '').replace('-', ' ').title()
             
             entries.append(entry)
         
@@ -155,18 +169,22 @@ class TOCProcessor(LLMNativeProcessor):
     def _generate_updated_toc_with_placement(self, current_toc: str, 
                                            created_files: List[str],
                                            updated_files: List[str],
-                                           file_entries: List[Dict]) -> Optional[Dict]:
+                                           file_entries: List[Dict],
+                                           working_directory: Path) -> Optional[Dict]:
         """Generate the updated TOC content with integrated placement analysis"""
         from ..prompts.toc import get_toc_update_prompt, TOC_UPDATE_SYSTEM
         
         # Create file descriptions mapping
         file_descriptions = {entry['filename']: entry for entry in file_entries}
         
+        # Combine created and updated files into a single list
+        files_to_add = created_files + updated_files
+        
         prompt = get_toc_update_prompt(
             current_toc,
-            created_files,
-            updated_files,
-            file_descriptions
+            files_to_add,          # Combined list of files to add
+            file_descriptions,     # Metadata dictionary
+            str(working_directory) # Convert Path to string
         )
         
         messages = [

@@ -37,6 +37,10 @@ class DirectoryDetector(LLMNativeProcessor):
             operation_name="Working Directory Selection & Validation"
         )
         
+        # Display thinking if available
+        if self.console_display and 'thinking' in result:
+            self.console_display.show_thinking(result['thinking'], "🤔 AI Thinking - Working Directory Selection & Validation")
+        
         # Validate the result format and directory existence
         result = self._validate_result_format(result, repo_path)
         

@@ -73,6 +73,10 @@ class BaseContentProcessor(LLMNativeProcessor):
                 operation_name="Material Sufficiency Check"
             )
             
+            # Display thinking if available
+            if self.console_display and 'thinking' in sufficiency_check:
+                self.console_display.show_thinking(sufficiency_check['thinking'], "🤔 AI Thinking - Material Sufficiency Check")
+            
             if sufficiency_check.get('insufficient_areas'):
                 gaps.extend(sufficiency_check['insufficient_areas'])
         
@@ -190,6 +194,10 @@ class BaseContentProcessor(LLMNativeProcessor):
                 extraction_purpose="Identify what information is missing to fulfill this documentation request",
                 operation_name="Gap Analysis"
             )
+            
+            # Display thinking if available
+            if self.console_display and 'thinking' in gap_analysis:
+                self.console_display.show_thinking(gap_analysis['thinking'], "🤔 AI Thinking - Gap Analysis")
             
             if gap_analysis.get('missing_items'):
                 gap_report['missing_information'].extend(gap_analysis['missing_items'])

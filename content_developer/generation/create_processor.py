@@ -24,7 +24,17 @@ class CreateContentProcessor(BaseContentProcessor):
         """Generate content for a CREATE action"""
         filename = action.get('filename', 'untitled.md')
         content_type = action.get('content_type', 'How-To Guide')
-        ms_topic = action.get('ms_topic', 'how-to')
+        
+        # Defensive fallback for ms_topic based on content_type
+        ms_topic_mapping = {
+            'Concept': 'concept',
+            'How-To Guide': 'how-to',
+            'Quickstart': 'quickstart',
+            'Tutorial': 'tutorial',
+            'Overview': 'overview',
+            'Reference': 'reference'
+        }
+        ms_topic = action.get('ms_topic', ms_topic_mapping.get(content_type, 'how-to'))
         
         # Format material sources for the prompt
         materials_text = self._format_materials(materials_content)
@@ -44,7 +54,7 @@ class CreateContentProcessor(BaseContentProcessor):
             # Generate content using LLM
             response = self._generate_content(
                 action, materials_text, reference_chunks_text, 
-                content_type_info, filename
+                content_type_info, filename, materials_content
             )
             
             # Extract content from markdown block if present
@@ -63,15 +73,21 @@ class CreateContentProcessor(BaseContentProcessor):
     
     def _generate_content(self, action: Dict, materials_text: str, 
                          reference_chunks_text: str, content_type_info: Dict,
-                         filename: str) -> Dict:
+                         filename: str, materials_content: Dict[str, str]) -> Dict:
         """Generate content using LLM"""
         # Load full content standards
         content_standards = self._load_content_standards()
         
         # Get the prompt with all necessary information
         prompt = get_create_content_prompt(
-            self.config, action, materials_text, reference_chunks_text, content_type_info,
-            content_standards  # Pass full standards for formatting
+            self.config, 
+            action, 
+            materials_content,  # Pass the original Dict[str, str] not formatted text
+            [],  # Empty list for materials_summaries (not needed for content creation)
+            [],  # Empty list for related_chunks (we have reference_chunks_text instead)
+            reference_chunks_text,  # Use reference_chunks_text as chunk_context
+            content_type_info,
+            content_standards
         )
         
         # Call LLM for content generation
@@ -82,6 +98,10 @@ class CreateContentProcessor(BaseContentProcessor):
         
         response = self._call_llm(messages, response_format="json_object", 
                                 operation_name=f"Content Creation: {filename}")
+        
+        # Display thinking if available
+        if self.console_display and 'thinking' in response:
+            self.console_display.show_thinking(response['thinking'], f"🤔 AI Thinking - Content Creation: {filename}")
         
         return response
     

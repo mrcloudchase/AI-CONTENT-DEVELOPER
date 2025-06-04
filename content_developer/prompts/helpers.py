@@ -335,6 +335,25 @@ def schema_to_example(schema: dict, include_descriptions: bool = False) -> dict:
                     "Then, I'll structure the information according to the expected format",
                     "Finally, I'll ensure all required fields are properly populated"
                 ]
+            elif field_name == 'decisions' and 'items' in field_schema and field_schema['items'].get('type') == 'object':
+                # Handle decisions array with object schema
+                item_schema = field_schema['items']
+                decision_example = {
+                    "action": "CREATE",
+                    "filename": "example-guide.md",
+                    "content_type": "How-To Guide",
+                    "ms_topic": "how-to",
+                    "reason": "No existing documentation covers this topic. Materials provide comprehensive information requiring new content creation.",
+                    "priority": "high",
+                    "relevant_chunks": ["chunk_id_1", "chunk_id_2"],
+                    "content_brief": {
+                        "objective": "Enable readers to accomplish specific task",
+                        "key_points_to_cover": ["Point 1", "Point 2"],
+                        "prerequisites_to_state": ["Prerequisite 1", "Prerequisite 2"],
+                        "next_steps_to_suggest": ["Next step 1", "Next step 2"]
+                    }
+                }
+                example[field_name] = [decision_example]
             elif field_name == 'technologies':
                 example[field_name] = ["Technology1", "Technology2", "Framework1"]
             elif field_name == 'key_concepts':
@@ -344,7 +363,13 @@ def schema_to_example(schema: dict, include_descriptions: bool = False) -> dict:
             elif 'chunks' in field_name:
                 example[field_name] = ["chunk_id_1", "chunk_id_2"]
             else:
-                example[field_name] = ["item1", "item2", "item3"]
+                # Handle other arrays with item schemas
+                if 'items' in field_schema and field_schema['items'].get('type') == 'object':
+                    # Recursively generate example for array of objects
+                    item_example = schema_to_example({'properties': field_schema['items'].get('properties', {})})
+                    example[field_name] = [item_example] if item_example else ["item1"]
+                else:
+                    example[field_name] = ["item1", "item2", "item3"]
                 
         elif field_type == 'number':
             # Generate number examples based on constraints

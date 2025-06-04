@@ -84,6 +84,7 @@ ANALYSIS REQUIREMENTS:
    
 3. FOR CREATE ACTIONS:
    - Select appropriate content type based on user materials and goal
+   - Set ms_topic based on content type (e.g., "concept" for Concept, "how-to" for How-To Guide)
    - Reference specific chunk_ids from TOP RELEVANT CHUNKS section
    - Specify exact filename and comprehensive reason
    - Create detailed content_brief with:
@@ -97,6 +98,7 @@ ANALYSIS REQUIREMENTS:
    
 4. FOR UPDATE ACTIONS:
    - Identify current content type from ms.topic
+   - Include current ms_topic value for consistency
    - Specify exact sections/information to add
    - Reference specific chunk_ids that show where to add content
    - Provide specific change description
@@ -109,6 +111,14 @@ ANALYSIS REQUIREMENTS:
      * Style consistency requirements
 
 5. RELEVANT CHUNKS: Use ONLY chunk_ids from the provided TOP RELEVANT CHUNKS or from file's relevant_chunks
+
+MS_TOPIC MAPPING:
+- Concept → "concept"
+- How-To Guide → "how-to"
+- Quickstart → "quickstart"
+- Tutorial → "tutorial"
+- Overview → "overview"
+- Reference → "reference"
 
 OUTPUT FORMAT:
 {json.dumps(example, indent=2)}
@@ -147,14 +157,16 @@ GAP ANALYSIS CRITERIA:
 DECISION LOGIC:
 - CREATE when: Low coverage OR need different content type OR topic not addressed
 - UPDATE when: Medium/high coverage AND same content type works AND specific sections can be added
+- ALWAYS include ms_topic field that matches the content_type (see MS_TOPIC MAPPING in prompt)
 
 CONTENT TYPE SELECTION:
 - Match content type to user's goal and material structure
-- Overview: High-level technical explanations
-- Concept: Deep understanding of how things work
-- Quickstart: Get users started quickly (<10 min)
-- How-To: Step-by-step task completion
-- Tutorial: End-to-end learning scenarios
+- Overview: High-level technical explanations (ms_topic: "overview")
+- Concept: Deep understanding of how things work (ms_topic: "concept")
+- Quickstart: Get users started quickly (<10 min) (ms_topic: "quickstart")
+- How-To: Step-by-step task completion (ms_topic: "how-to")
+- Tutorial: End-to-end learning scenarios (ms_topic: "tutorial")
+- Reference: Technical specifications and API docs (ms_topic: "reference")
 
 CONTENT BRIEF REQUIREMENTS:
 - Be specific: Don't say "explain networking" - say "explain how Cilium uses eBPF for packet filtering"

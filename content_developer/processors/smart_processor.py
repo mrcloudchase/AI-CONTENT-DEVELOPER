@@ -59,7 +59,9 @@ class SmartProcessor:
         result = json.loads(response.choices[0].message.content)
         
         # Extract and display thinking if present
-        self._display_thinking(result, operation_name)
+        # COMMENTED OUT to prevent duplicate thinking displays
+        # The individual processors will handle thinking display themselves
+        # self._display_thinking(result, operation_name)
         
         # Automatically save ALL LLM interactions for complete observability
         if operation_name:
@@ -99,7 +101,9 @@ class SmartProcessor:
         result = self._parse_llm_response(response, response_format)
         
         # Extract and display thinking if present
-        self._display_thinking(result, operation_name)
+        # COMMENTED OUT to prevent duplicate thinking displays
+        # The individual processors will handle thinking display themselves
+        # self._display_thinking(result, operation_name)
         
         # Automatically save ALL LLM interactions for complete observability
         if operation_name:
