@@ -48,7 +48,7 @@ class UpdateContentProcessor(BaseContentProcessor):
         if updated_content and updated_content != existing_content:
             # Save preview
             preview_path = self._save_update_preview(
-                updated_content, filename, repo_name, working_directory
+                updated_content, filename, working_dir_path, repo_name
             )
             
             return {
@@ -134,14 +134,6 @@ class UpdateContentProcessor(BaseContentProcessor):
             if self.console_display and 'thinking' in result:
                 self.console_display.show_thinking(result['thinking'], f"🤔 AI Thinking - Content Update: {filename}")
             
-            # Save interaction for debugging
-            self.save_interaction(
-                messages[1]['content'], 
-                result, 
-                f"update_{action.get('filename', 'unknown')}", 
-                "./llm_outputs/content_generation/update"
-            )
-            
             # Get the complete updated document from the LLM response
             updated_document = result.get('updated_document', '')
             
@@ -171,10 +163,10 @@ class UpdateContentProcessor(BaseContentProcessor):
         logger.warning("_apply_changes called but is deprecated in LLM-native approach")
         return original_content
     
-    def _save_update_preview(self, content: str, filename: str, 
-                            repo_name: str, working_directory: str) -> str:
+    def _save_update_preview(self, content: str, filename: str,
+                            working_dir: Path, repo_name: str) -> str:
         """Save updated content preview"""
-        preview_dir = Path("./llm_outputs/preview/updates")
+        preview_dir = Path("./llm_outputs/preview/update")
         mkdir(preview_dir)
         
         preview_path = preview_dir / filename

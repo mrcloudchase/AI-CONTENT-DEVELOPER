@@ -1,5 +1,0 @@
-=== TEST OPERATION ===
-2025-06-02T15:34:46.295506
-==================================================
-
-Test prompt for phase/step verification

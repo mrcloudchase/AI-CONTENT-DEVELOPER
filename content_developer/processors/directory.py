@@ -162,8 +162,8 @@ Validate:
                 microsoft_products = [microsoft_products] if microsoft_products else []
             
             summary_text = (
-                f"• {s.get('source', 'Unknown')}: {s.get('main_topic', 'N/A')}\n"
-                f"  Summary: {s.get('summary', 'N/A')}\n"
+            f"• {s.get('source', 'Unknown')}: {s.get('main_topic', 'N/A')}\n"
+            f"  Summary: {s.get('summary', 'N/A')}\n"
                 f"  Technologies: {', '.join(str(t) for t in technologies)}\n"
                 f"  Key Concepts: {', '.join(str(k) for k in key_concepts)}\n"
                 f"  Products: {', '.join(str(p) for p in microsoft_products)}"

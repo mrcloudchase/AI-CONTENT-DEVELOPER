@@ -17,8 +17,9 @@ from ..processors import (
 )
 from ..generation import ContentGenerator
 from ..repository import RepositoryManager
-from ..utils import write, mkdir, setup_logging
+from ..utils import write, mkdir
 from ..constants import MAX_PHASES
+from ..utils.step_tracker import get_step_tracker
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,6 @@ class ContentDeveloperOrchestrator:
         self.repo_manager = RepositoryManager()
         self.dir_confirmator = DirectoryConfirmation(config, self.client)
         self.strategy_confirmator = StrategyConfirmation(config)
-        setup_logging()
     
     def execute(self) -> Result:
         """Execute the content development workflow"""
@@ -92,6 +92,10 @@ class ContentDeveloperOrchestrator:
     def _execute_phase1(self) -> Result:
         """Execute Phase 1: Repository Analysis & Directory Selection"""
         logger.info("=== Phase 1: Repository Analysis ===")
+        
+        # Reset step counter for Phase 1
+        step_tracker = get_step_tracker()
+        step_tracker.reset_phase(1)
         
         if self.console_display:
             with self.console_display.phase_progress("1: Repository Analysis", 4) as progress:
@@ -169,7 +173,7 @@ class ContentDeveloperOrchestrator:
         """Detect working directory using LLM"""
         try:
             detector = DirectoryDetector(self.client, self.config, self.console_display)
-            detector.set_phase_step(1, 2)
+            detector.set_phase_step(1, 1)
             llm_result = detector.process(
                 repo_path, structure, materials
             )
@@ -198,6 +202,10 @@ class ContentDeveloperOrchestrator:
     def _execute_phase2(self, result: Result) -> None:
         """Execute Phase 2: Content Strategy Analysis"""
         logger.info("=== Phase 2: Content Strategy Analysis ===")
+        
+        # Reset step counter for Phase 2
+        step_tracker = get_step_tracker()
+        step_tracker.reset_phase(2)
         
         try:
             # Get working directory path
@@ -306,6 +314,9 @@ class ContentDeveloperOrchestrator:
         """Execute Phase 3: Content Generation"""
         logger.info("=== Phase 3: Content Generation ===")
         
+        # Reset step counter for Phase 3
+        step_tracker = get_step_tracker()
+        step_tracker.reset_phase(3)
         try:
             # Get working directory path
             working_dir_path = Path(result.working_directory_full_path)
@@ -507,6 +518,10 @@ class ContentDeveloperOrchestrator:
     def _execute_phase4(self, result: Result) -> None:
         """Execute Phase 4: TOC Management"""
         logger.info("=== Phase 4: TOC Management ===")
+        
+        # Reset step counter for Phase 4
+        step_tracker = get_step_tracker()
+        step_tracker.reset_phase(4)
         
         try:
             # Get working directory path

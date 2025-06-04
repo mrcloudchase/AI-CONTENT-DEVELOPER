@@ -6,10 +6,10 @@ echo "=== AI Content Developer Test Run ==="
 echo "This will test basic functionality with AKS documentation materials."
 echo ""
 
-# Check if API key is set
-if [ -z "$OPENAI_API_KEY" ]; then
-    echo "❌ Error: OPENAI_API_KEY not set"
-    echo "Please run: export OPENAI_API_KEY='your-key-here'"
+# Check if Azure OpenAI is configured
+if [ -z "$AZURE_OPENAI_ENDPOINT" ]; then
+    echo "❌ Error: AZURE_OPENAI_ENDPOINT not set"
+    echo "Please set your Azure OpenAI environment variables"
     exit 1
 fi
 
@@ -32,11 +32,10 @@ echo ""
 # Phase 1 Test
 echo "=== Testing Phase 1: Repository Analysis ==="
 python main.py \
-    "$repo_url" \
-    "Document Cilium networking for AKS" \
-    "Azure Kubernetes Service" \
-    "$test_file" \
-    "$test_url" \
+    --repo "$repo_url" \
+    --goal "Document Cilium networking for AKS" \
+    --service "Azure Kubernetes Service" \
+    -m "$test_file" "$test_url" \
     --phases 1 \
     --auto-confirm
 
@@ -52,12 +51,12 @@ fi
 # Check outputs
 echo ""
 echo "Checking Phase 1 outputs:"
-if [ -d "llm_outputs/materials_summary" ]; then
-    echo "  ✓ Materials summary directory created"
-    file_count=$(ls -1 llm_outputs/materials_summary/*.json 2>/dev/null | wc -l)
+if [ -d "llm_outputs/phase-01" ]; then
+    echo "  ✓ Phase 1 output directory created"
+    file_count=$(ls -1 llm_outputs/phase-01/step-*/*.json 2>/dev/null | wc -l)
     echo "  ✓ Found $file_count interaction file(s)"
 else
-    echo "  ✗ Materials summary directory not found"
+    echo "  ✗ Phase 1 output directory not found"
 fi
 
 if [ -d "work/tmp" ]; then
@@ -70,11 +69,10 @@ fi
 echo ""
 echo "=== Testing Phase 2: Content Discovery ==="
 python main.py \
-    "$repo_url" \
-    "Document Cilium networking for AKS" \
-    "Azure Kubernetes Service" \
-    "$test_file" \
-    "$test_url" \
+    --repo "$repo_url" \
+    --goal "Document Cilium networking for AKS" \
+    --service "Azure Kubernetes Service" \
+    -m "$test_file" "$test_url" \
     --phases 2 \
     --auto-confirm
 
@@ -91,29 +89,28 @@ echo ""
 echo "Checking Phase 2 outputs:"
 if [ -d "llm_outputs/embeddings" ]; then
     echo "  ✓ Embeddings directory created"
-    cache_count=$(ls -1 llm_outputs/embeddings/*.json 2>/dev/null | wc -l)
+    cache_count=$(find llm_outputs/embeddings -name "*.json" 2>/dev/null | wc -l)
     echo "  ✓ Found $cache_count embedding cache file(s)"
 else
     echo "  ✗ Embeddings directory not found"
 fi
 
-if [ -d "llm_outputs/content_strategy" ]; then
-    echo "  ✓ Content strategy directory created"
-    strategy_count=$(ls -1 llm_outputs/content_strategy/*.json 2>/dev/null | wc -l)
+if [ -d "llm_outputs/phase-02" ]; then
+    echo "  ✓ Phase 2 output directory created"
+    strategy_count=$(ls -1 llm_outputs/phase-02/step-*/*.json 2>/dev/null | wc -l)
     echo "  ✓ Found $strategy_count strategy file(s)"
 else
-    echo "  ✗ Content strategy directory not found"
+    echo "  ✗ Phase 2 output directory not found"
 fi
 
 # Phase 3 Test
 echo ""
 echo "=== Testing Phase 3: Content Generation ==="
 python main.py \
-    "$repo_url" \
-    "Document Cilium networking for AKS" \
-    "Azure Kubernetes Service" \
-    "$test_file" \
-    "$test_url" \
+    --repo "$repo_url" \
+    --goal "Document Cilium networking for AKS" \
+    --service "Azure Kubernetes Service" \
+    -m "$test_file" "$test_url" \
     --phases 3 \
     --auto-confirm
 
@@ -130,14 +127,14 @@ echo ""
 echo "Checking Phase 3 outputs:"
 if [ -d "llm_outputs/preview" ]; then
     echo "  ✓ Preview directory created"
-    preview_count=$(ls -1 llm_outputs/preview/*.md 2>/dev/null | wc -l)
+    preview_count=$(find llm_outputs/preview -name "*.md" 2>/dev/null | wc -l)
     echo "  ✓ Found $preview_count generated content file(s)"
     
     # Show generated files
     if [ $preview_count -gt 0 ]; then
         echo ""
         echo "Generated files:"
-        ls -la llm_outputs/preview/*.md 2>/dev/null | tail -5
+        find llm_outputs/preview -name "*.md" -type f | head -5
     fi
 else
     echo "  ✗ Preview directory not found"
@@ -147,11 +144,10 @@ fi
 echo ""
 echo "=== Testing Phase 4: TOC Management ==="
 python main.py \
-    "$repo_url" \
-    "Document Cilium networking for AKS" \
-    "Azure Kubernetes Service" \
-    "$test_file" \
-    "$test_url" \
+    --repo "$repo_url" \
+    --goal "Document Cilium networking for AKS" \
+    --service "Azure Kubernetes Service" \
+    -m "$test_file" "$test_url" \
     --phases 4 \
     --auto-confirm
 
@@ -166,12 +162,12 @@ fi
 # Check Phase 4 outputs
 echo ""
 echo "Checking Phase 4 outputs:"
-if [ -d "llm_outputs/toc_management" ]; then
-    echo "  ✓ TOC management directory created"
-    toc_count=$(ls -1 llm_outputs/toc_management/*.json 2>/dev/null | wc -l)
+if [ -d "llm_outputs/phase-04" ]; then
+    echo "  ✓ Phase 4 output directory created"
+    toc_count=$(ls -1 llm_outputs/phase-04/step-*/*.json 2>/dev/null | wc -l)
     echo "  ✓ Found $toc_count TOC interaction file(s)"
 else
-    echo "  ✗ TOC management directory not found"
+    echo "  ✗ Phase 4 output directory not found"
 fi
 
 if [ -d "llm_outputs/preview/toc" ]; then

@@ -14,6 +14,7 @@ from .imports import (
     HAS_OPENAI, HAS_RICH, HAS_DOCX, HAS_PDF, 
     HAS_WEB, HAS_TENACITY, HAS_PROGRESS
 )
+from .step_tracker import get_step_tracker, StepTracker
 
 __all__ = [
     # Core utilities
@@ -29,5 +30,8 @@ __all__ = [
     # Imports
     'get_import', 'initialize_imports',
     'HAS_OPENAI', 'HAS_RICH', 'HAS_DOCX', 'HAS_PDF',
-    'HAS_WEB', 'HAS_TENACITY', 'HAS_PROGRESS'
+    'HAS_WEB', 'HAS_TENACITY', 'HAS_PROGRESS',
+    
+    # Step tracking
+    'get_step_tracker', 'StepTracker'
 ]

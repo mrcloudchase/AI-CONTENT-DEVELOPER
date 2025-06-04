@@ -41,6 +41,8 @@
   - name: Network requirements
     displayName: endpoint, url, connection, connectivity, proxy
     href: network-requirements.md
+  - name: Cilium networking in Arc-enabled Kubernetes
+    href: aks-cilium-concept.md
   - name: Connectivity modes
     displayName: disconnected, semi-connected
     href: conceptual-connectivity-modes.md
@@ -152,6 +154,8 @@
     - name: Access secrets offline from Azure Key Vault
       href: secret-store-extension.md
       displayName: secret synchronization, azure secret store, secret store
+    - name: Use Cilium networking in Arc-enabled Kubernetes
+      href: aks-cilium-howto.md
   - name: Deploy Arc-enabled services
     items:
       - name: Create custom locations
@@ -162,8 +166,6 @@
         href: /azure/machine-learning/how-to-attach-kubernetes-anywhere?toc=/azure/azure-arc/kubernetes/toc.json&bc=/azure/azure-arc/kubernetes/breadcrumb/toc.json
   - name: Simplify network connectivity
     href: arc-gateway-simplify-networking.md
-  - name: Configure Cilium networking
-    href: aks-cilium-networking-howto.md
   - name: Troubleshooting
     items:
     - name: Platform issues

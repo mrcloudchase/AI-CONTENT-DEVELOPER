@@ -177,14 +177,6 @@ class TOCProcessor(LLMNativeProcessor):
                 operation_name="TOC Generation"
             )
             
-            # Save interaction
-            self.save_interaction(
-                prompt,
-                response,
-                "toc_update",
-                "./llm_outputs/toc_management"
-            )
-            
             return response
             
         except Exception as e:

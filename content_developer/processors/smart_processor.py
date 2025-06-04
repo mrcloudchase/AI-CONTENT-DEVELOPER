@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..utils import write, save_json, mkdir
+from ..utils.step_tracker import get_step_tracker
 
 
 class SmartProcessor:
@@ -121,38 +122,18 @@ class SmartProcessor:
     
     def _determine_phase_step_directory(self) -> str:
         """Determine directory based on current phase and step"""
-        if self.current_phase is not None and self.current_step is not None:
-            return f"./llm_outputs/phase-{self.current_phase:02d}/step-{self.current_step:02d}"
+        if self.current_phase is not None:
+            # Get next step from global tracker
+            step_tracker = get_step_tracker()
+            step = step_tracker.get_next_step(self.current_phase)
+            
+            # Use the step for this LLM call
+            directory = f"./llm_outputs/phase-{self.current_phase:02d}/step-{step:02d}"
+            
+            return directory
         else:
-            # Fallback to old structure if phase/step not set
-            return self._determine_output_directory("Unknown Operation")
-    
-    def _determine_output_directory(self, operation_name: str) -> str:
-        """Determine appropriate output directory based on operation name"""
-        operation_lower = operation_name.lower()
-        
-        # Map operations to directories
-        if "material" in operation_lower:
-            return "./llm_outputs/materials_summary"
-        elif "directory" in operation_lower or "working" in operation_lower:
-            return "./llm_outputs/decisions/working_directory"
-        elif "strategy" in operation_lower:
-            return "./llm_outputs/content_strategy"
-        elif "create" in operation_lower or "creation" in operation_lower:
-            return "./llm_outputs/content_generation/create"
-        elif "update" in operation_lower:
-            return "./llm_outputs/content_generation/update"
-        elif "toc" in operation_lower:
-            return "./llm_outputs/toc_management"
-        elif "intent" in operation_lower or "ranking" in operation_lower:
-            return "./llm_outputs/content_discovery"
-        elif "structure" in operation_lower or "quality" in operation_lower or "placement" in operation_lower:
-            return "./llm_outputs/document_analysis"
-        elif "extraction" in operation_lower or "validation" in operation_lower:
-            return "./llm_outputs/information_extraction"
-        else:
-            # Default directory for unclassified operations
-            return "./llm_outputs/general_operations"
+            # Fallback if phase not set (shouldn't happen in normal operation)
+            return "./llm_outputs/untracked"
     
     def _extract_prompt_from_messages(self, messages: List[Dict[str, str]]) -> str:
         """Extract prompt content from messages format"""

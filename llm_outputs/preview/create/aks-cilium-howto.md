@@ -1,50 +1,58 @@
 ---
-title: Deploy and configure Cilium with Azure CNI in AKS
-description: Learn how to deploy, configure, and operate Azure CNI powered by Cilium in Azure Kubernetes Service (AKS), including advanced features such as CiliumEndpointSlices, enhanced network policy enforcement, and integration with Azure Monitor.
+title: Configure Cilium as the data plane for Azure CNI in AKS
+description: Learn how to deploy, configure, and validate Cilium as the data plane for Azure CNI in Azure Kubernetes Service (AKS), including CLI steps, configuration options, validation, and best practices for platform engineers.
 ms.topic: how-to
 ---
 
-# Deploy and configure Cilium with Azure CNI in AKS
+# Configure Cilium as the data plane for Azure CNI in AKS
 
 ## Introduction
 
-Azure CNI powered by Cilium brings advanced networking capabilities to Azure Kubernetes Service (AKS) by combining the robust Azure CNI control plane with Cilium's high-performance eBPF data plane. This integration enables dynamic endpoint management, enhanced network policy enforcement, and improved observability, making it ideal for platform engineers managing scalable, secure, and efficient Kubernetes environments.
+Azure Kubernetes Service (AKS) supports Azure CNI powered by Cilium, combining the robust control plane of Azure CNI with the high-performance, eBPF-based data plane of Cilium. This integration enables advanced networking, dynamic endpoint management, and granular network policy enforcement for large-scale, secure, and observable Kubernetes clusters.
 
-With CiliumEndpointSlices, AKS clusters benefit from dynamic grouping of pod endpoints, enabling rapid service discovery, efficient load balancing, and granular security controls. Integration with Azure Monitor and Cilium observability tools further enhances operational insight and troubleshooting capabilities.
-
-> [!NOTE]
-> Cilium on AKS is currently supported only on Linux nodes. Ensure your cluster meets all prerequisites before proceeding.
+This guide provides step-by-step instructions for platform engineers to deploy, configure, and validate Cilium as the data plane for Azure CNI in AKS. You'll learn how to choose between overlay and VNET IP assignment modes, apply network policies, validate deployment, and follow best practices for operational monitoring and migration.
 
 ## Prerequisites
 
-Before deploying or configuring Azure CNI powered by Cilium in AKS, ensure the following:
+> [!div class="checklist"]
+> * An existing AKS cluster or permissions to create one
+> * Azure CLI version 2.48.1 or later installed and configured ([Install Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli))
+> * Basic familiarity with Kubernetes CLI tools (kubectl)
+> * Sufficient Azure permissions to create resource groups, virtual networks, and AKS clusters
 
-- **Familiarity with AKS and Kubernetes networking concepts**
-- **Azure CLI** version 2.48.1 or later installed and authenticated
-- **Access to an Azure subscription** with permissions to create and manage AKS clusters
-- **Supported AKS and Cilium versions**:
-  - Kubernetes 1.27 (LTS): Cilium 1.13.18+
-  - Kubernetes 1.28: Cilium 1.13.18+
-  - Kubernetes 1.29: Cilium 1.14.19+
-  - Kubernetes 1.30 (LTS): Cilium 1.14.19+
-  - Kubernetes 1.31: Cilium 1.16.6+
-  - Kubernetes 1.32: Cilium 1.17.0+
-- **Linux-based AKS node pools only** (Windows nodes are not supported)
-- **AKS API version** 2022-09-02-preview or later if using ARM templates or REST API
+> [!NOTE]
+> Azure CNI powered by Cilium is available only for Linux-based AKS clusters. Windows node pools are not supported.
+
+### Supported Kubernetes and Cilium Versions
+
+| Kubernetes Version | Minimum Cilium Version |
+|-------------------|-----------------------|
+| 1.27 (LTS)        | 1.13.18               |
+| 1.28 (EOL)        | 1.13.18               |
+| 1.29              | 1.14.19               |
+| 1.30 (LTS)        | 1.14.19               |
+| 1.31              | 1.16.6                |
+| 1.32              | 1.17.0                |
 
 > [!WARNING]
-> Azure CNI powered by Cilium is not available for Windows nodes. Network policies using `ipBlock` have limitations—see Limitations below.
+> Ensure your AKS cluster and CLI tooling meet the minimum version requirements. Cilium Endpoint Slices are supported in Kubernetes version 1.32 and above.
 
 ## Steps
 
-### 1. Choose a Pod IP Assignment Method
-Azure CNI powered by Cilium supports multiple modes for assigning pod IPs:
-- **Overlay network** (similar to Azure CNI Overlay)
-- **Virtual network** (dynamic pod IP assignment)
-- **Node subnet**
+### 1. Choose a Pod IP Assignment Model
+
+Azure CNI powered by Cilium supports multiple pod IP assignment models:
+
+- **Overlay network**: Pods receive IPs from a dedicated CIDR, decoupled from the VNET.
+- **VNET assignment**: Pods receive IPs directly from an Azure VNET subnet.
+- **Node subnet assignment**: Pods share IPs from the node subnet.
+
+> [!TIP]
+> Overlay mode is suitable for clusters where IP conservation is important. VNET mode is recommended for scenarios requiring direct pod-to-Azure resource connectivity.
+
+### 2. Create an AKS Cluster with Azure CNI Powered by Cilium
 
 #### [Overlay Network](#tab/overlay)
-Create a new AKS cluster with Cilium and overlay networking:
 
 ```azurecli
 az aks create \
@@ -59,21 +67,34 @@ az aks create \
 ```
 
 > [!NOTE]
-> The `--network-dataplane cilium` flag replaces the deprecated `--enable-ebpf-dataplane` flag.
+> The `--network-dataplane cilium` flag enables Cilium as the data plane. The deprecated `--enable-ebpf-dataplane` flag is no longer used.
 
-#### [Virtual Network](#tab/vnet)
-Provision a virtual network and subnets, then create the AKS cluster:
+#### [VNET Assignment](#tab/vnet)
+
+1. Create a resource group and virtual network with separate subnets for nodes and pods:
 
 ```azurecli
-# Create the resource group
 az group create --name <resourceGroupName> --location <location>
+az network vnet create \
+  --resource-group <resourceGroupName> \
+  --location <location> \
+  --name <vnetName> \
+  --address-prefixes <address-prefix> -o none
+az network vnet subnet create \
+  --resource-group <resourceGroupName> \
+  --vnet-name <vnetName> \
+  --name nodesubnet \
+  --address-prefixes <node-subnet-prefix> -o none
+az network vnet subnet create \
+  --resource-group <resourceGroupName> \
+  --vnet-name <vnetName> \
+  --name podsubnet \
+  --address-prefixes <pod-subnet-prefix> -o none
+```
 
-# Create a virtual network with node and pod subnets
-az network vnet create --resource-group <resourceGroupName> --location <location> --name <vnetName> --address-prefixes <vnetAddressPrefix> -o none
-az network vnet subnet create --resource-group <resourceGroupName> --vnet-name <vnetName> --name nodesubnet --address-prefixes <nodeSubnetPrefix> -o none
-az network vnet subnet create --resource-group <resourceGroupName> --vnet-name <vnetName> --name podsubnet --address-prefixes <podSubnetPrefix> -o none
+2. Create the AKS cluster:
 
-# Create the AKS cluster
+```azurecli
 az aks create \
   --name <clusterName> \
   --resource-group <resourceGroupName> \
@@ -86,8 +107,10 @@ az aks create \
   --generate-ssh-keys
 ```
 
-#### [Node Subnet](#tab/nodesubnet)
-Create a cluster using the node subnet with Cilium:
+#### [Node Subnet Assignment](#tab/node-subnet)
+
+> [!NOTE]
+> Azure CLI version 2.69.0 or later is required for this option.
 
 ```azurecli
 az aks create \
@@ -101,51 +124,17 @@ az aks create \
 
 ---
 
-### 2. Enable CiliumEndpointSlices
-CiliumEndpointSlices are supported in Kubernetes 1.32 and above. They provide scalable, dynamic grouping of pod endpoints for efficient service discovery and policy enforcement.
-
-> [!NOTE]
-> CiliumEndpointSlices do not support custom grouping configuration or priority namespaces via `cilium.io/ces-namespace`.
-
-No manual configuration is required to enable CiliumEndpointSlices if your cluster is running a supported version. Endpoint slices are managed automatically by Cilium and AKS.
-
-#### Example: Viewing CiliumEndpointSlices
-```bash
-kubectl get ciliumepslices -A
-```
-
 ### 3. Configure Network Policies with Cilium
-Cilium enforces Kubernetes NetworkPolicy resources natively. You can define policies for fine-grained control over pod communication.
 
-#### Example: Basic NetworkPolicy
+Cilium enforces both Kubernetes NetworkPolicy and CiliumNetworkPolicy resources. For most scenarios, use standard Kubernetes NetworkPolicy. For advanced features (FQDN filtering, Layer 7 policies), enable Advanced Container Networking Services.
+
+#### Example: Basic Egress Policy
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-frontend
-  namespace: default
-spec:
-  podSelector:
-    matchLabels:
-      app: frontend
-  policyTypes:
-  - Ingress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: backend
-```
-
-> [!WARNING]
-> Network policies using `ipBlock` cannot select pod or node IPs. To allow traffic to all pods, use `namespaceSelector` and `podSelector` instead.
-
-#### Example: Workaround for ipBlock Limitation
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-all-egress
+  name: allow-egress-to-external
 spec:
   podSelector: {}
   policyTypes:
@@ -154,54 +143,89 @@ spec:
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0
+```
+
+> [!WARNING]
+> Azure CNI powered by Cilium does **not** support using `ipBlock` to allow access to node or pod IPs. Use `namespaceSelector` and `podSelector` for pod-to-pod traffic.
+
+#### Example: Allow All Pods in All Namespaces
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all-pods
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
     - namespaceSelector: {}
     - podSelector: {}
 ```
 
-### 4. Integrate with Azure Monitor and Cilium Observability
-Cilium provides detailed logging, metrics, and diagnostics. Integration with Azure Monitor and Log Analytics enables proactive troubleshooting and performance tuning.
+> [!TIP]
+> For FQDN filtering and Layer 7 policies, see [Advanced Container Networking Services](https://learn.microsoft.com/azure/aks/azure-cni-powered-by-cilium#considerations).
 
-- Enable advanced container networking services for observability features (metrics, flow logs, FQDN filtering, Layer 7 policies).
-- Configure Log Analytics workspace and connect it to your AKS cluster as per standard Azure Monitor integration steps.
+### 4. Validate Cilium Deployment and Functionality
 
-> [!NOTE]
-> Out-of-the-box dashboards visualize endpoint slice health, latency, and error rates. Alerts can be configured for synchronization failures or policy enforcement breaches.
+After deployment, validate that Cilium is running and enforcing policies:
 
-### 5. Operational Best Practices
-- **Scalability:** Azure CNI powered by Cilium supports up to 5,000 pods across 500 nodes per cluster.
-- **Reliability:** Target 99.99% uptime for networking subsystems.
-- **Fallback:** If CiliumEndpointSlices fail, AKS reverts to traditional endpoint management automatically.
-- **Security:** All component communications are encrypted and integrate with Azure Active Directory.
-- **Maintainability:** Use robust error handling and monitor logs for diagnostics.
+#### Check Cilium DaemonSet Status
+
+```azurecli
+kubectl get daemonset -n kube-system cilium
+```
+
+#### View Cilium Pod Logs
+
+```azurecli
+kubectl logs -n kube-system -l k8s-app=cilium
+```
+
+#### Check Cilium Endpoint Slices (Kubernetes 1.32+)
+
+```azurecli
+kubectl get ciliumendpointslices -A
+```
+
+#### Validate Network Policy Enforcement
+
+Apply a test NetworkPolicy and verify pod connectivity as expected.
+
+### 5. Best Practices for Operational Monitoring
+
+- Integrate AKS with Azure Monitor and Log Analytics to capture Cilium metrics, flow logs, and diagnostic events.
+- Use out-of-the-box dashboards to visualize endpoint slice health, latency, and error rates.
+- Configure alerts for critical events such as policy enforcement failures or endpoint synchronization issues.
 
 > [!TIP]
-> For production environments, regularly review Azure Monitor dashboards and configure alerts for critical networking events.
+> For detailed observability, enable Advanced Container Networking Services to access Cilium flow logs and metrics.
 
-### 6. Limitations and Supported Scenarios
-- **Linux-only:** Cilium is not supported on Windows nodes.
-- **ipBlock Restrictions:** Network policies using `ipBlock` cannot allow traffic to pod or node IPs.
-- **No kube-proxy:** Clusters with Cilium dataplane do not use kube-proxy.
-- **No manual Cilium configuration:** AKS manages Cilium configuration; for custom setups, use BYO CNI.
-- **CiliumEndpointSlices:** Supported in Kubernetes 1.32+; grouping configuration is not customizable.
-- **No support for ClusterwideCiliumNetworkPolicy.**
+### 6. Migration Considerations
+
+- AKS clusters created with Cilium as the data plane do **not** use kube-proxy. Existing clusters upgraded to Cilium will have workloads migrated to run without kube-proxy.
+- Ensure all workloads are compatible with Cilium's networking model before migration.
+- Cilium maintains backward compatibility with Azure CNI policy constructs, but review network policies for unsupported features (e.g., `ipBlock` limitations).
+- Robust error handling and fallback mechanisms are in place; clusters without Cilium remain on the default endpoint management system.
+
+> [!WARNING]
+> Cilium is not supported on Windows node pools. Ensure all critical workloads are on Linux nodes before migration.
 
 ## Verification
 
-After deployment, verify that Cilium and endpoint slices are functioning:
-
-```bash
-kubectl get pods -n kube-system -l k8s-app=cilium
-kubectl get ciliumepslices -A
-```
-
-Check Azure Monitor dashboards for networking metrics and alerts.
+- Use `kubectl get daemonset -n kube-system cilium` to confirm Cilium is running on all nodes.
+- Check Cilium logs for errors: `kubectl logs -n kube-system -l k8s-app=cilium`
+- Validate network policies by applying test policies and verifying pod connectivity.
+- Monitor Cilium metrics and events in Azure Monitor/Log Analytics.
 
 ## Next Steps
 
-- [Implement advanced network policies using Cilium](https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium)
-- [Monitor and troubleshoot Cilium-powered networking in AKS](https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium)
-- [Explore multi-cloud or hybrid scenarios with Cilium and Azure Arc](/articles/azure-arc/kubernetes/network-requirements.md)
-- [Use GitOps with Flux v2 for AKS configuration management](/articles/azure-arc/kubernetes/tutorial-use-gitops-flux2.md)
+- Explore [Advanced Cilium features](https://learn.microsoft.com/azure/aks/azure-cni-powered-by-cilium#considerations) such as FQDN filtering and Layer 7 policies.
+- Integrate AKS with [Azure Monitor and Log Analytics](https://learn.microsoft.com/azure/aks/monitor-aks) for enhanced observability.
+- Review [AKS networking requirements](../azure-arc/kubernetes/network-requirements.md) and [AKS overview](../azure-arc/kubernetes/overview.md).
+- See [AKS troubleshooting and FAQ documentation](https://learn.microsoft.com/azure/aks/faq) for common issues and solutions.
 
 > [!div class="nextstepaction"]
-> [Learn more about AKS networking and Cilium integration](https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium)
+> [Learn more about networking in AKS](https://learn.microsoft.com/azure/aks/azure-cni-powered-by-cilium)

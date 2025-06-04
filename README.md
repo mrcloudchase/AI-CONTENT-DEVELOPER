@@ -243,7 +243,7 @@ You can customize these in your `.env` file.
 ### Basic Usage
 
 ```bash
-python main.py <repo_url> "<content_goal>" "<service_area>" [materials...]
+python main.py --repo <repo_url> --goal "<content_goal>" --service "<service_area>" -m [materials...]
 ```
 
 ### Examples
@@ -251,92 +251,111 @@ python main.py <repo_url> "<content_goal>" "<service_area>" [materials...]
 #### Full Pipeline (All Phases)
 ```bash
 # By default, all phases run automatically
-python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
-    "Create Cilium networking documentation" \
-    "Azure Kubernetes Service" \
-    support-materials/cilium-overview.pdf \
-    support-materials/azure-cni-guide.docx
+python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Create Cilium networking documentation" \
+    --service "Azure Kubernetes Service" \
+    -m support-materials/cilium-overview.pdf \
+       support-materials/azure-cni-guide.docx
 ```
 
 #### Phase 1 Only (Analysis)
 ```bash
-python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
-    "Analyze repository structure" \
-    "AKS" \
-    --phases 1
+python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Analyze repository structure" \
+    --service "AKS" \
+    --phases 1 \
+    -m overview.md
 ```
 
 #### Phases 1 & 2 (Analysis + Strategy)
 ```bash
-python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
-    "Plan networking documentation updates" \
-    "AKS" \
+python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Plan networking documentation updates" \
+    --service "AKS" \
     --phases 12 \
-    networking-guide.md
+    -m networking-guide.md
 ```
 
 #### Auto-Confirm Mode
 ```bash
-python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
-    "Update CNI documentation" \
-    "AKS" \
+python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Update CNI documentation" \
+    --service "AKS" \
     --auto-confirm \
-    cni-updates.pdf
+    -m cni-updates.pdf
 ```
 
 #### Apply Changes Directly
 ```bash
-python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
-    "Create new tutorials" \
-    "AKS" \
+python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Create new tutorials" \
+    --service "AKS" \
     --apply-changes \
-    tutorial-content.md
+    -m tutorial-content.md
+```
+
+#### Clean Run (Fresh Start)
+```bash
+# Clear previous outputs and start fresh
+python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Create documentation" \
+    --service "AKS" \
+    --clean \
+    -m guide.pdf
+
+# Combine with auto-confirm for fully automated fresh run
+python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Update guides" \
+    --service "AKS" \
+    --clean --auto-confirm --apply-changes \
+    -m updates.docx
 ```
 
 #### Phase 4: TOC Management
 ```bash
 # Run generation and TOC update together
-python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
-    "Create Cilium documentation" \
-    "AKS" \
+python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Create Cilium documentation" \
+    --service "AKS" \
     --phases 34 \
     --apply-changes \
-    cilium-guide.pdf
+    -m cilium-guide.pdf
 
 # Run all phases including TOC management  
-python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
-    "Update networking guides" \
-    "AKS" \
+python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Update networking guides" \
+    --service "AKS" \
     --phases 1234 \
     --auto-confirm \
-    networking-updates.docx
+    -m networking-updates.docx
 
-# Run only TOC update (if files were previously generated)
-python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
-    "Update TOC for new content" \
-    "AKS" \
-    --phases 4 \
-    --auto-confirm
+# Run all phases with multiple materials
+python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Update TOC for new content" \
+    --service "AKS" \
+    --auto-confirm \
+    -m guide1.pdf guide2.md reference.docx
 
 # Skip TOC update if TOC.yml has issues
-python main.py https://github.com/MicrosoftDocs/azure-aks-docs \
-    "Create documentation" \
-    "AKS" \
+python main.py --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Create documentation" \
+    --service "AKS" \
     --skip-toc \
-    materials.pdf
+    -m materials.pdf
 ```
 
 ### Command Line Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `repo_url` | Repository URL to analyze | Required |
-| `content_goal` | Goal for content creation/update | Required |
-| `service_area` | Service area (e.g., 'Azure Kubernetes Service') | Required |
-| `materials` | Support material files/URLs | Optional |
+| `--repo` | Repository URL to analyze | Required |
+| `--goal` | Goal for content creation/update | Required |
+| `--service` | Service area (e.g., 'Azure Kubernetes Service') | Required |
+| `-m`, `--materials` | Support material files/URLs | Required |
 | `--audience` | Target audience for the content | "technical professionals" |
 | `--audience-level` | Technical level (beginner, intermediate, advanced) | "intermediate" |
 | `--auto-confirm`, `-y` | Auto-confirm all prompts | False |
+| `--clean` | Clear llm_outputs and work directory before starting | False |
 | `--work-dir` | Working directory for repos | `./work/tmp` |
 | `--max-depth` | Max repository depth to analyze | 3 |
 | `--content-limit` | Content extraction limit (chars) | 15000 |

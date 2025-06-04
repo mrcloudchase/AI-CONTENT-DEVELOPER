@@ -88,17 +88,12 @@ class Config:
         """Create all necessary output directories"""
         base_dir = "./llm_outputs"
         
-        # Define all required directories
+        # Define only required directories
         required_directories = [
             "embeddings",
-            "content_strategy", 
             "preview",
-            "materials_summary",
-            "decisions/working_directory",
-            "content_generation/create",
-            "content_generation/update",
-            "content_discovery",
-            "toc_management",
+            "preview/create",
+            "preview/update",
             "preview/toc"
         ]
         

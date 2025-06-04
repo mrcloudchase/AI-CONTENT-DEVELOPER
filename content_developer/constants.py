@@ -3,16 +3,13 @@ Constants for AI Content Developer
 """
 
 # Output directories for LLM interactions
-DIRS = [
-    "materials_summary",
-    "decisions/working_directory", 
-    "content_strategy",
+OUTPUT_DIRS = [
     "embeddings",
-    "content_generation/create",
-    "content_generation/update",
-    "materials_cache",
+    "preview",
     "preview/create",
-    "preview/update"
+    "preview/update",
+    "preview/toc",
+    # Phase directories are created dynamically as phase-XX/step-YY
 ]
 
 # Maximum number of phases in the workflow
