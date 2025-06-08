@@ -25,27 +25,33 @@ class StrategyConfirmation(GenericInteractive):
     
     def _display_actions(self, strategy):
         """Display detailed actions"""
-        create_actions = [d for d in strategy.decisions if d.get('action') == 'CREATE']
-        update_actions = [d for d in strategy.decisions if d.get('action') == 'UPDATE']
-        
+        # Display CREATE actions
+        create_actions = [a for a in strategy.decisions if a.action == 'CREATE']
         if create_actions:
-            print(f"\n✨ CREATE Actions ({len(create_actions)}):")
+            print(f"\n📄 Files to Create ({len(create_actions)}):")
             for i, action in enumerate(create_actions, 1):
-                print(f"\n{i}. {action.get('filename', 'Unknown')}")
-                print(f"   Type: {action.get('content_type', 'Unknown')}")
-                print(f"   Reason: {action.get('reason', 'No reason')[:100]}...")
-                if chunks := action.get('relevant_chunks'):
-                    print(f"   References: {len(chunks)} chunks")
+                filename = action.filename or action.target_file or 'Unknown'
+                content_type = action.content_type or 'Unknown'
+                reason = action.reason or action.rationale or 'No reason'
+                print(f"\n{i}. {filename}")
+                print(f"   Type: {content_type}")
+                print(f"   Reason: {reason[:100]}...")
+                if action.relevant_chunks:
+                    print(f"   Relevant chunks: {len(action.relevant_chunks)}")
         
+        # Display UPDATE actions
+        update_actions = [a for a in strategy.decisions if a.action == 'UPDATE']
         if update_actions:
-            print(f"\n📝 UPDATE Actions ({len(update_actions)}):")
+            print(f"\n✏️  Files to Update ({len(update_actions)}):")
             for i, action in enumerate(update_actions, 1):
-                print(f"\n{i}. {action.get('filename', 'Unknown')}")
-                print(f"   Change: {action.get('change_description', 'No description')[:100]}...")
-                if sections := action.get('specific_sections'):
-                    print(f"   Sections: {', '.join(sections[:3])}")
-                if chunks := action.get('relevant_chunks'):
-                    print(f"   References: {len(chunks)} chunks")
+                filename = action.filename or action.target_file or 'Unknown'
+                change_desc = action.change_description or action.rationale or 'No description'
+                print(f"\n{i}. {filename}")
+                print(f"   Change: {change_desc[:100]}...")
+                if action.specific_sections:
+                    print(f"   Sections: {', '.join(action.specific_sections[:3])}...")
+                if action.relevant_chunks:
+                    print(f"   Relevant chunks: {len(action.relevant_chunks)}")
     
     def _interact(self, result):
         """Interactive strategy confirmation"""

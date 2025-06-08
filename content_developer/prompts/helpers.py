@@ -286,16 +286,133 @@ def format_microsoft_elements(content_standards: Dict) -> str:
     return "\n".join(lines)
 
 
-def schema_to_example(schema: dict, include_descriptions: bool = False) -> dict:
-    """Convert JSON schema to example JSON for LLM prompts
+def schema_to_example(schema: dict, include_descriptions: bool = False) -> str:
+    """Convert JSON schema to example JSON string for LLM prompts
     
     Args:
         schema: JSON schema dictionary
         include_descriptions: Whether to include field descriptions as comments
         
     Returns:
-        Example JSON that matches the schema
+        Formatted JSON example string that matches the schema
     """
+    if not isinstance(schema, dict) or 'properties' not in schema:
+        return "Return your response as valid JSON:\n{}"
+    
+    example = {}
+    properties = schema.get('properties', {})
+    
+    for field_name, field_schema in properties.items():
+        field_type = field_schema.get('type')
+        
+        if field_type == 'string':
+            # Generate example based on field name and constraints
+            if 'pattern' in field_schema:
+                if field_schema['pattern'] == '^1\\.':
+                    example[field_name] = "1. First analysis step...\n2. Second step...\n3. Final step..."
+                elif field_schema['pattern'] == '^[^/]+\\.md$':
+                    example[field_name] = "example-file.md"
+                else:
+                    example[field_name] = "example string"
+            elif 'enum' in field_schema:
+                example[field_name] = field_schema['enum'][0]
+            elif field_name == 'source':
+                example[field_name] = "./path/to/source"
+            elif field_name == 'working_directory':
+                example[field_name] = "articles/service-name"
+            elif 'summary' in field_name:
+                example[field_name] = "Comprehensive summary of the content covering key points and insights."
+            else:
+                max_length = field_schema.get('maxLength', 50)
+                example[field_name] = f"Example {field_name.replace('_', ' ')}"[:max_length]
+                
+        elif field_type == 'array':
+            # Generate array examples
+            if field_name == 'thinking':
+                example[field_name] = [
+                    "I'll analyze the provided content and understand the requirements",
+                    "I'll identify key technical concepts and technologies mentioned",
+                    "I'll structure the information according to the expected format",
+                    "I'll ensure all required fields are properly populated"
+                ]
+            elif field_name == 'decisions' and 'items' in field_schema and field_schema['items'].get('type') == 'object':
+                # Handle decisions array with object schema
+                item_schema = field_schema['items']
+                decision_example = {
+                    "action": "CREATE",
+                    "filename": "example-guide.md",
+                    "content_type": "How-To Guide",
+                    "ms_topic": "how-to",
+                    "reason": "No existing documentation covers this topic. Materials provide comprehensive information requiring new content creation.",
+                    "priority": "high",
+                    "relevant_chunks": ["chunk_id_1", "chunk_id_2"],
+                    "content_brief": {
+                        "objective": "Enable readers to accomplish specific task",
+                        "key_points_to_cover": ["Point 1", "Point 2"],
+                        "prerequisites_to_state": ["Prerequisite 1", "Prerequisite 2"],
+                        "next_steps_to_suggest": ["Next step 1", "Next step 2"]
+                    }
+                }
+                example[field_name] = [decision_example]
+            elif field_name == 'technologies':
+                example[field_name] = ["Technology1", "Technology2", "Framework1"]
+            elif field_name == 'key_concepts':
+                example[field_name] = ["concept1", "concept2", "methodology1"]
+            elif field_name == 'microsoft_products':
+                example[field_name] = ["Azure Service1", "Azure Service2"]
+            elif 'chunks' in field_name:
+                example[field_name] = ["chunk_id_1", "chunk_id_2"]
+            else:
+                # Handle other arrays with item schemas
+                if 'items' in field_schema and field_schema['items'].get('type') == 'object':
+                    # Recursively generate example for array of objects
+                    item_example = _schema_to_example_dict({'properties': field_schema['items'].get('properties', {})})
+                    example[field_name] = [item_example] if item_example else ["item1"]
+                else:
+                    example[field_name] = ["item1", "item2", "item3"]
+                
+        elif field_type == 'number':
+            # Generate number examples based on constraints
+            minimum = field_schema.get('minimum', 0)
+            maximum = field_schema.get('maximum', 1)
+            if maximum <= 1:
+                example[field_name] = 0.85
+            else:
+                example[field_name] = (minimum + maximum) / 2
+                
+        elif field_type == 'integer':
+            example[field_name] = field_schema.get('minimum', 1)
+            
+        elif field_type == 'boolean':
+            example[field_name] = True
+            
+        elif field_type == 'object':
+            # Recursively handle nested objects
+            if 'properties' in field_schema:
+                example[field_name] = _schema_to_example_dict(field_schema)
+            else:
+                example[field_name] = {"key": "value"}
+                
+        elif isinstance(field_type, list):  # Union types like ["string", "null"]
+            if "null" in field_type:
+                example[field_name] = None
+            else:
+                # Use the first non-null type
+                for t in field_type:
+                    if t != "null":
+                        field_schema_copy = field_schema.copy()
+                        field_schema_copy['type'] = t
+                        example[field_name] = _schema_to_example_dict(
+                            {'properties': {field_name: field_schema_copy}}
+                        )[field_name]
+                        break
+    
+    import json
+    return f"Return your response as valid JSON matching this structure:\n{json.dumps(example, indent=2)}"
+
+
+def _schema_to_example_dict(schema: dict) -> dict:
+    """Internal helper that returns a dict instead of formatted string"""
     if not isinstance(schema, dict) or 'properties' not in schema:
         return {}
     
@@ -366,7 +483,7 @@ def schema_to_example(schema: dict, include_descriptions: bool = False) -> dict:
                 # Handle other arrays with item schemas
                 if 'items' in field_schema and field_schema['items'].get('type') == 'object':
                     # Recursively generate example for array of objects
-                    item_example = schema_to_example({'properties': field_schema['items'].get('properties', {})})
+                    item_example = _schema_to_example_dict({'properties': field_schema['items'].get('properties', {})})
                     example[field_name] = [item_example] if item_example else ["item1"]
                 else:
                     example[field_name] = ["item1", "item2", "item3"]
@@ -389,7 +506,7 @@ def schema_to_example(schema: dict, include_descriptions: bool = False) -> dict:
         elif field_type == 'object':
             # Recursively handle nested objects
             if 'properties' in field_schema:
-                example[field_name] = schema_to_example(field_schema, include_descriptions)
+                example[field_name] = _schema_to_example_dict(field_schema)
             else:
                 example[field_name] = {"key": "value"}
                 
@@ -402,9 +519,8 @@ def schema_to_example(schema: dict, include_descriptions: bool = False) -> dict:
                     if t != "null":
                         field_schema_copy = field_schema.copy()
                         field_schema_copy['type'] = t
-                        example[field_name] = schema_to_example(
-                            {'properties': {field_name: field_schema_copy}}, 
-                            include_descriptions
+                        example[field_name] = _schema_to_example_dict(
+                            {'properties': {field_name: field_schema_copy}}
                         )[field_name]
                         break
     
@@ -418,12 +534,12 @@ def extract_type_requirements(schema: dict) -> str:
         schema: JSON schema dictionary
         
     Returns:
-        Formatted string describing type requirements
+        Formatted string describing type requirements for JSON output
     """
     if not isinstance(schema, dict) or 'properties' not in schema:
-        return ""
+        return "Return a valid JSON object"
     
-    requirements = []
+    requirements = ["JSON TYPE REQUIREMENTS:"]
     properties = schema.get('properties', {})
     required_fields = schema.get('required', [])
     
@@ -481,5 +597,7 @@ def extract_type_requirements(schema: dict) -> str:
             req_parts.append("[OPTIONAL]")
             
         requirements.append(" ".join(req_parts))
+    
+    requirements.append("\nIMPORTANT: Return your complete response as valid JSON that matches these requirements.")
     
     return "\n".join(requirements) 

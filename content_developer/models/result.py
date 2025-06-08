@@ -41,4 +41,8 @@ class Result:
     
     # Phase 4 results
     toc_results: Optional[Dict] = None
-    toc_ready: bool = False 
+    toc_ready: bool = False
+    
+    # Phase 5 results
+    remediation_results: Optional[Dict] = None
+    remediation_ready: bool = False 

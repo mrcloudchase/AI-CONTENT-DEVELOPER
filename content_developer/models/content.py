@@ -10,10 +10,47 @@ from typing import Any, Dict, List, Optional
 class ContentStrategy:
     """Content strategy with CREATE/UPDATE actions"""
     thinking: str
-    decisions: List[Dict]  # CREATE and UPDATE actions
+    decisions: List['ContentDecision']  # List of ContentDecision objects
     confidence: float
     summary: str
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
+    debug_info: Optional[Dict[str, Any]] = None
+
+
+@dataclass
+class ContentDecision:
+    """Represents a strategic decision about content to create or update"""
+    action: str  # CREATE, UPDATE, or SKIP
+    target_file: Optional[str]  # Can be None for SKIP actions
+    file_title: str
+    content_type: str
+    sections: List[str]
+    rationale: str
+    priority: str = "medium"
+    aligns_with_goal: bool = True
+    prerequisites: List[str] = field(default_factory=list)
+    technologies: List[str] = field(default_factory=list)
+    
+    # Legacy fields for backward compatibility
+    filename: Optional[str] = None
+    reason: Optional[str] = None
+    relevant_chunks: List[str] = field(default_factory=list)
+    content_brief: Optional[Dict[str, Any]] = None
+    ms_topic: Optional[str] = None
+    
+    # For UPDATE actions
+    current_content_type: Optional[str] = None
+    change_description: Optional[str] = None
+    specific_sections: Optional[List[str]] = None
+    
+    def __post_init__(self):
+        # Map new fields to legacy fields for compatibility
+        if self.target_file and not self.filename:
+            self.filename = self.target_file
+        if self.rationale and not self.reason:
+            self.reason = self.rationale
+        if self.content_type and not self.ms_topic:
+            self.ms_topic = self.content_type
 
 
 @dataclass

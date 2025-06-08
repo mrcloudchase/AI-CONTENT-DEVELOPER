@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 import json
 import logging
 
-from ..models import DocumentChunk
+from ..models import DocumentChunk, Config, ContentDecision
 from ..processors.llm_native_processor import LLMNativeProcessor
 from ..utils import write, mkdir
 
@@ -57,19 +57,48 @@ class BaseContentProcessor(LLMNativeProcessor):
             'gap_report': gap_report
         }
     
-    def _check_for_gaps(self, action: Dict, materials_content: Dict[str, str]) -> Dict:
-        """Check if we have the required materials for this action"""
+    def _check_for_gaps(self, action: ContentDecision, materials_content: Dict[str, str],
+                        existing_content: str = None, config = None) -> Dict:
+        """Check if we have the required materials for this action
+        
+        Args:
+            action: The action dictionary with update details
+            materials_content: Dictionary of material sources and their content
+            existing_content: The current content of the file being updated (optional)
+            config: Configuration object with content goal and audience info
+        """
         gaps = []
         
         # Check if materials are empty
         if not materials_content:
             gaps.append("No materials provided")
+            return {
+                'has_gaps': True,
+                'missing_info': gaps,
+                'requested_file': action.filename or action.target_file or 'Unknown',
+                'suggestions': ["Please provide relevant documentation materials"]
+            }
         
-        # Use LLM to analyze if materials are sufficient for the requested action
-        if materials_content and action.get('reason'):
+        # For UPDATE actions with existing content, do comprehensive sufficiency check
+        if existing_content and action.action == 'UPDATE' and config:
+            sufficiency_result = self._perform_comprehensive_sufficiency_check(
+                action, materials_content, existing_content, config
+            )
+            
+            return {
+                'has_gaps': not sufficiency_result.get('has_sufficient_information', False),
+                'missing_info': sufficiency_result.get('insufficient_areas', []),
+                'requested_file': action.filename or action.target_file or 'Unknown',
+                'suggestions': sufficiency_result.get('suggestions', []),
+                'coverage_percentage': sufficiency_result.get('coverage_percentage', 0)
+            }
+        
+        # Fallback to simple check for other cases
+        if materials_content and (action.reason or action.rationale):
+            reason_text = action.reason or action.rationale or ''
             sufficiency_check = self.extract_key_information(
-                content=str(materials_content),
-                extraction_purpose=f"Check if materials contain sufficient information for: {action.get('reason')}",
+                content=self._format_materials_for_extraction(materials_content),
+                extraction_purpose=f"Check if materials contain sufficient information for: {reason_text}",
                 operation_name="Material Sufficiency Check"
             )
             
@@ -83,8 +112,80 @@ class BaseContentProcessor(LLMNativeProcessor):
         return {
             'has_gaps': len(gaps) > 0,
             'missing_info': gaps,
-            'requested_file': action.get('filename', 'Unknown')
+            'requested_file': action.filename or action.target_file or 'Unknown'
         }
+    
+    def _perform_comprehensive_sufficiency_check(self, action: ContentDecision, materials_content: Dict[str, str],
+                                               existing_content: str, config) -> Dict:
+        """Perform comprehensive sufficiency check comparing materials with existing content"""
+        
+        # Create the prompt inline instead of importing
+        prompt = f"""Analyze if the provided materials contain sufficient information to update the existing document.
+
+GOAL: {config.content_goal}
+TARGET FILE: {action.filename or action.target_file or 'Unknown'}
+UPDATE REASON: {action.reason or action.rationale or 'No reason provided'}
+
+EXISTING DOCUMENT:
+{existing_content[:2000]}...
+
+AVAILABLE MATERIALS:
+{self._format_materials_clearly(materials_content)}
+
+Determine if materials provide enough NEW information to fulfill the update request.
+Focus on: what's already in the document vs. what materials provide that's new and relevant."""
+
+        # Use specific schema for comprehensive sufficiency check
+        expected_format = {
+            "thinking": [
+                "First, I'll analyze what content already exists in the document",
+                "Next, I'll review what new information the materials provide",
+                "Then, I'll assess if materials cover all update requirements",
+                "Finally, I'll determine if this is sufficient for a quality update"
+            ],
+            "has_sufficient_information": True,
+            "coverage_percentage": 85,
+            "insufficient_areas": [],
+            "suggestions": [],
+            "confidence": 90
+        }
+        
+        result = self.extract_key_information(
+            content=prompt,
+            extraction_purpose="Material sufficiency analysis for content update",
+            operation_name="Material Sufficiency Check",
+            expected_format=expected_format
+        )
+        
+        # Display thinking if available
+        if self.console_display and 'thinking' in result:
+            self.console_display.show_thinking(result['thinking'], "🤔 AI Thinking - Material Sufficiency Check")
+        
+        return result
+    
+    def _format_materials_clearly(self, materials_content: Dict[str, str]) -> str:
+        """Format materials content clearly for the sufficiency check"""
+        if not materials_content:
+            return "No materials provided"
+        
+        formatted_parts = []
+        for i, (source, content) in enumerate(materials_content.items(), 1):
+            # Truncate very long content for the check
+            display_content = content
+            if len(content) > 5000:
+                display_content = content[:5000] + f"\n\n[... truncated. Full content contains {len(content)} characters ...]"
+            
+            formatted_parts.append(f"""
+=== MATERIAL {i}: {source} ===
+{display_content}
+""")
+        
+        return "\n".join(formatted_parts)
+    
+    def _format_materials_for_extraction(self, materials_content: Dict[str, str]) -> str:
+        """Format materials for simple extraction (backward compatibility)"""
+        # Use the clearer formatting instead of str(dict)
+        return self._format_materials_clearly(materials_content)
     
     def _save_preview(self, content: str, filename: str, repo_name: str, 
                      working_directory: str, action_type: str) -> str:
@@ -172,14 +273,14 @@ class BaseContentProcessor(LLMNativeProcessor):
         
         return {'name': content_type}
     
-    def _create_gap_report(self, action: Dict, materials_content: Dict[str, str],
+    def _create_gap_report(self, action: ContentDecision, materials_content: Dict[str, str],
                           relevant_chunks: Optional[Dict], error: str = None,
                           additional_info: List[str] = None) -> Dict:
         """Create a comprehensive gap report for missing information"""
         gap_report = {
-            'requested_action': action.get('action', 'Unknown'),
-            'requested_file': action.get('filename', 'Unknown'),
-            'content_type': action.get('content_type', 'Unknown'),
+            'requested_action': action.action or 'Unknown',
+            'requested_file': action.filename or action.target_file or 'Unknown',
+            'content_type': action.content_type or 'Unknown',
             'materials_provided': list(materials_content.keys()) if materials_content else [],
             'has_relevant_chunks': bool(relevant_chunks),
             'error': error,

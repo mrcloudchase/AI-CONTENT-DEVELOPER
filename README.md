@@ -58,6 +58,13 @@ flowchart TB
         X[Preview TOC Changes]
     end
     
+    subgraph "Phase 5: Remediation"
+        Y[SEO Optimization]
+        Z[Security Review]
+        AA[Accuracy Validation]
+        AB[Save Final Content]
+    end
+    
     A & B & C & D --> E
     E --> F --> G
     G --> H --> I
@@ -66,6 +73,7 @@ flowchart TB
     N & O --> P
     P --> Q --> R --> S --> T
     T --> U --> V --> W --> X
+    X --> Y --> Z --> AA --> AB
 ```
 
 ### Module Structure
@@ -158,8 +166,49 @@ stateDiagram-v2
         PreviewTOC --> [*]
     }
     
-    Phase4 --> [*]
+    Phase4 --> Phase5: remediation_ready
+    
+    state Phase5 {
+        [*] --> SEOOptimization
+        SEOOptimization --> SecurityReview
+        SecurityReview --> AccuracyValidation
+        AccuracyValidation --> SaveFinalContent
+        SaveFinalContent --> [*]
+    }
+    
+    Phase5 --> [*]
 ```
+
+## Large Repository Handling
+
+The tool automatically detects and optimizes for large repositories (>5,000 files):
+
+### Directory-Only View
+For all repositories (automatically applied to large repos), the tool uses a directory-only tree view that:
+- Shows the complete directory tree structure
+- Excludes individual files to reduce prompt size
+- Displays markdown file counts per directory  
+- Indicates directories with TOC.yml files
+- Filters out common non-documentation directories
+
+Example output:
+```
+[Repository Root] (5 .md)
+├── articles [TOC] (0 .md)
+│   ├── aks (45 .md)
+│   │   ├── concepts (12 .md)
+│   │   ├── how-to (20 .md)
+│   │   └── troubleshooting (13 .md)
+│   ├── storage (32 .md)
+│   │   ├── blobs (15 .md)
+│   │   ├── files (10 .md)
+│   │   └── queues (7 .md)
+│   └── app-service (28 .md)
+├── includes (0 .md)
+└── bread (0 .md)
+```
+
+This approach provides full visibility into the repository structure while preventing rate limiting issues when processing massive repositories like azure-docs.
 
 ## Prerequisites
 
@@ -606,6 +655,43 @@ python main.py \
     --apply-changes
 ```
 
+#### Phase 5: Content Remediation Only
+```bash
+# Run remediation on previously generated content (requires prior phase 3 completion)
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Optimize Kubernetes networking documentation for SEO and security" \
+    --service "Azure Kubernetes Service" \
+    --phases 5 \
+    -m networking-guide.pdf
+```
+
+#### All Phases: Complete Workflow with Remediation
+```bash
+# Run complete workflow including remediation for highest quality output
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-monitor-docs \
+    --goal "Create comprehensive monitoring and alerting guide with best practices" \
+    --service "Azure Monitor" \
+    --phases all \
+    -m monitoring-patterns.pdf alerting-rules.md sla-requirements.docx \
+    --auto-confirm \
+    --apply-changes
+```
+
+#### Phases 3-5: Generation with Remediation
+```bash
+# Generate content and run full remediation workflow
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-security-docs \
+    --goal "Document Zero Trust security implementation for Azure workloads" \
+    --service "Azure Security" \
+    --phases 345 \
+    -m zero-trust-principles.pdf security-baseline.docx \
+    --audience "security engineers" \
+    --audience-level advanced
+```
+
 ### Advanced Usage Examples
 
 #### Working with Multiple Materials and URLs
@@ -621,6 +707,18 @@ python main.py \
        landing-zone-architecture.md \
     --audience "security architects and compliance officers" \
     --audience-level advanced
+```
+
+#### Working with Large Materials (No Truncation)
+```bash
+# Process large PDFs or documents without truncation
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Update documentation based on comprehensive PRD" \
+    --service "Azure Kubernetes Service" \
+    -m large-prd-document.pdf detailed-specs.docx \
+    --content-limit 10000000 \
+    --phases 2
 ```
 
 #### Clean Run with Full Automation
@@ -695,7 +793,7 @@ python main.py \
     --goal "Document microservices design patterns and anti-patterns for Azure-based solutions" \
     --service "Azure Architecture" \
     -m microservices-patterns.pdf anti-patterns.md case-studies.docx \
-    --content-limit 25000 \
+    --content-limit 1000000 \
     --audience "solution architects" \
     --audience-level advanced
 ```
@@ -714,8 +812,8 @@ python main.py \
 | `--clean` | Clear llm_outputs and work directory before starting | False |
 | `--work-dir` | Working directory for repos | `./work/tmp` |
 | `--max-depth` | Max repository depth to analyze | 3 |
-| `--content-limit` | Content extraction limit (chars) | 15000 |
-| `--phases` | Phases to run (1, 2, 3, 4, 12, 13, 14, 23, 24, 34, 123, 124, 134, 234, 1234, or 'all') | "all" |
+| `--content-limit` | Material extraction limit (chars). Use high values (e.g., 10000000) to avoid truncation | 15000 |
+| `--phases` | Phases to run (1, 2, 3, 4, 5, 12, 13, 14, 15, 23, 24, 25, 34, 35, 45, 123, 124, 125, 134, 135, 145, 234, 235, 245, 345, 1234, 1235, 1245, 1345, 2345, 12345, or 'all') | "all" |
 | `--debug-similarity` | Show similarity scoring details | False |
 | `--apply-changes` | Apply generated content to repository | False |
 | `--skip-toc` | Skip TOC management (Phase 4) if TOC.yml is invalid | False |
@@ -776,9 +874,13 @@ For more details, see the [DefaultAzureCredential documentation](https://learn.m
 
 - **Smart Document Chunking**: Preserves document structure while creating semantic chunks
 - **Embedding Generation**: Creates vector embeddings for semantic search using Azure OpenAI
-- **Gap Analysis**: Identifies missing content by comparing materials against existing docs
-- **Strategic Planning**: Determines whether to CREATE new files or UPDATE existing ones
+- **Enhanced Gap Analysis**: 
+  - **NEW**: Uses full material content (not just summaries) for accurate comparison
+  - **NEW**: Analyzes only top 3 most relevant files for focused strategy
+  - Identifies specific missing sections by comparing materials against existing docs
+- **Strategic Planning**: Determines whether to CREATE, UPDATE, or SKIP files
 - **Coverage Assessment**: Evaluates how well existing content covers the material topics
+- **File-Based Analysis**: Aggregates chunk scores by file for better relevance assessment
 
 ### Phase 3: Content Generation
 
@@ -811,6 +913,89 @@ For more details, see the [DefaultAzureCredential documentation](https://learn.m
 - **Validation**: Ensures YAML syntax correctness and structural integrity
 
 **Note**: Phase 4 requires a valid TOC.yml file in the working directory. If the TOC has YAML syntax errors, use `--skip-toc` to skip this phase.
+
+### Phase 5: Content Remediation
+
+Phase 5 performs three sequential remediation steps on all generated content to ensure quality, security, and accuracy:
+
+#### Step 1: SEO Optimization
+- **Title Tag Optimization**: Ensures H1 titles are descriptive with primary keywords
+- **Meta Description**: Creates compelling 150-160 character descriptions
+- **Heading Structure**: Optimizes H2/H3 hierarchy for scannability
+- **Keyword Integration**: Naturally includes primary and semantic keywords
+- **Content Enhancements**: 
+  - Adds alt text suggestions for images
+  - Optimizes introduction paragraphs
+  - Suggests internal links
+  - Structures content for featured snippets
+- **Technical SEO**: Optimizes code blocks and suggests schema markup
+
+#### Step 2: Security Remediation
+- **Sensitive Information Removal**:
+  - Removes hardcoded credentials, keys, and tokens
+  - Replaces real IP addresses with RFC 1918 ranges
+  - Uses safe domain names (example.com, contoso.com)
+  - Removes employee names and personal information
+- **Resource Identifier Safety**:
+  - Replaces real Azure subscription IDs
+  - Uses generic resource names
+  - Ensures no production resources are exposed
+- **Security Best Practices**:
+  - Validates examples follow least privilege
+  - Adds security warnings where appropriate
+  - Ensures secure coding practices in examples
+- **Compliance Considerations**: Adds notes for data residency and compliance
+
+#### Step 3: Technical Accuracy Validation
+- **Material Cross-Reference**: Validates all claims against source materials
+- **Code Validation**: 
+  - Checks syntax correctness
+  - Identifies deprecated methods
+  - Validates API calls and parameters
+- **Factual Accuracy**:
+  - Verifies service limits and quotas
+  - Validates version compatibility
+  - Confirms regional availability
+- **Completeness Check**: Ensures all required steps and prerequisites are included
+- **Currency Review**: Flags outdated information and suggests updates
+
+#### Phase 5 Output Structure
+```
+./llm_outputs/preview/phase5/
+├── seo/
+│   ├── create/         # SEO-optimized new files
+│   └── update/         # SEO-optimized updated files
+├── security/
+│   ├── create/         # Security-remediated new files
+│   └── update/         # Security-remediated updated files
+└── final/
+    ├── create/         # Final validated new files
+    └── update/         # Final validated updated files
+```
+
+Each step displays:
+- AI thinking process and reasoning
+- Metrics and improvements made
+- Issues found and corrected
+- Confidence scores
+
+The final validated content in `phase5/final/` represents the highest quality output, having passed through all three remediation steps.
+
+### Large Repository Optimization
+
+- **Automatic Detection**: Detects repositories with >5,000 files and optimizes structure display
+- **Directory-Only Tree View**: 
+  - Shows complete directory tree structure (all directories, all depths)
+  - Excludes individual files to reduce prompt size
+  - Displays markdown file counts per directory
+  - Indicates TOC.yml presence with [TOC] tag
+  - Filters out common non-documentation directories
+- **Smart Directory Filtering**: Automatically excludes:
+  - Build directories (node_modules, dist, build, target)
+  - Test directories (test, tests, __pycache__)
+  - Media directories (images, assets, static)
+  - Version control (.git)
+- **Performance Optimization**: Directory-only view prevents rate limiting with large repositories while maintaining full structural visibility
 
 ### Enhanced Features
 

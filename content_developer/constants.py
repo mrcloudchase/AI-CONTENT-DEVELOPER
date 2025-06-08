@@ -13,7 +13,7 @@ OUTPUT_DIRS = [
 ]
 
 # Maximum number of phases in the workflow
-MAX_PHASES = 4
+MAX_PHASES = 5
 
 # Phase names for display
 PHASE_NAMES = {

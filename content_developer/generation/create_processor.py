@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from ..models import DocumentChunk
+from ..models import DocumentChunk, ContentDecision
 from ..prompts import get_create_content_prompt, CREATE_CONTENT_SYSTEM
 from ..utils import write, mkdir, extract_from_markdown_block
 from .base_content_processor import BaseContentProcessor
@@ -17,24 +17,27 @@ logger = logging.getLogger(__name__)
 class CreateContentProcessor(BaseContentProcessor):
     """Generate new content files based on CREATE actions"""
     
-    def _process(self, action: Dict, materials: List[Dict], materials_content: Dict[str, str], 
+    def _process(self, action: ContentDecision, materials: List[Dict], materials_content: Dict[str, str], 
                  existing_chunks: List[DocumentChunk], repo_name: str, working_directory: str,
                  relevant_chunks: Optional[Dict[str, DocumentChunk]] = None,
                  chunks_with_context: Optional[Dict[str, Dict]] = None) -> Dict:
         """Generate content for a CREATE action"""
-        filename = action.get('filename', 'untitled.md')
-        content_type = action.get('content_type', 'How-To Guide')
+        # Show operation
+        if self.console_display:
+            self.console_display.show_operation(f"Creating content: {action.filename or action.target_file}")
+        
+        filename = action.filename or action.target_file or 'untitled.md'
+        content_type = action.content_type or 'How-To Guide'
         
         # Defensive fallback for ms_topic based on content_type
         ms_topic_mapping = {
-            'Concept': 'concept',
+            'Concept': 'concept-article',
             'How-To Guide': 'how-to',
-            'Quickstart': 'quickstart',
             'Tutorial': 'tutorial',
-            'Overview': 'overview',
-            'Reference': 'reference'
+            'Quickstart': 'quickstart',
+            'Overview': 'overview'
         }
-        ms_topic = action.get('ms_topic', ms_topic_mapping.get(content_type, 'how-to'))
+        ms_topic = action.ms_topic or ms_topic_mapping.get(content_type, 'how-to')
         
         # Format material sources for the prompt
         materials_text = self._format_materials(materials_content)
@@ -71,7 +74,7 @@ class CreateContentProcessor(BaseContentProcessor):
             logger.error(f"Failed to generate content for {filename}: {e}")
             return self._create_error_result(action, materials_content, relevant_chunks, e)
     
-    def _generate_content(self, action: Dict, materials_text: str, 
+    def _generate_content(self, action: ContentDecision, materials_text: str, 
                          reference_chunks_text: str, content_type_info: Dict,
                          filename: str, materials_content: Dict[str, str]) -> Dict:
         """Generate content using LLM"""
@@ -105,7 +108,7 @@ class CreateContentProcessor(BaseContentProcessor):
         
         return response
     
-    def _create_success_result(self, action: Dict, response: Dict, preview_path, content: str) -> Dict:
+    def _create_success_result(self, action: ContentDecision, response: Dict, preview_path, content: str) -> Dict:
         """Create successful result structure"""
         return {
             'success': True,
@@ -117,10 +120,10 @@ class CreateContentProcessor(BaseContentProcessor):
             'gap_report': response.get('gap_report', None)  # Improvement #5
         }
     
-    def _create_error_result(self, action: Dict, materials_content: Dict[str, str],
+    def _create_error_result(self, action: ContentDecision, materials_content: Dict[str, str],
                             relevant_chunks: Optional[Dict], error: Exception) -> Dict:
         """Create error result with gap report"""
-        content_type = action.get('content_type', 'Unknown')
+        content_type = action.content_type or 'Unknown'
         
         # Create gap report (Improvement #5)
         gap_report = self._create_gap_report(

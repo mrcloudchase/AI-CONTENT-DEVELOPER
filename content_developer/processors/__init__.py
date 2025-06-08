@@ -7,7 +7,7 @@ from .directory import DirectoryDetector
 from .discovery import ContentDiscoveryProcessor
 from .material import MaterialProcessor
 from .strategy import ContentStrategyProcessor
-from .toc_processor import TOCProcessor
+from .phase5 import TOCProcessor
 
 __all__ = [
     'SmartProcessor',

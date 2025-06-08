@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 import re
 import json
 
-from ..models import DocumentChunk
+from ..models import DocumentChunk, ContentDecision
 from ..utils import read, write, mkdir, extract_from_markdown_block
 from ..prompts import get_update_content_prompt, UPDATE_CONTENT_SYSTEM
 from .base_content_processor import BaseContentProcessor
@@ -57,13 +57,18 @@ class UpdateContentProcessor(BaseContentProcessor):
         logger.warning(f"Could not normalize filename '{filename}', using as-is")
         return filename
     
-    def _process(self, action: Dict, materials: List[Dict], 
+    def _process(self, action: ContentDecision, materials: List[Dict], 
                        materials_content: Dict[str, str], chunks: List[DocumentChunk],
                        working_dir_path: Path, repo_name: str, working_directory: str,
                        relevant_chunks: Dict[str, DocumentChunk] = None,
                        chunks_with_context: Dict[str, Dict] = None) -> Dict:
         """Process a single UPDATE action"""
-        original_filename = action.get('filename', '')
+        # Show operation
+        if self.console_display:
+            self.console_display.show_operation(f"Updating content: {action.filename or action.target_file}")
+        
+        # Validate inputs
+        original_filename = action.filename or action.target_file or ''
         
         # Normalize the filename to handle path issues
         filename = self._normalize_filename(original_filename, working_dir_path, repo_name)
@@ -82,10 +87,14 @@ class UpdateContentProcessor(BaseContentProcessor):
         # Read existing content
         existing_content = read(file_path, limit=None)
         
-        # Check for missing information
-        gap_report = self._check_for_gaps(action, materials_content)
+        # Check for missing information with enhanced check
+        gap_report = self._check_for_gaps(action, materials_content, existing_content, self.config)
         if gap_report['has_gaps']:
-            return self._create_gap_result(action, gap_report)
+            # Enhanced gap result with suggestions
+            enhanced_gap_result = self._create_gap_result(action, gap_report)
+            enhanced_gap_result['suggestions'] = gap_report.get('suggestions', [])
+            enhanced_gap_result['coverage_percentage'] = gap_report.get('coverage_percentage', 0)
+            return enhanced_gap_result
         
         # Generate updated content
         updated_content = self._update_content(
@@ -138,7 +147,7 @@ class UpdateContentProcessor(BaseContentProcessor):
             'content_type': content_type
         }
     
-    def _update_content(self, action: Dict, existing_content: str, 
+    def _update_content(self, action: ContentDecision, existing_content: str, 
                        materials: List[Dict], materials_content: Dict[str, str],
                        relevant_chunks: Dict[str, DocumentChunk],
                        chunks_with_context: Dict[str, Dict]) -> Optional[str]:
@@ -174,28 +183,30 @@ class UpdateContentProcessor(BaseContentProcessor):
         ]
         
         try:
-            result = self._call_llm(messages, model=self.config.completion_model, 
-                                  response_format="json_object",
-                                  operation_name=f"Content Update: {action.get('filename', 'unknown')}")
+            response = self._call_llm(
+                messages,
+                model=self.config.completion_model,
+                response_format="json_object",
+                operation_name=f"Content Update: {action.filename or action.target_file or 'unknown'}")
             
             # Extract and display thinking if available
-            if self.console_display and 'thinking' in result:
-                self.console_display.show_thinking(result['thinking'], f"🤔 AI Thinking - Content Update: {action.get('filename', 'unknown')}")
+            if self.console_display and 'thinking' in response:
+                self.console_display.show_thinking(response['thinking'], f"🤔 AI Thinking - Content Update: {action.filename or action.target_file or 'unknown'}")
             
             # Get the complete updated document from the LLM response
-            updated_document = result.get('updated_document', '')
+            updated_document = response.get('updated_document', '')
             
             if not updated_document:
                 logger.error("LLM did not return an updated document")
                 return None
             
             # Log summary of changes
-            if 'changes_summary' in result:
-                logger.info(f"Update summary: {result['changes_summary']}")
+            if 'changes_summary' in response:
+                logger.info(f"Update summary: {response['changes_summary']}")
             
             # Log metadata
-            if 'metadata' in result:
-                metadata = result['metadata']
+            if 'metadata' in response:
+                metadata = response['metadata']
                 logger.info(f"Sections modified: {', '.join(metadata.get('sections_modified', []))}")
                 if metadata.get('sections_added'):
                     logger.info(f"Sections added: {', '.join(metadata['sections_added'])}")

@@ -105,25 +105,66 @@ class ConsoleDisplay:
         self.console.print(thinking_panel)
         self.console.print()
     
-    def show_decision(self, decision: Dict[str, Any]) -> None:
+    def show_strategy_decision(self, decision: 'ContentDecision'):
         """Display a content strategy decision"""
-        action = decision.get('action', 'UNKNOWN')
-        filename = decision.get('filename', 'unknown')
-        reason = decision.get('reason', 'No reason provided')
+        # Choose icon and color based on action
+        if decision.action == "CREATE":
+            icon = "🆕"
+            action_style = "green"
+        elif decision.action == "UPDATE":
+            icon = "📝"
+            action_style = "yellow"
+        elif decision.action == "SKIP":
+            icon = "⏭️"
+            action_style = "blue"
+        else:
+            icon = "📄"
+            action_style = "white"
         
-        # Choose emoji and color based on action
-        action_styles = {
-            'CREATE': ('🆕', 'green'),
-            'UPDATE': ('📝', 'yellow'),
-            'SKIP': ('⏭️', 'dim')
-        }
-        emoji, color = action_styles.get(action, ('❓', 'white'))
+        # Build the display panel
+        content_parts = []
         
-        # Create decision text
-        decision_text = f"{emoji} [bold {color}]{action}[/bold {color}]: {filename}"
-        self.console.print(f"  {decision_text}")
-        self.console.print(f"    [dim]Reason: {reason}[/dim]")
-        self.console.print()
+        # Action and file
+        content_parts.append(f"[{action_style}]{decision.action}[/{action_style}]: {decision.file_title or 'N/A'}")
+        if decision.target_file:
+            content_parts.append(f"File: {decision.target_file}")
+        
+        # Content type and priority
+        if decision.action != "SKIP":
+            content_parts.append(f"Type: {decision.content_type} | Priority: {decision.priority}")
+        
+        # Rationale
+        content_parts.append(f"\nRationale: {decision.rationale}")
+        
+        # Goal alignment
+        if hasattr(decision, 'aligns_with_goal'):
+            alignment = "✓ Aligns with goal" if decision.aligns_with_goal else "⚠ May not align with goal"
+            content_parts.append(f"{alignment}")
+        
+        # Sections for CREATE/UPDATE
+        if decision.sections and decision.action != "SKIP":
+            content_parts.append(f"\nSections: {', '.join(decision.sections[:5])}")
+            if len(decision.sections) > 5:
+                content_parts.append(f"  ... and {len(decision.sections) - 5} more")
+        
+        # Technologies
+        if hasattr(decision, 'technologies') and decision.technologies:
+            content_parts.append(f"Technologies: {', '.join(decision.technologies[:5])}")
+        
+        # Prerequisites
+        if hasattr(decision, 'prerequisites') and decision.prerequisites:
+            content_parts.append(f"Prerequisites: {', '.join(decision.prerequisites[:3])}")
+        
+        content = '\n'.join(content_parts)
+        
+        panel = Panel(
+            content,
+            title=f"{icon} Strategy Decision",
+            border_style=action_style,
+            padding=(1, 2)
+        )
+        
+        self.console.print(panel)
     
     def show_status(self, message: str, status: str = "info") -> None:
         """Show a status message with appropriate styling"""
@@ -244,4 +285,28 @@ class ConsoleDisplay:
     def print_separator(self) -> None:
         """Print a visual separator"""
         self.console.print("─" * min(80, self.console.width), style="dim")
-        self.console.print() 
+        self.console.print()
+    
+    def prompt_confirm(self, message: str, default: bool = True) -> bool:
+        """Prompt user for yes/no confirmation"""
+        try:
+            from rich.prompt import Confirm
+            return Confirm.ask(message, default=default)
+        except Exception:
+            # Fallback to simple input
+            response = input(f"{message} ({'Y' if default else 'N'}/{'n' if default else 'y'}): ")
+            if not response:
+                return default
+            return response.lower().startswith('y')
+    
+    def show_separator(self) -> None:
+        """Show a visual separator (alias for print_separator)"""
+        self.print_separator()
+    
+    def show_metric(self, name: str, value: str) -> None:
+        """Show a metric with name and value"""
+        self.console.print(f"  [bold]{name}:[/bold] {value}")
+    
+    def show_warning(self, message: str) -> None:
+        """Show a warning message"""
+        self.show_status(message, "warning") 

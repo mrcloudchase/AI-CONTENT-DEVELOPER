@@ -52,6 +52,10 @@ class MaterialProcessor(SmartProcessor):
             if self.console_display and 'thinking' in result:
                 self.console_display.show_thinking(result['thinking'], f"🤔 AI Thinking - Material Analysis: {source_name}")
             
+            # Add the full content to the result
+            result['full_content'] = content
+            result['source'] = source
+            
             # save_interaction is now handled automatically by llm_call
             return result
         except Exception as e:

@@ -20,6 +20,9 @@ def display_results(result: Result):
     if result.generation_results:
         _display_generation_results(result.generation_results)
     
+    if result.remediation_results:
+        _display_remediation_results(result.remediation_results)
+    
     if result.toc_results:
         _display_toc_results(result.toc_results)
     
@@ -62,19 +65,38 @@ def _display_phase_status(result: Result):
     print(f"  ✅ Phase 1 - Repository Analysis: {'Complete' if result.directory_ready else 'Incomplete'}")
     print(f"  {'✅' if result.strategy_ready else '⏸️'} Phase 2 - Content Strategy: {'Complete' if result.strategy_ready else 'Incomplete'}")
     print(f"  {'✅' if result.generation_ready else '⏸️'} Phase 3 - Content Generation: {'Complete' if result.generation_ready else 'Incomplete'}")
-    print(f"  {'✅' if result.toc_ready else '⏸️'} Phase 4 - TOC Management: {'Complete' if result.toc_ready else 'Incomplete'}")
+    print(f"  {'✅' if result.remediation_ready else '⏸️'} Phase 4 - Content Remediation: {'Complete' if result.remediation_ready else 'Incomplete'}")
+    print(f"  {'✅' if result.toc_ready else '⏸️'} Phase 5 - TOC Management: {'Complete' if result.toc_ready else 'Incomplete'}")
 
 
 def _display_strategy_summary(strategy):
     """Display content strategy summary"""
-    create_count = sum(1 for decision in strategy.decisions if decision.get('action') == 'CREATE')
-    update_count = sum(1 for decision in strategy.decisions if decision.get('action') == 'UPDATE')
+    create_count = sum(1 for decision in strategy.decisions if decision.action == 'CREATE')
+    update_count = sum(1 for decision in strategy.decisions if decision.action == 'UPDATE')
+    skip_count = sum(1 for decision in strategy.decisions if decision.action == 'SKIP')
     
     print(f"\n📋 Content Strategy:")
-    print(f"  • Total Actions: {len(strategy.decisions)}")
-    print(f"  • CREATE: {create_count} new files")
-    print(f"  • UPDATE: {update_count} existing files")
-    print(f"  • Confidence: {strategy.confidence:.0%}")
+    print(f"   Total Decisions: {len(strategy.decisions)}")
+    print(f"   Files to Create: {create_count}")
+    print(f"   Files to Update: {update_count}")
+    print(f"   Files to Skip: {skip_count}")
+    print(f"   Confidence: {strategy.confidence:.1%}")
+    
+    # Show each decision
+    for i, decision in enumerate(strategy.decisions, 1):
+        action_emoji = {
+            'CREATE': '🆕',
+            'UPDATE': '📝',
+            'SKIP': '⏭️'
+        }.get(decision.action, '📄')
+        
+        print(f"\n   {i}. {action_emoji} {decision.action}: {getattr(decision, 'file_title', getattr(decision, 'filename', 'Unknown'))}")
+        if hasattr(decision, 'rationale') and decision.rationale:
+            print(f"      Reason: {decision.rationale}")
+        elif hasattr(decision, 'reason') and decision.reason:
+            print(f"      Reason: {decision.reason}")
+        if hasattr(decision, 'priority'):
+            print(f"      Priority: {decision.priority}")
 
 
 def _display_generation_results(gen_results: Dict):
@@ -85,6 +107,16 @@ def _display_generation_results(gen_results: Dict):
     print(f"  • Created: {summary.get('create_success', 0)}/{summary.get('create_attempted', 0)}")
     print(f"  • Updated: {summary.get('update_success', 0)}/{summary.get('update_attempted', 0)}")
     
+    # Show skipped results
+    skip_results = gen_results.get('skip_results', [])
+    if skip_results:
+        insufficient_count = sum(1 for s in skip_results if s.get('status') == 'skipped_insufficient_materials')
+        skip_count = len(skip_results) - insufficient_count
+        if skip_count > 0:
+            print(f"  • Skipped (by design): {skip_count}")
+        if insufficient_count > 0:
+            print(f"  • Skipped (insufficient materials): {insufficient_count}")
+    
     # Show errors if any
     if summary.get('error'):
         print(f"\n❌ Generation Error: {summary['error']}")
@@ -92,6 +124,9 @@ def _display_generation_results(gen_results: Dict):
     # Show file results
     _display_file_results(gen_results.get('create_results', []), "Created Files")
     _display_file_results(gen_results.get('update_results', []), "Updated Files")
+    
+    # Show skipped due to insufficient materials
+    _display_skipped_results(skip_results)
     
     # Show debug info if available
     if debug_info := gen_results.get('debug_info'):
@@ -106,7 +141,13 @@ def _display_file_results(results: List[Dict], title: str):
     print(f"\n📝 {title} (Previews):")
     
     for res in results:
-        filename = res['action'].get('filename', 'Unknown')
+        # Get filename from the action object (ContentDecision)
+        action = res.get('action')
+        if action:
+            # ContentDecision object - access attributes directly
+            filename = getattr(action, 'filename', getattr(action, 'target_file', 'Unknown'))
+        else:
+            filename = 'Unknown'
         
         # Handle successful results
         if res.get('success'):
@@ -132,11 +173,27 @@ def _display_failed_result(res: Dict, filename: str):
     
     gap_report = res.get('gap_report')
     if not gap_report:
+        if error := res.get('error'):
+            print(f"    Error: {error}")
         return
         
+    # Show coverage percentage if available
+    if 'coverage_percentage' in gap_report:
+        print(f"    Coverage: {gap_report['coverage_percentage']:.0f}%")
+    
+    # Show missing information
     missing_info = gap_report.get('missing_info', [])
     if missing_info:
-        print(f"    Missing: {', '.join(missing_info)}")
+        print(f"    Missing: {', '.join(missing_info[:2])}")  # Show first 2
+        if len(missing_info) > 2:
+            print(f"    ... and {len(missing_info) - 2} more gaps")
+    
+    # Show suggestions if available
+    suggestions = gap_report.get('suggestions', [])
+    if suggestions:
+        print(f"    💡 Add: {suggestions[0]}")  # Show first suggestion
+        if len(suggestions) > 1:
+            print(f"    ... and {len(suggestions) - 1} more suggestions")
 
 
 def _display_debug_info(debug_info: Dict):
@@ -157,8 +214,24 @@ def _display_gap_reports(gap_reports: List[Dict]):
     print(f"\n⚠️  Gap Reports ({len(gap_reports)}):")
     for i, gap in enumerate(gap_reports, 1):
         print(f"  {i}. {gap.get('requested_file', 'Unknown file')}")
-        for info in gap.get('missing_info', []):
-            print(f"     - {info}")
+        
+        # Show coverage percentage if available
+        if 'coverage_percentage' in gap:
+            print(f"     Coverage: {gap['coverage_percentage']:.0f}%")
+        
+        # Show missing information
+        missing_info = gap.get('missing_info', [])
+        if missing_info:
+            print(f"     Missing Information:")
+            for info in missing_info:
+                print(f"       - {info}")
+        
+        # Show suggestions if available
+        suggestions = gap.get('suggestions', [])
+        if suggestions:
+            print(f"     💡 Suggestions to make materials sufficient:")
+            for suggestion in suggestions:
+                print(f"       - {suggestion}")
 
 
 def _display_output_locations(result: Result):
@@ -187,6 +260,53 @@ def _display_apply_reminder(result: Result):
         if toc_preview:
             print(f"   • TOC changes are not applied")
         print(f"   To apply changes to the repository, run with --apply-changes flag")
+
+
+def _display_skipped_results(skip_results: List[Dict]):
+    """Display files that were skipped"""
+    if not skip_results:
+        return
+    
+    # Separate by skip reason
+    insufficient_skips = []
+    design_skips = []
+    
+    for res in skip_results:
+        if res.get('status') == 'skipped_insufficient_materials':
+            insufficient_skips.append(res)
+        else:
+            design_skips.append(res)
+    
+    # Show insufficient materials skips
+    if insufficient_skips:
+        print(f"\n⚠️  Skipped Due to Insufficient Materials:")
+        for res in insufficient_skips:
+            decision = res.get('decision')
+            if decision:
+                filename = getattr(decision, 'file_title', getattr(decision, 'filename', 'Unknown'))
+                print(f"  • {filename}")
+                
+                # Show material coverage if available
+                if sufficiency := res.get('material_sufficiency'):
+                    coverage = sufficiency.get('coverage_percentage', 0)
+                    print(f"    Coverage: {coverage}% - {res.get('reason', 'Material coverage too low')}")
+                    
+                    # Show missing topics
+                    if missing := sufficiency.get('missing_topics', []):
+                        print(f"    Missing topics: {', '.join(missing[:3])}")
+                        if len(missing) > 3:
+                            print(f"    ... and {len(missing) - 3} more")
+    
+    # Show design skips (intentional skips from strategy)
+    if design_skips:
+        print(f"\n⏭️  Skipped by Design:")
+        for res in design_skips:
+            decision = res.get('decision')
+            if decision:
+                filename = getattr(decision, 'file_title', getattr(decision, 'filename', 'Unknown'))
+                reason = res.get('reason', decision.rationale if hasattr(decision, 'rationale') else 'No reason provided')
+                print(f"  • {filename}")
+                print(f"    Reason: {reason[:100]}...")
 
 
 def _display_toc_results(toc_results: Dict):
@@ -231,4 +351,29 @@ def _display_toc_results(toc_results: Dict):
     
     # Show any errors
     if error := toc_results.get('error'):
-        print(f"  • ❌ Error: {error}") 
+        print(f"  • ❌ Error: {error}")
+
+
+def _display_remediation_results(rem_results: Dict):
+    """Display content remediation results"""
+    summary = rem_results.get('summary', {})
+    
+    print(f"\n🔧 Remediation Results:")
+    print(f"  • Files Processed: {summary.get('total_files', 0)}")
+    print(f"  • SEO Optimized: {summary.get('success_rate', {}).get('seo', 0) * 100:.0f}%")
+    print(f"  • Security Checked: {summary.get('success_rate', {}).get('security', 0) * 100:.0f}%")
+    print(f"  • Accuracy Validated: {summary.get('success_rate', {}).get('accuracy', 0) * 100:.0f}%")
+    print(f"  • All Steps Complete: {summary.get('all_steps_completed', 0)}")
+    
+    # Show individual file results if available
+    if rem_results.get('remediation_results'):
+        print(f"\n  Details:")
+        for res in rem_results['remediation_results'][:5]:  # Show first 5
+            filename = res.get('filename', 'Unknown')
+            seo_ok = "✅" if res.get('seo_success') else "❌"
+            sec_ok = "✅" if res.get('security_success') else "❌"
+            acc_ok = "✅" if res.get('accuracy_success') else "❌"
+            print(f"    • {filename}: SEO {seo_ok} | Security {sec_ok} | Accuracy {acc_ok}")
+        
+        if len(rem_results['remediation_results']) > 5:
+            print(f"    ... and {len(rem_results['remediation_results']) - 5} more files") 

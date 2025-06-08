@@ -93,12 +93,13 @@ class LLMNativeProcessor(SmartProcessor):
         return self._validate_response_types(response, expected_types)
     
     def extract_key_information(self, content: str, extraction_purpose: str,
-                               operation_name: str = "Information Extraction") -> Dict:
+                               operation_name: str = "Information Extraction",
+                               expected_format: Dict = None) -> Dict:
         """Extract specific information from content using LLM"""
         response = self._call_llm(
             messages=[
                 {"role": "system", "content": INFORMATION_EXTRACTION_SYSTEM},
-                {"role": "user", "content": get_information_extraction_prompt(content, extraction_purpose)}
+                {"role": "user", "content": get_information_extraction_prompt(content, extraction_purpose, expected_format)}
             ],
             response_format="json_object",
             operation_name=operation_name

@@ -1,14 +1,16 @@
 """
-TOC (Table of Contents) processor using LLM-native approach
+TOC Management Processor
 """
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 import yaml
 
-from .llm_native_processor import LLMNativeProcessor
-from ..models import DocumentChunk
-from ..utils import read, write
+from ...utils import write, mkdir, read
+from ..llm_native_processor import LLMNativeProcessor
+from ...models import Config
+from ...prompts.phase5 import get_toc_update_prompt, TOC_UPDATE_SYSTEM
+from ... import display
 
 logger = logging.getLogger(__name__)
 
@@ -128,39 +130,41 @@ class TOCProcessor(LLMNativeProcessor):
         entries = []
         decisions = strategy_results.get('decisions', [])
         
-        # Create a mapping of filename to decision info
-        decision_map = {
-            decision.get('filename'): decision 
-            for decision in decisions 
-            if decision.get('filename')
-        }
+        # Map strategy decisions to files that need TOC entries
+        decision_map = {}
+        for decision in decisions:
+            if hasattr(decision, 'filename') and decision.filename:
+                decision_map[decision.filename] = decision
         
-        for file in files:
-            entry = {'filename': file}
+        # Process each file
+        for file_path in files:
+            entry = {'filename': file_path}
             
-            # Add description from strategy if available
-            if file in decision_map:
-                decision = decision_map[file]
-                entry['description'] = decision.get('reason', '')
-                entry['content_type'] = decision.get('content_type', '')
-                entry['ms_topic'] = decision.get('ms_topic', '')  # Add ms_topic
+            if file_path in decision_map:
+                # Use the decision to get metadata
+                decision = decision_map[file_path]
                 
-                # Extract title from filename or content brief
-                content_brief = decision.get('content_brief', {})
-                if content_brief.get('objective'):
-                    entry['objective'] = content_brief['objective']
+                # Add metadata for better placement
+                entry['description'] = decision.reason or decision.rationale or ''
+                entry['content_type'] = decision.content_type or ''
+                entry['ms_topic'] = decision.ms_topic or ''
+                
+                # Extract content brief if available
+                content_brief = decision.content_brief or {}
+                if isinstance(content_brief, dict):
+                    entry['objective'] = content_brief.get('objective', '')
+                    entry['primary_topic'] = content_brief.get('primary_topic', '')
+                    entry['technical_level'] = content_brief.get('technical_level', '')
                 
                 # Generate title from filename if not provided
-                # Remove .md extension and convert hyphens to spaces
-                title = file.replace('.md', '').replace('-', ' ')
-                # Capitalize words for title case
+                title = file_path.replace('.md', '').replace('-', ' ')
                 entry['title'] = ' '.join(word.capitalize() for word in title.split())
             else:
                 # Default values for files not in strategy
                 entry['description'] = ''
                 entry['content_type'] = 'unknown'
                 entry['ms_topic'] = 'unknown'
-                entry['title'] = file.replace('.md', '').replace('-', ' ').title()
+                entry['title'] = file_path.replace('.md', '').replace('-', ' ').title()
             
             entries.append(entry)
         
@@ -172,8 +176,6 @@ class TOCProcessor(LLMNativeProcessor):
                                            file_entries: List[Dict],
                                            working_directory: Path) -> Optional[Dict]:
         """Generate the updated TOC content with integrated placement analysis"""
-        from ..prompts.toc import get_toc_update_prompt, TOC_UPDATE_SYSTEM
-        
         # Create file descriptions mapping
         file_descriptions = {entry['filename']: entry for entry in file_entries}
         

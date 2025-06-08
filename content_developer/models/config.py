@@ -36,6 +36,7 @@ class Config:
     debug_similarity: bool = False
     apply_changes: bool = False
     skip_toc: bool = False
+    check_material_sufficiency: bool = True
     
     # Azure OpenAI configuration
     azure_endpoint: str = ""
