@@ -33,6 +33,7 @@ The main coordinator that:
 - Handles configuration and authentication
 - Coordinates processor interactions
 - Manages state between phases
+- Applies remediated content to repository
 
 #### 2. Processors (`processors/`)
 Specialized components for specific tasks:
@@ -54,14 +55,14 @@ Specialized components for specific tasks:
 - `CreateProcessor`: Generates new documentation
 - `UpdateProcessor`: Updates existing documentation
 
-**Phase 4 Processors:**
-- `ContentRemediationProcessor`: Orchestrates remediation steps
+**Phase 4 Processors (Content Remediation):**
+- `ContentRemediationProcessor`: Orchestrates three-step remediation
 - `SEOProcessor`: Optimizes for search engines
 - `SecurityProcessor`: Removes sensitive information
 - `AccuracyProcessor`: Validates technical accuracy
 
-**Phase 5 Processors:**
-- `TOCProcessor`: Updates table of contents
+**Phase 5 Processors (TOC Management):**
+- `TOCProcessor`: Analyzes and updates table of contents
 
 ### 3. Cache System (`cache/unified_cache.py`)
 
@@ -134,20 +135,20 @@ Strategy → ContentGenerator
 CREATE actions → CreateProcessor → New Files
 UPDATE actions → UpdateProcessor → Updated Files
     ↓
-Preview Files → Result
+Preview Files → Result (No direct application)
 ```
 
 ### Phase 4: Content Remediation
 ```
-Generated Content → ContentRemediationProcessor
+Preview Files → ContentRemediationProcessor
          ↓
-    SEOProcessor → Optimized Content
+    Step 1: SEOProcessor → SEO Optimized Content
          ↓
-    SecurityProcessor → Secure Content
+    Step 2: SecurityProcessor → Secure Content
          ↓
-    AccuracyProcessor → Validated Content
+    Step 3: AccuracyProcessor → Validated Content
          ↓
-Apply Changes → Repository
+Final Content → Apply to Repository (if --apply-changes)
 ```
 
 ### Phase 5: TOC Management
@@ -158,7 +159,7 @@ TOC.yml Analysis → Missing Entries
         ↓
 Placement Strategy → Updated TOC
         ↓
-Apply Changes → TOC.yml
+Apply Changes → TOC.yml (if --apply-changes)
 ```
 
 ## Key Design Patterns
@@ -180,7 +181,7 @@ class SmartProcessor:
 Different strategies for content generation, updates, and remediation.
 
 ### 3. Chain of Responsibility
-Remediation steps form a chain where each processor improves the content.
+Remediation steps form a chain where each processor improves the content sequentially.
 
 ### 4. Factory Pattern
 Prompt generation uses factory methods to create phase-specific prompts.
@@ -196,6 +197,7 @@ Prompt generation uses factory methods to create phase-specific prompts.
 - Sensitive information removed during remediation
 - No production credentials in examples
 - Safe domain names and IP ranges used
+- Placeholder patterns for sensitive values
 
 ### Caching Security
 - Embeddings stored locally
@@ -208,6 +210,7 @@ Prompt generation uses factory methods to create phase-specific prompts.
 - File hash-based change detection
 - Embedding reuse for unchanged content
 - Manifest-based orphan cleanup
+- Automatic cache verification
 
 ### 2. Parallel Processing
 - Concurrent file processing in discovery
@@ -218,11 +221,13 @@ Prompt generation uses factory methods to create phase-specific prompts.
 - Directory-only view for >5,000 files
 - Excluded directories (node_modules, etc.)
 - Depth limiting for structure analysis
+- Automatic detection and optimization
 
 ### 4. Prompt Optimization
 - Token-aware content truncation
 - Relevant chunk selection
 - Context window management
+- Dynamic content type loading
 
 ## Error Handling
 
@@ -240,6 +245,44 @@ Prompt generation uses factory methods to create phase-specific prompts.
 - Input validation at each phase
 - Output validation before proceeding
 - Schema validation for LLM responses
+- Content type compatibility checks
+
+## Phase 4: Content Remediation Details
+
+### Three-Step Remediation Process
+
+#### Step 1: SEO Optimization
+- Title tag optimization (H1 < 60 chars)
+- Meta description generation (150-160 chars)
+- Heading hierarchy improvement
+- Keyword density optimization
+- Internal linking suggestions
+- Featured snippet optimization
+
+#### Step 2: Security Remediation
+- Credential removal and replacement
+- IP address sanitization (RFC 1918)
+- Domain name standardization
+- PII removal
+- Resource identifier anonymization
+- Security warning additions
+
+#### Step 3: Accuracy Validation
+- Cross-reference with source materials
+- Technical claim verification
+- Code syntax validation
+- Version compatibility checks
+- Service limit validation
+- Completeness assessment
+
+### Remediation Data Flow
+```
+Each file goes through all three steps sequentially:
+Original → SEO → Security → Accuracy → Final
+
+Preview files are overwritten at each step:
+./llm_outputs/preview/{create|update}/file.md (updated 3 times)
+```
 
 ## Extensibility Points
 
@@ -279,18 +322,28 @@ def get_custom_prompt(...):
     return f"""Custom prompt..."""
 ```
 
+### 5. New Remediation Steps
+Add processors in `processors/phase4/`:
+```python
+class CustomRemediationProcessor(LLMNativeProcessor):
+    def _process(self, content, file_info, config):
+        # Implementation
+```
+
 ## Configuration Management
 
 ### Environment Variables
 - `AZURE_OPENAI_ENDPOINT`: Azure OpenAI endpoint
 - `AZURE_OPENAI_COMPLETION_DEPLOYMENT`: Model for completion
 - `AZURE_OPENAI_EMBEDDING_DEPLOYMENT`: Model for embeddings
+- `AZURE_OPENAI_API_VERSION`: API version (default: 2024-08-01-preview)
 
 ### Command Line Configuration
 - Repository and materials
 - Phase selection
 - Output control
 - Debug options
+- Apply changes flag
 
 ### Content Standards
 `content_standards.json` defines:
@@ -298,6 +351,7 @@ def get_custom_prompt(...):
 - Structure templates
 - Formatting rules
 - Code guidelines
+- Microsoft-specific elements
 
 ## Monitoring and Logging
 
@@ -306,12 +360,30 @@ def get_custom_prompt(...):
 - Processor-level operations
 - LLM interactions saved
 - Error tracking with context
+- Step tracking system
 
 ### Metrics
 - Token usage per phase
 - Processing times
 - Cache hit rates
 - Error frequencies
+- Remediation improvements
+
+### Output Structure
+```
+./llm_outputs/
+├── tool_logs.txt               # LLM interaction logs
+├── materials_summary/          # Material analysis
+├── decisions/                  # Directory selection
+├── content_strategy/           # Strategy results
+├── embeddings/                 # Cache directory
+├── generation/                 # Generation logs
+├── phase4/                     # Remediation logs
+├── phase5/                     # TOC management logs
+└── preview/                    # Generated content
+    ├── create/                 # New files
+    └── update/                 # Updated files
+```
 
 ## Future Architecture Considerations
 
@@ -321,6 +393,7 @@ def get_custom_prompt(...):
 3. **Plugin System**: Allow custom processors via plugins
 4. **Web UI**: Add web interface for better UX
 5. **Multi-Model Support**: Support different LLM providers
+6. **Custom Remediation Steps**: Allow user-defined remediation
 
 ### Scalability Considerations
 - Database for large-scale caching
@@ -352,4 +425,10 @@ def get_custom_prompt(...):
 - Enterprise security
 - Consistent performance
 - Compliance capabilities
-- Integration with Azure services 
+- Integration with Azure services
+
+### Why Progressive Remediation?
+- Each step builds on previous improvements
+- Specialized focus for each concern
+- Measurable quality improvements
+- Flexibility to add/remove steps 

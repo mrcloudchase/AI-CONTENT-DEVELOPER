@@ -162,22 +162,22 @@ openai.NotFoundError: Error code: 404 - The API deployment for this resource doe
 
 **Solutions:**
 
-1. **Update to latest code:**
+1. **Check for dataclass/dictionary mismatch:**
+   - Ensure ContentDecision is treated as dataclass
+   - Use `action.filename` not `action['filename']`
+
+2. **Update to latest code:**
    ```bash
    git pull origin main
    ```
 
-2. **Check prompt imports:**
-   - Ensure all prompt functions are properly imported
-   - Verify phase3 prompts are accessible
-
-#### Phase 4: Remediation Failures
+#### Phase 4: Content Remediation Errors
 
 **Error: "No preview files found"**
 
 **Solutions:**
 
-1. **Ensure Phase 3 completed:**
+1. **Ensure Phase 3 completed successfully:**
    ```bash
    # Check preview directory
    ls -la ./llm_outputs/preview/create/
@@ -186,7 +186,30 @@ openai.NotFoundError: Error code: 404 - The API deployment for this resource doe
 
 2. **Run phases sequentially:**
    ```bash
-   python main.py ... --phases 123  # Then run phase 4
+   python main.py ... --phases 123  # Generate content first
+   python main.py ... --phases 4    # Then remediate
+   ```
+
+3. **Check remediation logs:**
+   ```bash
+   # Look for remediation steps
+   grep "Remediated" ./logs/ai_content_developer_*.log
+   ```
+
+**Error: "Remediation step failed"**
+
+**Solutions:**
+
+1. **Check which step failed:**
+   ```bash
+   # SEO, Security, or Accuracy?
+   grep "failed" ./logs/ai_content_developer_*.log | grep -E "SEO|Security|Accuracy"
+   ```
+
+2. **Verify preview file content:**
+   ```bash
+   # Ensure files aren't corrupted
+   head -20 ./llm_outputs/preview/create/*.md
    ```
 
 #### Phase 5: TOC Management Errors
@@ -211,6 +234,7 @@ openai.NotFoundError: Error code: 404 - The API deployment for this resource doe
    - Use spaces, not tabs
    - Ensure proper indentation (2 spaces)
    - Check for duplicate keys
+   - Remove trailing spaces
 
 ### 5. Performance Issues
 
@@ -218,22 +242,22 @@ openai.NotFoundError: Error code: 404 - The API deployment for this resource doe
 
 **Solutions:**
 
-1. **Reduce parallel operations:**
+1. **Check step tracking:**
+   ```bash
+   # Monitor which step is slow
+   tail -f ./logs/ai_content_developer_*.log | grep "Phase"
+   ```
+
+2. **Reduce parallel operations:**
    ```python
    # In discovery.py
    ThreadPoolExecutor(max_workers=2)  # Reduce from 4
    ```
 
-2. **Use cached embeddings:**
+3. **Use cached embeddings:**
    ```bash
    # Don't clear cache unnecessarily
    # Embeddings are reused for unchanged files
-   ```
-
-3. **Process smaller batches:**
-   ```bash
-   # Run specific phases
-   python main.py ... --phases 12  # Strategy only
    ```
 
 #### Rate Limiting
@@ -310,6 +334,7 @@ openai.NotFoundError: Error code: 404 - The API deployment for this resource doe
 **Symptoms:**
 - "Failed to create DocumentChunk from cache"
 - Unexpected embedding errors
+- "Invalid chunk data structure"
 
 **Solutions:**
 
@@ -365,6 +390,53 @@ openai.NotFoundError: Error code: 404 - The API deployment for this resource doe
    python main.py ... -m material.html
    ```
 
+### 9. Remediation-Specific Issues
+
+#### Incomplete Remediation
+
+**Symptoms:**
+- Only some remediation steps complete
+- Content not improving as expected
+
+**Solutions:**
+
+1. **Check remediation flow:**
+   ```bash
+   # Verify all 3 steps ran
+   grep -E "SEO optimization|Security remediation|Accuracy validation" ./logs/*.log
+   ```
+
+2. **Review remediation output:**
+   ```bash
+   # Check improvements made
+   grep "improvements" ./logs/*.log | tail -10
+   ```
+
+3. **Run remediation separately:**
+   ```bash
+   # After phase 3
+   python main.py ... --phases 4 --apply-changes
+   ```
+
+#### Content Not Applied
+
+**Symptoms:**
+- Remediated content exists in preview but not in repository
+
+**Solutions:**
+
+1. **Use --apply-changes flag:**
+   ```bash
+   python main.py ... --phases 4 --apply-changes
+   ```
+
+2. **Check preview files:**
+   ```bash
+   # Verify remediated content exists
+   ls -la ./llm_outputs/preview/create/
+   ls -la ./llm_outputs/preview/update/
+   ```
+
 ## Debug Techniques
 
 ### 1. Enable Verbose Logging
@@ -378,14 +450,14 @@ export AI_CONTENT_DEBUG=true
 python main.py ... --debug-similarity
 ```
 
-### 2. Check Specific Phase Logs
+### 2. Check Phase and Step Progress
 
 ```bash
-# Phase 1 logs
-grep "Phase 1" ./logs/ai_content_developer_*.log
+# Monitor step execution
+tail -f ./logs/ai_content_developer_*.log | grep -E "Phase [0-9], Step [0-9]"
 
-# LLM interactions
-ls -la ./llm_outputs/
+# Check completed steps
+grep "completed" ./logs/ai_content_developer_*.log | grep Phase
 ```
 
 ### 3. Test Individual Components
@@ -401,6 +473,11 @@ print(content[:500])
 from content_developer.processors import ContentDiscoveryProcessor
 processor = ContentDiscoveryProcessor(client, config)
 # ... test processing
+
+# Test remediation
+from content_developer.processors.phase4 import SEOProcessor
+processor = SEOProcessor(client, config)
+# ... test SEO optimization
 ```
 
 ### 4. Validate Configuration
@@ -465,6 +542,17 @@ rm -rf ./llm_outputs/preview/
    cp ./llm_outputs/preview/create/*.md [target_directory]/
    ```
 
+## Phase Order Reference
+
+Remember the current phase order:
+1. **Phase 1**: Repository Analysis
+2. **Phase 2**: Content Strategy
+3. **Phase 3**: Content Generation
+4. **Phase 4**: Content Remediation (SEO, Security, Accuracy)
+5. **Phase 5**: TOC Management
+
+Content is only applied to repository after Phase 4 with `--apply-changes`.
+
 ## Getting Help
 
 ### 1. Check Logs
@@ -475,6 +563,9 @@ ls -t ./logs/*.log | head -1 | xargs tail -100
 
 # Search for errors
 grep -i error ./logs/ai_content_developer_*.log | tail -20
+
+# Check specific phase
+grep "Phase 4" ./logs/ai_content_developer_*.log | tail -50
 ```
 
 ### 2. Community Support
@@ -500,6 +591,9 @@ tail -50 ./logs/ai_content_developer_*.log
 
 # Command used (sanitized)
 python main.py --repo *** --goal "***" ...
+
+# Phase status
+grep "Phase.*completed" ./logs/ai_content_developer_*.log | tail -5
 ```
 
 ## Prevention Tips
@@ -522,4 +616,9 @@ python main.py --repo *** --goal "***" ...
 4. **Use Preview Mode:**
    - Always preview before --apply-changes
    - Review generated content
-   - Test on non-production repos first 
+   - Test on non-production repos first
+
+5. **Understand Phase Dependencies:**
+   - Phase 4 requires Phase 3 preview files
+   - Phase 5 requires Phase 3 results
+   - Run phases in order for best results 

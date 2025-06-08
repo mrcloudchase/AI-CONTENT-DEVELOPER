@@ -222,8 +222,11 @@ class ContentRemediationProcessor(SmartProcessor):
         preview_dir = Path("./llm_outputs/preview") / action_type
         mkdir(preview_dir)
         
+        # Extract just the filename from the full path
+        filename_only = Path(filename).name
+        
         # Overwrite the same preview file
-        preview_path = preview_dir / filename
+        preview_path = preview_dir / filename_only
         write(preview_path, content)
         
         logger.info(f"Remediated ({step}): {preview_path}")

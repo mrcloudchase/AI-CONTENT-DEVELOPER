@@ -59,16 +59,28 @@ python main.py --repo <url> --goal "<goal>" --service "<service>" -m [materials.
 | `--audience` | "technical professionals" | Target audience |
 | `--audience-level` | "intermediate" | Technical level (beginner/intermediate/advanced) |
 | `--auto-confirm` | False | Skip all confirmation prompts |
-| `--apply-changes` | False | Apply changes to repository |
+| `--apply-changes` | False | Apply changes to repository (after remediation in Phase 4) |
 | `--clean` | False | Clear outputs before starting |
 | `--work-dir` | "./work/tmp" | Working directory for repos |
 | `--max-depth` | 3 | Max repository analysis depth |
 | `--content-limit` | 15000 | Material extraction character limit |
 | `--phases` | "all" | Phases to run (see Phase Configuration) |
 | `--debug-similarity` | False | Show similarity scoring details |
-| `--skip-toc` | False | Skip TOC management phase |
+| `--skip-toc` | False | Skip TOC management (Phase 5) |
 
 ## Phase Configuration
+
+### Phase Overview
+
+The system operates in 5 distinct phases:
+
+1. **Phase 1**: Repository Analysis & Directory Selection
+2. **Phase 2**: Content Strategy & Gap Analysis  
+3. **Phase 3**: Content Generation (creates preview files)
+4. **Phase 4**: Content Remediation (SEO, Security, Accuracy)
+5. **Phase 5**: TOC Management
+
+**Important**: Content is only applied to the repository after Phase 4 remediation when using `--apply-changes`.
 
 ### Phase Selection
 
@@ -87,7 +99,7 @@ Use `--phases` to control which phases run:
 - `34` - Generation + Remediation
 - `45` - Remediation + TOC
 - `123` - Analysis through Generation
-- `234` - Strategy through Remediation
+- `234` - Strategy through Remediation  
 - `345` - Generation through TOC
 - `1234` - All except TOC
 - `2345` - All except Analysis
@@ -98,7 +110,7 @@ Use `--phases` to control which phases run:
 Some phases require prior phases to have completed:
 - Phase 2 requires Phase 1 results
 - Phase 3 requires Phase 2 results
-- Phase 4 requires Phase 3 results
+- Phase 4 requires Phase 3 results (reads from preview files)
 - Phase 5 requires Phase 3 results (can run without Phase 4)
 
 ## Model Configuration
@@ -160,6 +172,13 @@ Each content type should define:
 - `structure`: Required sections
 - `frontMatter`: Metadata requirements
 
+### Dynamic Content Type Loading
+
+The system dynamically loads content types from `content_standards.json`:
+- Content types are automatically available in Phase 2 strategy
+- No code changes needed when adding new types
+- Validation ensures all required fields are present
+
 ### Adding Custom Content Types
 
 1. Edit `content_standards.json`
@@ -174,6 +193,16 @@ Each content type should define:
 Embeddings and chunks are cached in:
 ```
 ./llm_outputs/embeddings/[repo_name]/[working_directory]/
+```
+
+### Cache Structure
+
+```
+embeddings/
+└── [repo_name]/
+    └── [working_directory]/
+        ├── manifest.json          # File hash mappings
+        └── [chunk_id].json       # Chunk data + embeddings
 ```
 
 ### Cache Management
@@ -192,6 +221,45 @@ rm -rf ./llm_outputs/embeddings/[repo_name]/
 Monitor cache size:
 ```bash
 du -sh ./llm_outputs/embeddings/
+```
+
+### Cache Features
+
+- **Hash-based invalidation**: Only regenerates when files change
+- **Orphan cleanup**: Removes chunks from deleted/modified files
+- **Manifest verification**: Automatic integrity checks
+- **Atomic operations**: Prevents corruption
+
+## Phase 4: Remediation Configuration
+
+### Remediation Steps
+
+Phase 4 performs three sequential remediation steps:
+
+1. **SEO Optimization**
+   - Title optimization (<60 chars)
+   - Meta descriptions (150-160 chars)
+   - Keyword density
+   - Internal linking
+
+2. **Security Remediation**
+   - Credential removal
+   - IP sanitization
+   - Domain standardization
+   - PII removal
+
+3. **Accuracy Validation**
+   - Material cross-reference
+   - Technical verification
+   - Code validation
+   - Completeness check
+
+### Remediation Output
+
+Each step overwrites the same preview file:
+```
+./llm_outputs/preview/create/file.md  # Updated 3 times
+./llm_outputs/preview/update/file.md  # Updated 3 times
 ```
 
 ## Logging Configuration
@@ -213,6 +281,17 @@ Logs are stored in:
 ### Log Rotation
 
 Logs rotate when they reach 10MB, keeping last 5 files.
+
+### Step Tracking
+
+The system tracks phase and step execution:
+```
+Phase 1, Step 1: Material Analysis
+Phase 1, Step 2: Directory Selection
+Phase 2, Step 1: Content Discovery
+Phase 2, Step 2: Strategy Generation
+...
+```
 
 ## Authentication Configuration
 
@@ -237,6 +316,29 @@ export AZURE_TENANT_ID="your-tenant-id"
 ### Managed Identity
 
 No configuration needed when running in Azure with assigned identity.
+
+## Prompt Configuration
+
+### Prompt Organization
+
+Prompts are organized by phase:
+```
+prompts/
+├── phase1/           # Repository analysis
+├── phase2/           # Content strategy
+├── phase3/           # Content generation
+├── phase4/           # Remediation
+├── phase5/           # TOC management
+└── supporting/       # Helper prompts
+```
+
+### Custom Prompts
+
+Override default prompts by modifying:
+```python
+# Example: Custom SEO prompt
+content_developer/prompts/phase4/seo_remediation.py
+```
 
 ## Performance Tuning
 
@@ -268,13 +370,6 @@ RETRY_DELAY = 1.0  # seconds
 
 ## Advanced Configuration
 
-### Custom Prompts
-
-Override default prompts by creating:
-```
-./prompts/custom/[phase]/[prompt_name].py
-```
-
 ### Processor Configuration
 
 Configure processor behavior:
@@ -294,6 +389,14 @@ EXCLUDED_DIRS = [
     '.git', '__pycache__', 'venv'
 ]
 ```
+
+### Large Repository Handling
+
+For repositories >5,000 files:
+- Automatic directory-only view
+- Excluded directories filtered
+- Markdown file counts shown
+- TOC presence indicated
 
 ## Configuration Best Practices
 
@@ -325,6 +428,7 @@ Never commit `.env` files:
 
 - Initial runs: Use phase 1 only to verify setup
 - Iterative development: Run phases 2-3 repeatedly
+- Quality output: Run phases 3-4 for remediation
 - Final runs: Use all phases for complete workflow
 
 ### 5. Material Limits
@@ -361,6 +465,12 @@ Never commit `.env` files:
    ```
    Solution: Reduce parallel operations or add delays
 
+5. **Phase Dependencies**
+   ```
+   Error: Phase 3 requires Phase 2 results
+   ```
+   Solution: Run required phases first or use combinations
+
 ### Configuration Validation
 
 Run health check:
@@ -376,7 +486,7 @@ This validates:
 
 ## Configuration Examples
 
-### High-Quality Documentation
+### High-Quality Documentation with Remediation
 
 ```bash
 python main.py \
@@ -389,7 +499,7 @@ python main.py \
     --apply-changes
 ```
 
-### Quick Preview
+### Quick Preview (No Remediation)
 
 ```bash
 python main.py \
@@ -399,6 +509,18 @@ python main.py \
     -m updates.md \
     --phases 123 \
     --auto-confirm
+```
+
+### Remediation Only (Requires Prior Phase 3)
+
+```bash
+python main.py \
+    --repo https://github.com/Azure/azure-docs \
+    --goal "Optimize existing content" \
+    --service "Azure Functions" \
+    -m standards.pdf \
+    --phases 4 \
+    --apply-changes
 ```
 
 ### Debugging Run

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import logging
 import re
+import json
 
 from ..models import Config, ContentDecision, DocumentChunk
 from ..cache import UnifiedCache
@@ -132,11 +133,65 @@ class ContentGenerationProcessor(LLMNativeProcessor):
         if self.console_display:
             self.console_display.show_operation(f"Creating new content: {decision.file_title}")
         
-        # Format materials for the prompt
-        formatted_materials = self._format_materials_for_prompt(materials)
+        # Load content standards
+        try:
+            with open('content_standards.json', 'r') as f:
+                content_standards = json.load(f)
+        except Exception as e:
+            logger.warning(f"Failed to load content standards: {e}")
+            content_standards = {
+                'contentTypes': [],
+                'formattingElements': [],
+                'codeGuidelines': {}
+            }
         
-        # Get the creation prompt
-        prompt = get_create_prompt(decision, formatted_materials, config)
+        # Get content type info
+        content_type = getattr(decision, 'content_type', 'How-To Guide')
+        content_type_info = next(
+            (ct for ct in content_standards.get('contentTypes', []) 
+             if ct.get('name') == content_type),
+            {
+                'name': content_type,
+                'ms_topic': getattr(decision, 'ms_topic', 'how-to'),
+                'purpose': f'Create a {content_type}',
+                'structure': []
+            }
+        )
+        
+        # Create materials_content dictionary (source -> content)
+        materials_content = {}
+        for material in materials:
+            material_dict = material if isinstance(material, dict) else material.__dict__
+            source = material_dict.get('source', 'Unknown')
+            content = material_dict.get('content', material_dict.get('summary', ''))
+            materials_content[source] = content
+        
+        # Create materials summaries
+        materials_summaries = []
+        for material in materials:
+            material_dict = material if isinstance(material, dict) else material.__dict__
+            materials_summaries.append({
+                'source': material_dict.get('source', 'Unknown'),
+                'summary': material_dict.get('summary', ''),
+                'technologies': material_dict.get('technologies', []),
+                'key_concepts': material_dict.get('key_concepts', [])
+            })
+        
+        # Empty related chunks and chunk context for now
+        related_chunks = []
+        chunk_context = "No additional chunk context available."
+        
+        # Get the creation prompt with all required arguments
+        prompt = get_create_prompt(
+            config,
+            decision,  # action
+            materials_content,
+            materials_summaries,
+            related_chunks,
+            chunk_context,
+            content_type_info,
+            content_standards
+        )
         
         messages = [
             {"role": "system", "content": CREATION_SYSTEM},
@@ -206,12 +261,17 @@ class ContentGenerationProcessor(LLMNativeProcessor):
             'content_type': content_type
         }
         
-        # Empty content standards for now (could be loaded from a file)
-        content_standards = {
-            'contentTypes': [],
-            'formattingElements': [],
-            'codeGuidelines': {}
-        }
+        # Load content standards from file
+        try:
+            with open('content_standards.json', 'r') as f:
+                content_standards = json.load(f)
+        except Exception as e:
+            logger.warning(f"Failed to load content standards: {e}")
+            content_standards = {
+                'contentTypes': [],
+                'formattingElements': [],
+                'codeGuidelines': {}
+            }
         
         # Get the update prompt with all required parameters
         prompt = get_update_prompt(

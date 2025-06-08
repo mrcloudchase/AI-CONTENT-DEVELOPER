@@ -70,21 +70,38 @@ content_developer/
 │   ├── __init__.py
 │   ├── smart_processor.py      # Base class with embeddings
 │   ├── llm_native_processor.py # Base class for LLM ops
-│   ├── material.py            # Material processing
-│   ├── directory.py           # Directory detection
-│   ├── discovery.py           # Content discovery
-│   ├── strategy.py            # Strategy generation
-│   ├── phase4/               # Remediation processors
-│   └── phase5/               # TOC management
-├── generation/          # Content generation
-├── extraction/          # Content extraction
+│   ├── material.py            # Phase 1: Material processing
+│   ├── directory.py           # Phase 1: Directory detection
+│   ├── discovery.py           # Phase 2: Content discovery
+│   ├── strategy.py            # Phase 2: Strategy generation
+│   ├── phase4/               # Phase 4: Remediation processors
+│   │   ├── __init__.py
+│   │   ├── remediation_processor.py  # Main orchestrator
+│   │   ├── seo_processor.py         # SEO optimization
+│   │   ├── security_processor.py    # Security remediation
+│   │   └── accuracy_processor.py    # Accuracy validation
+│   └── phase5/               # Phase 5: TOC management
+│       ├── __init__.py
+│       └── toc_processor.py
+├── generation/          # Phase 3: Content generation
+├── extraction/          # Content extraction utilities
 ├── chunking/           # Document chunking
 ├── cache/              # Caching system
 ├── repository/         # Git operations
 ├── interactive/        # User interactions
 ├── display/            # Output display
-├── prompts/            # LLM prompts
+├── prompts/            # LLM prompts (organized by phase)
+│   ├── phase1/         # Repository analysis prompts
+│   ├── phase2/         # Strategy prompts
+│   ├── phase3/         # Generation prompts
+│   ├── phase4/         # Remediation prompts
+│   ├── phase5/         # TOC prompts
+│   └── supporting/     # Helper prompts
 ├── utils/              # Utilities
+│   ├── core_utils.py
+│   ├── file_ops.py
+│   ├── step_tracker.py  # Phase/step tracking
+│   └── logging.py
 └── orchestrator/       # Main orchestrator
 ```
 
@@ -106,9 +123,21 @@ from azure.identity import DefaultAzureCredential
 
 # Local imports
 from ..models import Config, Result
-from ..utils import write, mkdir
+from ..utils import write, mkdir, get_step_tracker
 from .base_processor import BaseProcessor
 ```
+
+## Phase Organization
+
+The system operates in 5 phases:
+
+1. **Phase 1**: Repository Analysis & Directory Selection
+2. **Phase 2**: Content Strategy & Gap Analysis
+3. **Phase 3**: Content Generation (creates preview files)
+4. **Phase 4**: Content Remediation (SEO, Security, Accuracy)
+5. **Phase 5**: TOC Management
+
+**Important**: Content is only applied to repository after Phase 4 with `--apply-changes`.
 
 ## Development Workflow
 
@@ -178,7 +207,7 @@ class MyProcessor(SmartProcessor):
         # Implementation
         pass
 
-# For direct LLM operations
+# For direct LLM operations (e.g., remediation)
 from .llm_native_processor import LLMNativeProcessor
 
 class MyLLMProcessor(LLMNativeProcessor):
@@ -187,7 +216,7 @@ class MyLLMProcessor(LLMNativeProcessor):
         pass
 ```
 
-#### Processor Template
+#### Processor Template with Step Tracking
 
 ```python
 """
@@ -198,6 +227,7 @@ from typing import Dict, List
 from pathlib import Path
 
 from ..models import Config
+from ..utils import get_step_tracker
 from .smart_processor import SmartProcessor
 
 logger = logging.getLogger(__name__)
@@ -222,6 +252,11 @@ class MyProcessor(SmartProcessor):
         # Show operation if console available
         if self.console_display:
             self.console_display.show_operation("Processing...")
+        
+        # Track step if phase/step is set
+        step_tracker = get_step_tracker()
+        if hasattr(self, 'phase') and hasattr(self, 'step'):
+            step_tracker.track(self.phase, self.step, "My Operation")
         
         # Main processing logic
         result = self._perform_operation(input_data)
@@ -248,13 +283,42 @@ class MyProcessor(SmartProcessor):
 
 ### 3. Adding New Prompts
 
-#### Prompt Structure
+#### Prompt Organization by Phase
 
-Create prompts in `content_developer/prompts/phase[N]/`:
+Create prompts in the appropriate phase directory:
+
+```
+prompts/
+├── phase1/              # Repository analysis
+│   ├── __init__.py
+│   ├── material_summary.py
+│   └── directory_selection.py
+├── phase2/              # Content strategy
+│   ├── __init__.py
+│   └── unified_strategy.py
+├── phase3/              # Content generation
+│   ├── __init__.py
+│   ├── create_content.py
+│   ├── update_content.py
+│   └── material_sufficiency.py
+├── phase4/              # Remediation
+│   ├── __init__.py
+│   ├── seo_remediation.py
+│   ├── security_remediation.py
+│   └── accuracy_validation.py
+├── phase5/              # TOC management
+│   ├── __init__.py
+│   └── toc_update.py
+└── supporting/          # Helper prompts
+    ├── __init__.py
+    └── content_placement.py
+```
+
+#### Prompt Structure
 
 ```python
 """
-Prompt description - Phase N
+Prompt description - Phase N: Operation Name
 """
 
 def get_my_prompt(param1: str, param2: Dict) -> str:
@@ -314,6 +378,33 @@ MY_SYSTEM_PROMPT = """You are an expert..."""
    output = processor.process(...)
    ```
 
+#### Working with Phase 4 (Remediation)
+
+Phase 4 has special considerations:
+
+```python
+# Phase 4 processes files through 3 sequential steps
+class ContentRemediationProcessor(SmartProcessor):
+    def _process(self, generation_results, materials, config, working_dir):
+        # Step 1: SEO
+        seo_processor = SEOProcessor(...)
+        seo_processor.set_phase_step(4, 1)
+        
+        # Step 2: Security
+        security_processor = SecurityProcessor(...)
+        security_processor.set_phase_step(4, 2)
+        
+        # Step 3: Accuracy
+        accuracy_processor = AccuracyProcessor(...)
+        accuracy_processor.set_phase_step(4, 3)
+```
+
+Each remediation step:
+- Reads content from preview
+- Applies specific improvements
+- Overwrites the preview file
+- Passes content to next step
+
 #### Creating New Phase
 
 1. Update `constants.py`:
@@ -326,6 +417,11 @@ MY_SYSTEM_PROMPT = """You are an expert..."""
    def _execute_phase6(self, result: Result) -> None:
        """Execute Phase 6: Your Phase"""
        logger.info("=== Phase 6: Your Phase ===")
+       
+       # Reset step counter
+       step_tracker = get_step_tracker()
+       step_tracker.reset_phase(6)
+       
        # Implementation
    ```
 
@@ -360,6 +456,12 @@ class TestMyProcessor(unittest.TestCase):
     def test_process_validation_error(self):
         with self.assertRaises(ValueError):
             self.processor.process(None)
+    
+    def test_step_tracking(self):
+        # Test step tracking
+        self.processor.set_phase_step(1, 1)
+        result = self.processor.process(test_input)
+        # Verify step was tracked
 ```
 
 ### Integration Testing
@@ -376,6 +478,9 @@ python main.py --repo https://github.com/test/repo \
 
 # Test phase combination
 python main.py ... --phases 12 --auto-confirm
+
+# Test remediation
+python main.py ... --phases 34 --apply-changes
 ```
 
 ### Manual Testing Checklist
@@ -388,6 +493,8 @@ python main.py ... --phases 12 --auto-confirm
 - [ ] Test with various repository sizes
 - [ ] Verify console output formatting
 - [ ] Check log output
+- [ ] Verify step tracking works
+- [ ] Test remediation improvements
 
 ## Debugging
 
@@ -424,6 +531,13 @@ export AI_CONTENT_DEBUG=true
    ```python
    logger.debug(f"LLM Request: {messages}")
    logger.debug(f"LLM Response: {response}")
+   ```
+
+5. **Track Phase Progress**:
+   ```python
+   step_tracker = get_step_tracker()
+   logger.debug(f"Current phase: {step_tracker.current_phase}")
+   logger.debug(f"Current step: {step_tracker.current_step}")
    ```
 
 ## Code Quality Standards
@@ -468,6 +582,23 @@ MAX_EMBEDDINGS_BATCH = 100
 
 # Timeouts
 LLM_TIMEOUT = 60  # seconds
+
+# Remediation steps
+REMEDIATION_STEPS = ["seo", "security", "accuracy"]
+```
+
+### 5. Working with ContentDecision
+
+Always use as dataclass, not dictionary:
+
+```python
+# Correct
+if action.filename:
+    process_file(action.filename)
+
+# Incorrect (old style)
+if action['filename']:
+    process_file(action['filename'])
 ```
 
 ## Performance Optimization
@@ -511,6 +642,14 @@ for chunk in self._chunk_iterator(large_list, chunk_size=100):
 del large_temporary_data
 ```
 
+### 4. Embedding Optimization
+
+```python
+# Reuse embeddings for unchanged files
+if not cache.needs_update(file_key, file_hash):
+    return cache.get_embeddings(file_key)
+```
+
 ## Contributing Guidelines
 
 ### 1. Branch Strategy
@@ -551,6 +690,7 @@ test: add unit tests for Y
    - [ ] No hardcoded values
    - [ ] Follows code standards
    - [ ] Backwards compatible
+   - [ ] Step tracking implemented
 
 ### 4. Code Review Focus
 
@@ -559,6 +699,7 @@ test: add unit tests for Y
 - **Security**: No credentials or sensitive data?
 - **Maintainability**: Easy to understand?
 - **Testing**: Adequate test coverage?
+- **Phase Integration**: Fits phase pattern?
 
 ## Troubleshooting Development Issues
 
@@ -577,12 +718,17 @@ test: add unit tests for Y
    # Always validate types
    if not isinstance(input_data, dict):
        raise TypeError(f"Expected dict, got {type(input_data)}")
+   
+   # Use dataclasses correctly
+   if hasattr(action, 'filename'):  # ContentDecision is dataclass
+       filename = action.filename
    ```
 
-3. **Async Issues**:
+3. **Phase Dependencies**:
    ```python
-   # Be careful with mixing sync/async
-   # Our codebase is primarily synchronous
+   # Ensure required data exists
+   if not result.generation_results:
+       raise ValueError("Phase 4 requires Phase 3 results")
    ```
 
 ### Development Tools
@@ -609,24 +755,54 @@ test: add unit tests for Y
    sphinx-apidoc -o docs/api content_developer/
    ```
 
+## Key Patterns to Follow
+
+### 1. Processor Pattern
+- Inherit from appropriate base class
+- Implement `_process()` method
+- Add `process()` public interface
+- Use step tracking
+
+### 2. Prompt Pattern
+- Organize by phase
+- Include system prompt
+- Define clear output format
+- Handle edge cases
+
+### 3. Cache Pattern
+- Check cache before processing
+- Update cache after processing
+- Handle cache misses gracefully
+- Clean orphaned entries
+
+### 4. Console Display Pattern
+- Check if console_display exists
+- Show appropriate messages
+- Use correct severity levels
+- Provide progress updates
+
 ## Next Steps
 
 1. **Explore the Codebase**:
    - Start with `main.py`
    - Follow execution to `orchestrator.py`
    - Understand phase flow
+   - Study processor patterns
 
 2. **Make Small Changes**:
    - Fix a typo
    - Improve logging
    - Add validation
+   - Enhance error messages
 
-3. **Contribute**:
+3. **Contribute Features**:
    - Pick an issue
    - Discuss approach
+   - Implement with tests
    - Submit PR
 
 4. **Learn Patterns**:
    - Study existing processors
    - Understand prompt structure
-   - Follow established patterns 
+   - Follow established patterns
+   - Review recent PRs 

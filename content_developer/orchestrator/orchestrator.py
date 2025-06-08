@@ -113,11 +113,11 @@ class ContentDeveloperOrchestrator:
                 material_processor = MaterialProcessor(self.client, self.config, self.console_display)
                 material_processor.set_phase_step(1, 1)
                 materials = material_processor.process(
-            self.config.support_materials, repo_path
-        )
+                    self.config.support_materials, repo_path
+                )
                 progress.update_func(1)
         
-        # Get repository structure
+                # Get repository structure
                 progress.update_func(description="Analyzing structure")
                 
                 # Check repository size to decide which structure method to use
@@ -132,12 +132,12 @@ class ContentDeveloperOrchestrator:
                     # For smaller repos, we can use the full structure (which now defaults to directory-only anyway)
                     structure = self.repo_manager.get_structure(repo_path, self.config.max_repo_depth)
                 
-            progress.update_func(1)
-            
-            # Detect working directory with LLM - Phase 1, Step 2
-            progress.update_func(description="Selecting directory")
-            llm_result, llm_failed, error = self._detect_directory(repo_path, structure, materials)
-            progress.update_func(1)
+                progress.update_func(1)
+                
+                # Detect working directory with LLM - Phase 1, Step 2
+                progress.update_func(description="Selecting directory")
+                llm_result, llm_failed, error = self._detect_directory(repo_path, structure, materials)
+                progress.update_func(1)
         else:
             # Original flow without console display
             repo_path = self.repo_manager.clone_or_update(self.config.repo_url, self.config.work_dir)
@@ -147,7 +147,7 @@ class ContentDeveloperOrchestrator:
                 self.config.support_materials, repo_path
             )
             structure = self.repo_manager.get_structure(repo_path, self.config.max_repo_depth)
-        llm_result, llm_failed, error = self._detect_directory(repo_path, structure, materials)
+            llm_result, llm_failed, error = self._detect_directory(repo_path, structure, materials)
         
         # In auto-confirm mode, check if the selection is valid
         if self.config.auto_confirm:
