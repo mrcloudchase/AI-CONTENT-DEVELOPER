@@ -229,7 +229,9 @@ class ContentRemediationProcessor(SmartProcessor):
         preview_path = preview_dir / filename_only
         write(preview_path, content)
         
-        logger.info(f"Remediated ({step}): {preview_path}")
+        logger.info(f"Writing to preview ({step}): {preview_path}")
+        if self.console_display:
+            self.console_display.show_status(f"Writing to preview: {filename} ({step})", "info")
         return str(preview_path)
     
     def _create_summary(self, results: Dict) -> Dict:

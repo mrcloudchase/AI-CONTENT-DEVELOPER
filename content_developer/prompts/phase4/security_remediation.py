@@ -74,7 +74,7 @@ Return your response as JSON with this structure:
     "Strategy for remediation",
     "Validation of technical usefulness"
   ],
-  "remediated_content": "The full security-remediated content",
+  "remediated_content": "The full remediated markdown content only",
   "security_issues_found": [
     {{"type": "credential|ip|domain|etc", "description": "what was found", "remediation": "how it was fixed"}}
   ],

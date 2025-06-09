@@ -85,7 +85,7 @@ Return your response as JSON with this structure:
   ],
   "validation_result": "pass|fail|pass_with_corrections",
   "accuracy_score": 0.0-1.0,
-  "validated_content": "The content with accuracy corrections applied",
+  "validated_content": "The full validated markdown content only",
   "accuracy_issues": [
     {{
       "type": "factual|code|procedure|version|deprecated",

@@ -119,6 +119,7 @@ class TOCProcessor(LLMNativeProcessor):
             'changes_made': True,
             'toc_path': str(toc_path),
             'preview_path': str(preview_path),
+            'content': updated_toc_result['content'],  # Add content for later use
             'placements': placement_rationale,
             'placement_decisions': updated_toc_result.get('placement_decisions', {}),
             'entries_added': updated_toc_result.get('entries_added', []),
@@ -218,4 +219,8 @@ class TOCProcessor(LLMNativeProcessor):
         preview_path = preview_dir / f"TOC_{working_dir_name}.yml"
         
         write(preview_path, updated_toc)
+        
+        if self.console_display:
+            self.console_display.show_status(f"Writing to preview: toc/{preview_path.name}", "info")
+        
         return preview_path 

@@ -17,7 +17,7 @@ from ..processors import (
 )
 from ..generation import ContentGenerator
 from ..repository import RepositoryManager
-from ..utils import write, mkdir
+from ..utils import write, mkdir, read
 from ..constants import MAX_PHASES
 from ..utils.step_tracker import get_step_tracker
 
@@ -77,6 +77,10 @@ class ContentDeveloperOrchestrator:
                 self.console_display.show_status("TOC management skipped (--skip-toc flag)", "info")
             logger.info("=== Phase 5: TOC Management (SKIPPED) ===")
             logger.info("TOC management skipped due to --skip-toc flag")
+        
+        # Apply all changes at the end if requested
+        if self.config.apply_changes and result.generation_ready:
+            self._apply_all_changes(result)
         
         return result
     
@@ -389,7 +393,7 @@ class ContentDeveloperOrchestrator:
                     "Files Created": create_count,
                     "Files Updated": update_count,
                     "Files Skipped": skip_count,
-                    "Applied to Repository": generation_results.get('applied', False)
+                    "Saved to Preview": True
                 })
             
             # Log summary
@@ -489,18 +493,10 @@ class ContentDeveloperOrchestrator:
             result.remediation_results = remediation_results
             result.remediation_ready = True
             
-            # Apply changes if requested (moved from phase 3)
-            if self.config.apply_changes:
-                self._apply_remediated_content(result.generation_results, remediation_results, working_dir_path)
-                # Set applied flag to indicate changes were written to repository
-                result.generation_results['applied'] = True
-                if self.console_display:
-                    self.console_display.show_status("Remediated content applied to repository", "success")
-            else:
-                # Set applied flag to false to indicate preview mode
-                result.generation_results['applied'] = False
-                if self.console_display:
-                    self.console_display.show_status("Preview mode - changes not applied (use --apply-changes to apply)", "info")
+            # Always set to preview mode - actual application happens at the end
+            result.generation_results['applied'] = False
+            if self.console_display:
+                self.console_display.show_status("Remediated content saved to preview", "success")
             
             # Show phase summary
             if self.console_display:
@@ -520,7 +516,8 @@ class ContentDeveloperOrchestrator:
     
     def _apply_remediated_content(self, generation_results: Dict, remediation_results: Dict, 
                                  working_dir_path: Path) -> None:
-        """Apply remediated content from preview files to the repository"""
+        """DEPRECATED: No longer used - all application happens in _apply_all_changes()
+        Apply remediated content from preview files to the repository"""
         logger.info("Applying remediated content to repository...")
         
         # Process remediation results to get the final content
@@ -580,18 +577,13 @@ class ContentDeveloperOrchestrator:
                     )
                     progress.update_func(1)
                     
-                    # Apply if requested
-                    progress.update_func(description="Updating TOC")
-                    if self.config.apply_changes and toc_results.get('success') and toc_results.get('changes_made'):
-                        self._apply_toc_changes(toc_results, working_dir_path)
-                        toc_results['applied'] = True
-                        self.console_display.show_status("TOC.yml updated", "success")
-                    else:
-                        toc_results['applied'] = False
-                        if toc_results.get('success') and not toc_results.get('changes_made'):
-                            self.console_display.show_status("No TOC changes needed", "info")
-                        elif toc_results.get('success'):
-                            self.console_display.show_status("TOC preview generated (use --apply-changes to apply)", "info")
+                    # Always save to preview - actual application happens at the end
+                    progress.update_func(description="Saving TOC preview")
+                    toc_results['applied'] = False
+                    if toc_results.get('success') and not toc_results.get('changes_made'):
+                        self.console_display.show_status("No TOC changes needed", "info")
+                    elif toc_results.get('success'):
+                        self.console_display.show_status("TOC preview saved", "success")
                     progress.update_func(1)
             else:
                 # Original flow
@@ -603,11 +595,8 @@ class ContentDeveloperOrchestrator:
                     result.content_strategy
                 )
                 
-                if self.config.apply_changes and toc_results.get('success') and toc_results.get('changes_made'):
-                    self._apply_toc_changes(toc_results, working_dir_path)
-                    toc_results['applied'] = True
-                else:
-                    toc_results['applied'] = False
+                # Always save to preview - actual application happens at the end
+                toc_results['applied'] = False
             
             # Update result
             result.toc_results = toc_results
@@ -618,7 +607,7 @@ class ContentDeveloperOrchestrator:
                 entries_added = len(toc_results.get('entries_added', []))
                 self.console_display.show_phase_summary("5: TOC Management", {
                     "Entries Added": entries_added,
-                    "Applied to Repository": toc_results.get('applied', False),
+                    "Saved to Preview": toc_results.get('changes_made', False),
                     "Status": toc_results.get('message', 'Completed')
                 })
             
@@ -709,7 +698,8 @@ class ContentDeveloperOrchestrator:
         )
     
     def _apply_toc_changes(self, toc_results: Dict, working_dir_path: Path) -> None:
-        """Apply TOC changes to the repository"""
+        """DEPRECATED: No longer used - all application happens in _apply_all_changes()
+        Apply TOC changes to the repository"""
         logger.info("Applying TOC changes to repository...")
         
         toc_path = working_dir_path / "TOC.yml"
@@ -785,7 +775,7 @@ class ContentDeveloperOrchestrator:
             logger.warning(f"No markdown files found in {directory}")
             logger.info("This may indicate a non-content directory was selected (e.g., media/assets directory)")
             logger.info("Consider re-running with a different content goal or checking the selected directory")
-        return len(md_files) 
+        return len(md_files)
     
     def _handle_phase4_error(self, result: Result, error: Exception) -> None:
         """Handle Phase 4 execution errors"""
@@ -795,4 +785,128 @@ class ContentDeveloperOrchestrator:
             self.console_display.show_error(str(error), "Phase 4 Failed")
         
         result.remediation_results = None
-        result.remediation_ready = False 
+        result.remediation_ready = False
+    
+    def _apply_all_changes(self, result: Result) -> None:
+        """Apply all changes from preview directories to the repository"""
+        logger.info("=== Applying All Changes to Repository ===")
+        
+        if not result.generation_ready:
+            logger.warning("No generated content to apply")
+            return
+            
+        working_dir_path = Path(result.working_directory_full_path)
+        applied_count = 0
+        
+        if self.console_display:
+            self.console_display.show_separator()
+            self.console_display.show_status("Applying changes to repository", "info")
+        
+        # Apply CREATE files from current run only
+        for create_result in result.generation_results.get('create_results', []):
+            if create_result.get('success') and create_result.get('preview_path'):
+                try:
+                    # Read content from the specific preview file
+                    preview_path = Path(create_result['preview_path'])
+                    if not preview_path.exists():
+                        logger.warning(f"Preview file not found: {preview_path}")
+                        continue
+                        
+                    content = read(preview_path)
+                    
+                    # Get target filename from action
+                    action = create_result.get('action')
+                    if not action:
+                        continue
+                        
+                    target_filename = action.filename or action.target_file
+                    if not target_filename:
+                        continue
+                    
+                    # Apply to repository
+                    target_path = working_dir_path / target_filename
+                    mkdir(target_path.parent)
+                    write(target_path, content)
+                    
+                    if self.console_display:
+                        self.console_display.show_status(f"Applying to repository: {target_filename} (created)", "success")
+                    logger.info(f"Applied CREATE: {target_filename}")
+                    applied_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"Failed to apply CREATE {target_filename}: {e}")
+                    if self.console_display:
+                        self.console_display.show_error(f"Failed to create {target_filename}: {e}")
+        
+        # Apply UPDATE files from current run only
+        for update_result in result.generation_results.get('update_results', []):
+            if update_result.get('success') and update_result.get('preview_path'):
+                try:
+                    # Read content from the specific preview file
+                    preview_path = Path(update_result['preview_path'])
+                    if not preview_path.exists():
+                        logger.warning(f"Preview file not found: {preview_path}")
+                        continue
+                        
+                    content = read(preview_path)
+                    
+                    # Get target filename from action
+                    action = update_result.get('action')
+                    if not action:
+                        continue
+                        
+                    target_filename = action.filename or action.target_file
+                    if not target_filename:
+                        continue
+                    
+                    # Apply to repository
+                    target_path = working_dir_path / target_filename
+                    write(target_path, content)
+                    
+                    if self.console_display:
+                        self.console_display.show_status(f"Applying to repository: {target_filename} (updated)", "success")
+                    logger.info(f"Applied UPDATE: {target_filename}")
+                    applied_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"Failed to apply UPDATE {target_filename}: {e}")
+                    if self.console_display:
+                        self.console_display.show_error(f"Failed to update {target_filename}: {e}")
+        
+        # Apply TOC changes from current run only
+        if hasattr(result, 'toc_results') and result.toc_results and result.toc_results.get('success') and result.toc_results.get('preview_path'):
+            try:
+                # Read content from the specific preview file
+                preview_path = Path(result.toc_results['preview_path'])
+                if preview_path.exists():
+                    content = read(preview_path)
+                    
+                    # Apply to repository
+                    toc_path = working_dir_path / "TOC.yml"
+                    write(toc_path, content)
+                    
+                    if self.console_display:
+                        self.console_display.show_status("Applying to repository: TOC.yml (updated)", "success")
+                    logger.info("Applied TOC.yml updates")
+                    applied_count += 1
+                else:
+                    logger.warning(f"TOC preview file not found: {preview_path}")
+                    
+            except Exception as e:
+                logger.error(f"Failed to apply TOC.yml: {e}")
+                if self.console_display:
+                    self.console_display.show_error(f"Failed to update TOC.yml: {e}")
+        
+        # Update result flags
+        if result.generation_results:
+            result.generation_results['applied'] = True
+        if hasattr(result, 'toc_results') and result.toc_results:
+            result.toc_results['applied'] = True
+        
+        # Show summary
+        if self.console_display:
+            self.console_display.show_separator()
+            self.console_display.show_metric("Total files applied", str(applied_count))
+            self.console_display.show_status("All changes applied to repository", "success")
+        
+        logger.info(f"Applied {applied_count} changes to repository") 

@@ -188,4 +188,7 @@ class CreateContentProcessor(BaseContentProcessor):
         preview_path = preview_dir / filename
         write(preview_path, content)
         
+        if self.console_display:
+            self.console_display.show_status(f"Writing to preview: {action_type}/{filename}", "info")
+        
         return preview_path 

@@ -79,6 +79,8 @@ class ContentGenerator(SmartProcessor):
                     preview_path = preview_dir / Path(filename).name
                     write(preview_path, content)
                     preview_path = str(preview_path)
+                    if self.console_display:
+                        self.console_display.show_status(f"Writing to preview: create/{Path(filename).name}", "info")
                 
                 result = {
                     'action': decision,
@@ -100,6 +102,8 @@ class ContentGenerator(SmartProcessor):
                     preview_path = preview_dir / Path(filename).name
                     write(preview_path, content)
                     preview_path = str(preview_path)
+                    if self.console_display:
+                        self.console_display.show_status(f"Writing to preview: update/{Path(filename).name}", "info")
                 
                 result = {
                     'action': decision,

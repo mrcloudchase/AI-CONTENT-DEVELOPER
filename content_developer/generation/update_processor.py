@@ -233,4 +233,7 @@ class UpdateContentProcessor(BaseContentProcessor):
         preview_path = preview_dir / base_filename
         write(preview_path, content)
         
+        if self.console_display:
+            self.console_display.show_status(f"Writing to preview: update/{base_filename}", "info")
+        
         return str(preview_path) 

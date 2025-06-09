@@ -70,7 +70,7 @@ Return your response as JSON with this structure:
     "Strategy for improvements",
     "Validation of technical accuracy"
   ],
-  "optimized_content": "The full optimized content with all improvements",
+  "optimized_content": "The full SEO improved markdown content only",
   "seo_improvements": [
     "List of specific improvements made"
   ],
