@@ -1234,3 +1234,205 @@ MIT License - see LICENSE file for details
 ---
 
 For more information, issues, or contributions, visit the [GitHub repository](https://github.com/chasedmicrosoft/ai-content-developer).
+
+graph LR
+    subgraph "Input Data"
+        repo["Repository URL"]
+        goal["Content Goal"]
+        service["Service Area"] 
+        materials["Support Materials<br/>(PDFs, Docs, Markdown)"]
+        audience["Target Audience"]
+    end
+    
+    subgraph "Phase 1 Data"
+        p1_materials["MaterialSummary[]<br/>- main_topic<br/>- summary<br/>- key_concepts<br/>- technologies"]
+        p1_structure["Repository Structure<br/>(Directory tree)"]
+        p1_result["Working Directory<br/>+ Confidence Score"]
+    end
+    
+    subgraph "Phase 2 Data"
+        p2_chunks["DocumentChunk[]<br/>- content<br/>- file_path<br/>- heading_path<br/>- embedding<br/>- frontmatter"]
+        p2_strategy["ContentStrategy<br/>- decisions[]<br/>- confidence<br/>- thinking"]
+        p2_decision["ContentDecision<br/>- action (CREATE/UPDATE/SKIP)<br/>- target_file<br/>- content_type<br/>- sections[]<br/>- rationale"]
+    end
+    
+    subgraph "Phase 3 Data"
+        p3_content["Generated Content<br/>- New markdown files<br/>- Updated markdown files"]
+        p3_preview["Preview Files<br/>./llm_outputs/preview/create/<br/>./llm_outputs/preview/update/"]
+    end
+    
+    subgraph "Phase 4 Data"
+        p4_seo["SEO Optimized Content<br/>- Keywords added<br/>- Meta improved"]
+        p4_security["Security Remediated<br/>- Sensitive data removed<br/>- Warnings added"]
+        p4_final["Final Validated Content<br/>- Technically accurate<br/>- Ready to apply"]
+    end
+    
+    subgraph "Phase 5 Data"
+        p5_toc["Updated TOC.yml<br/>- New entries added<br/>- Proper placement"]
+    end
+    
+    subgraph "Cache System"
+        cache_manifest["Manifest<br/>- File hashes<br/>- Chunk IDs"]
+        cache_chunks["Cached Chunks<br/>- Content<br/>- Embeddings<br/>- Metadata"]
+        cache_embeddings["Embeddings Cache<br/>- Chunk embeddings<br/>- Intent embeddings"]
+    end
+    
+    repo --> p1_structure
+    materials --> p1_materials
+    goal --> p1_materials
+    service --> p1_materials
+    audience --> p2_strategy
+    
+    p1_materials --> p1_result
+    p1_structure --> p1_result
+    
+    p1_result --> p2_chunks
+    p2_chunks --> cache_chunks
+    p2_chunks --> cache_embeddings
+    p2_chunks --> p2_strategy
+    p1_materials --> p2_strategy
+    
+    p2_strategy --> p2_decision
+    p2_decision --> p3_content
+    p1_materials --> p3_content
+    p2_chunks --> p3_content
+    
+    p3_content --> p3_preview
+    p3_preview --> p4_seo
+    p4_seo --> p4_security
+    p4_security --> p4_final
+    p4_final --> p3_preview
+    
+    p3_preview --> p5_toc
+    p2_decision --> p5_toc
+    
+    cache_manifest --> cache_chunks
+    cache_chunks --> cache_embeddings
+    
+    style repo fill:#f9f,stroke:#333,stroke-width:2px
+    style goal fill:#f9f,stroke:#333,stroke-width:2px
+    style service fill:#f9f,stroke:#333,stroke-width:2px
+    style materials fill:#f9f,stroke:#333,stroke-width:2px
+    style p4_final fill:#9f9,stroke:#333,stroke-width:3px
+    style p5_toc fill:#9f9,stroke:#333,stroke-width:3px
+
+# 1. ENTRY POINT
+main()
+├── create_argument_parser()
+├── parser.parse_args()
+├── setup_dual_logging(console_level)
+├── get_console()
+├── ConsoleDisplay(console)
+├── validate_arguments(parser, args)
+├── create_config_from_args(args)
+│   └── Config.__post_init__()
+│       ├── _validate_azure_config()
+│       ├── _load_deployment_config()
+│       └── _create_output_directories()
+└── execute_workflow(config, console_display)
+    ├── console_display.show_header()
+    ├── ContentDeveloperOrchestrator(config, console_display)
+    │   └── __init__()
+    │       ├── get_bearer_token_provider()
+    │       ├── AzureOpenAI()
+    │       ├── RepositoryManager()
+    │       ├── DirectoryConfirmation()
+    │       └── StrategyConfirmation()
+    └── orchestrator.execute()
+        ├── _parse_max_phase()
+        │
+        ├── _execute_phase1()  # PHASE 1: Repository Analysis
+        │   ├── get_step_tracker().reset_phase(1)
+        │   ├── repo_manager.clone_or_update()
+        │   ├── MaterialProcessor(client, config, console_display)
+        │   │   └── _process(materials, repo_path)
+        │   │       └── for each material:
+        │   │           ├── ContentExtractor.extract()
+        │   │           └── _summarize()
+        │   │               └── llm_call() → "Material Analysis"
+        │   ├── repo_manager.get_structure()
+        │   ├── _detect_directory()
+        │   │   └── DirectoryDetector.process()
+        │   │       └── _call_llm() → "Working Directory Selection"
+        │   ├── dir_confirmator.confirm()
+        │   ├── _setup_directory()
+        │   └── _create_phase1_result()
+        │
+        ├── _execute_phase2()  # PHASE 2: Content Strategy
+        │   ├── get_step_tracker().reset_phase(2)
+        │   ├── ContentDiscoveryProcessor.process()
+        │   │   ├── _find_markdown_files()
+        │   │   ├── _process_markdown_files()
+        │   │   │   └── for each file:
+        │   │   │       ├── file_get_hash()
+        │   │   │       ├── cache.needs_update()
+        │   │   │       └── _process_single_file()
+        │   │   │           ├── SmartChunker.chunk_markdown()
+        │   │   │           ├── _store_chunks_in_cache()
+        │   │   │           └── _update_file_manifest()
+        │   │   └── _generate_missing_embeddings()
+        │   ├── ContentStrategyProcessor.process()
+        │   │   ├── _get_relevant_files_with_content()
+        │   │   │   ├── _create_search_text()
+        │   │   │   ├── _get_embedding() → API call
+        │   │   │   ├── _score_chunks()
+        │   │   │   └── _aggregate_scores_by_file()
+        │   │   └── _generate_unified_strategy()
+        │   │       └── _call_llm() → "Unified Strategy Generation"
+        │   └── _confirm_strategy()
+        │
+        ├── _execute_phase3()  # PHASE 3: Content Generation
+        │   ├── get_step_tracker().reset_phase(3)
+        │   ├── ContentGenerator.process()
+        │   │   └── for each decision:
+        │   │       ├── ContentGenerationProcessor.process()
+        │   │       │   ├── _check_material_sufficiency_pregeneration()
+        │   │       │   │   └── _call_llm() → "Pre-generation Material Sufficiency Check"
+        │   │       │   ├── if CREATE:
+        │   │       │   │   └── _create_content()
+        │   │       │   │       └── _call_llm() → "Content Creation"
+        │   │       │   └── if UPDATE:
+        │   │       │       ├── _get_target_chunks()
+        │   │       │       ├── _reconstruct_content()
+        │   │       │       └── _update_content()
+        │   │       │           └── _call_llm() → "Content Update"
+        │   │       └── write() → "./llm_outputs/preview/{create|update}/"
+        │   └── _log_generation_summary()
+        │
+        ├── _execute_phase4()  # PHASE 4: Content Remediation
+        │   ├── get_step_tracker().reset_phase(4)
+        │   ├── ContentRemediationProcessor.process()
+        │   │   └── for each file:
+        │   │       └── _process_file()
+        │   │           ├── SEOProcessor.process()
+        │   │           │   └── _call_llm() → "SEO Remediation"
+        │   │           ├── SecurityProcessor.process()
+        │   │           │   └── _call_llm() → "Security Remediation"
+        │   │           ├── AccuracyProcessor.process()
+        │   │           │   └── _call_llm() → "Accuracy Validation"
+        │   │           └── _save_remediated_content()
+        │   │               └── write() → overwrite preview file
+        │   └── console_display.show_phase_summary()
+        │
+        ├── _execute_phase5()  # PHASE 5: TOC Management
+        │   ├── get_step_tracker().reset_phase(5)
+        │   ├── TOCProcessor.process()
+        │   │   ├── read() → TOC.yml
+        │   │   ├── _prepare_file_entries()
+        │   │   ├── _generate_updated_toc_with_placement()
+        │   │   │   └── _call_llm() → "TOC Update with Placement Analysis"
+        │   │   └── _save_toc_preview()
+        │   │       └── write() → "./llm_outputs/preview/toc/"
+        │   └── console_display.show_phase_summary()
+        │
+        └── if config.apply_changes:
+            └── _apply_all_changes()
+                ├── for each CREATE file:
+                │   ├── read() → from preview
+                │   └── write() → to repository
+                ├── for each UPDATE file:
+                │   ├── read() → from preview
+                │   └── write() → to repository
+                └── if TOC changes:
+                    ├── read() → from preview
+                    └── write() → TOC.yml
