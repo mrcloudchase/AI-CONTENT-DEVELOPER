@@ -515,39 +515,170 @@ class ContentDeveloperOrchestrator:
         except Exception as e:
             self._handle_phase4_error(result, e)
     
-    def _apply_remediated_content(self, generation_results: Dict, remediation_results: Dict, 
-                                 working_dir_path: Path) -> None:
-        """DEPRECATED: No longer used - all application happens in _apply_all_changes()
-        Apply remediated content from preview files to the repository"""
-        logger.info("Applying remediated content to repository...")
+    def _apply_all_changes(self, result: Result) -> None:
+        """Apply all changes from preview directories to the repository"""
+        logger.info("=== Applying All Changes to Repository ===")
         
-        # Process remediation results to get the final content
-        for result in remediation_results.get('remediation_results', []):
-            if result.get('accuracy_success') and result.get('final_content'):
-                # Get the action from generation results
-                filename = result['filename']
-                action_type = result['action_type']
+        if not result.generation_ready:
+            logger.warning("No generated content to apply")
+            return
+            
+        working_dir_path = Path(result.working_directory_full_path)
+        applied_count = 0
+        
+        if self.console_display:
+            self.console_display.show_separator()
+            self.console_display.show_status("Applying changes to repository", "info")
+        
+        # Create a mapping of filenames to remediated content if remediation was run
+        remediated_content = {}
+        if hasattr(result, 'remediation_results') and result.remediation_results:
+            for rem_result in result.remediation_results.get('remediation_results', []):
+                if rem_result.get('accuracy_success') and rem_result.get('final_content'):
+                    filename = rem_result['filename']
+                    remediated_content[filename] = rem_result['final_content']
+        
+        # Apply CREATE files
+        for create_result in result.generation_results.get('create_results', []):
+            if create_result.get('success'):
+                try:
+                    action = create_result.get('action')
+                    if not action:
+                        continue
+                        
+                    target_filename = action.filename or action.target_file
+                    if not target_filename:
+                        continue
+                    
+                    # Get content from remediated content or preview file
+                    content = None
+                    
+                    # First try remediated content
+                    if target_filename in remediated_content:
+                        content = remediated_content[target_filename]
+                        logger.info(f"Using remediated content for: {target_filename}")
+                    else:
+                        # Try to read from preview location
+                        preview_file = Path("./llm_outputs/preview/create") / Path(target_filename).name
+                        if preview_file.exists():
+                            content = read(preview_file)
+                            logger.info(f"Reading from preview: {preview_file}")
+                    
+                    if not content:
+                        logger.warning(f"No content found for CREATE: {target_filename}")
+                        continue
+                    
+                    # Apply to repository
+                    # Extract just the filename if it includes path components
+                    just_filename = Path(target_filename).name
+                    target_path = working_dir_path / just_filename
+                    mkdir(target_path.parent)
+                    write(target_path, content)
+                    
+                    if self.console_display:
+                        self.console_display.show_status(f"Applied CREATE: {target_filename}", "success")
+                    logger.info(f"Applied CREATE: {target_filename}")
+                    applied_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"Failed to apply CREATE {target_filename}: {e}")
+                    if self.console_display:
+                        self.console_display.show_error(f"Failed to create {target_filename}: {e}")
+        
+        # Apply UPDATE files
+        for update_result in result.generation_results.get('update_results', []):
+            if update_result.get('success'):
+                try:
+                    action = update_result.get('action')
+                    if not action:
+                        continue
+                        
+                    target_filename = action.filename or action.target_file
+                    if not target_filename:
+                        continue
+                    
+                    # Get content from remediated content or preview file
+                    content = None
+                    
+                    # First try remediated content
+                    if target_filename in remediated_content:
+                        content = remediated_content[target_filename]
+                        logger.info(f"Using remediated content for: {target_filename}")
+                    else:
+                        # Try to read from preview location
+                        preview_file = Path("./llm_outputs/preview/update") / Path(target_filename).name
+                        if preview_file.exists():
+                            content = read(preview_file)
+                            logger.info(f"Reading from preview: {preview_file}")
+                    
+                    if not content:
+                        logger.warning(f"No content found for UPDATE: {target_filename}")
+                        continue
+                    
+                    # Apply to repository
+                    # Extract just the filename if it includes path components
+                    just_filename = Path(target_filename).name
+                    target_path = working_dir_path / just_filename
+                    write(target_path, content)
+                    
+                    if self.console_display:
+                        self.console_display.show_status(f"Applied UPDATE: {target_filename}", "success")
+                    logger.info(f"Applied UPDATE: {target_filename}")
+                    applied_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"Failed to apply UPDATE {target_filename}: {e}")
+                    if self.console_display:
+                        self.console_display.show_error(f"Failed to update {target_filename}: {e}")
+        
+        # Apply TOC changes
+        if hasattr(result, 'toc_results') and result.toc_results and result.toc_results.get('success'):
+            try:
+                content = None
                 
-                # Find the corresponding action in generation results
-                if action_type == 'create':
-                    for create_result in generation_results.get('create_results', []):
-                        action = create_result.get('action')
-                        if action and (action.filename == filename or action.target_file == filename):
-                            # Apply the remediated content
-                            file_path = working_dir_path / filename
-                            mkdir(file_path.parent)
-                            write(file_path, result['final_content'])
-                            logger.info(f"Created (remediated): {filename}")
-                            break
-                elif action_type == 'update':
-                    for update_result in generation_results.get('update_results', []):
-                        action = update_result.get('action')
-                        if action and (action.filename == filename or action.target_file == filename):
-                            # Apply the remediated content
-                            file_path = working_dir_path / filename
-                            write(file_path, result['final_content'])
-                            logger.info(f"Updated (remediated): {filename}")
-                            break
+                # Get TOC content from results or preview file
+                if result.toc_results.get('content'):
+                    content = result.toc_results['content']
+                    logger.info("Using TOC content from results")
+                else:
+                    # Try to read from preview location
+                    working_dir_name = Path(result.working_directory_full_path).name
+                    preview_file = Path("./llm_outputs/preview/toc") / f"TOC_{working_dir_name}.yml"
+                    
+                    if preview_file.exists():
+                        content = read(preview_file)
+                        logger.info(f"Reading TOC from preview: {preview_file}")
+                
+                if content:
+                    # Apply to repository
+                    toc_path = working_dir_path / "TOC.yml"
+                    write(toc_path, content)
+                    
+                    if self.console_display:
+                        self.console_display.show_status("Applied TOC.yml updates", "success")
+                    logger.info("Applied TOC.yml updates")
+                    applied_count += 1
+                else:
+                    logger.warning("No TOC content found to apply")
+                    
+            except Exception as e:
+                logger.error(f"Failed to apply TOC.yml: {e}")
+                if self.console_display:
+                    self.console_display.show_error(f"Failed to update TOC.yml: {e}")
+        
+        # Update result flags
+        if result.generation_results:
+            result.generation_results['applied'] = True
+        if hasattr(result, 'toc_results') and result.toc_results:
+            result.toc_results['applied'] = True
+        
+        # Show summary
+        if self.console_display:
+            self.console_display.show_separator()
+            self.console_display.show_metric("Total files applied", str(applied_count))
+            self.console_display.show_status("All changes applied to repository", "success")
+        
+        logger.info(f"Applied {applied_count} changes to repository")
     
     def _execute_phase5(self, result: Result) -> None:
         """Execute Phase 5: TOC Management"""
@@ -802,126 +933,3855 @@ class ContentDeveloperOrchestrator:
         result.remediation_results = None
         result.remediation_ready = False
     
-    def _apply_all_changes(self, result: Result) -> None:
-        """Apply all changes from preview directories to the repository"""
-        logger.info("=== Applying All Changes to Repository ===")
-        
-        if not result.generation_ready:
-            logger.warning("No generated content to apply")
-            return
-            
-        working_dir_path = Path(result.working_directory_full_path)
-        applied_count = 0
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
         
         if self.console_display:
-            self.console_display.show_separator()
-            self.console_display.show_status("Applying changes to repository", "info")
+            self.console_display.show_error(str(error), "Phase 5 Failed")
         
-        # Apply CREATE files from current run only
-        for create_result in result.generation_results.get('create_results', []):
-            if create_result.get('success') and create_result.get('preview_path'):
-                try:
-                    # Read content from the specific preview file
-                    preview_path = Path(create_result['preview_path'])
-                    if not preview_path.exists():
-                        logger.warning(f"Preview file not found: {preview_path}")
-                        continue
-                        
-                    content = read(preview_path)
-                    
-                    # Get target filename from action
-                    action = create_result.get('action')
-                    if not action:
-                        continue
-                        
-                    target_filename = action.filename or action.target_file
-                    if not target_filename:
-                        continue
-                    
-                    # Apply to repository
-                    target_path = working_dir_path / target_filename
-                    mkdir(target_path.parent)
-                    write(target_path, content)
-                    
-                    if self.console_display:
-                        self.console_display.show_status(f"Applying to repository: {target_filename} (created)", "success")
-                    logger.info(f"Applied CREATE: {target_filename}")
-                    applied_count += 1
-                    
-                except Exception as e:
-                    logger.error(f"Failed to apply CREATE {target_filename}: {e}")
-                    if self.console_display:
-                        self.console_display.show_error(f"Failed to create {target_filename}: {e}")
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
         
-        # Apply UPDATE files from current run only
-        for update_result in result.generation_results.get('update_results', []):
-            if update_result.get('success') and update_result.get('preview_path'):
-                try:
-                    # Read content from the specific preview file
-                    preview_path = Path(update_result['preview_path'])
-                    if not preview_path.exists():
-                        logger.warning(f"Preview file not found: {preview_path}")
-                        continue
-                        
-                    content = read(preview_path)
-                    
-                    # Get target filename from action
-                    action = update_result.get('action')
-                    if not action:
-                        continue
-                        
-                    target_filename = action.filename or action.target_file
-                    if not target_filename:
-                        continue
-                    
-                    # Apply to repository
-                    target_path = working_dir_path / target_filename
-                    write(target_path, content)
-                    
-                    if self.console_display:
-                        self.console_display.show_status(f"Applying to repository: {target_filename} (updated)", "success")
-                    logger.info(f"Applied UPDATE: {target_filename}")
-                    applied_count += 1
-                    
-                except Exception as e:
-                    logger.error(f"Failed to apply UPDATE {target_filename}: {e}")
-                    if self.console_display:
-                        self.console_display.show_error(f"Failed to update {target_filename}: {e}")
-        
-        # Apply TOC changes from current run only
-        if hasattr(result, 'toc_results') and result.toc_results and result.toc_results.get('success') and result.toc_results.get('preview_path'):
-            try:
-                # Read content from the specific preview file
-                preview_path = Path(result.toc_results['preview_path'])
-                if preview_path.exists():
-                    content = read(preview_path)
-                    
-                    # Apply to repository
-                    toc_path = working_dir_path / "TOC.yml"
-                    write(toc_path, content)
-                    
-                    if self.console_display:
-                        self.console_display.show_status("Applying to repository: TOC.yml (updated)", "success")
-                    logger.info("Applied TOC.yml updates")
-                    applied_count += 1
-                else:
-                    logger.warning(f"TOC preview file not found: {preview_path}")
-                    
-            except Exception as e:
-                logger.error(f"Failed to apply TOC.yml: {e}")
-                if self.console_display:
-                    self.console_display.show_error(f"Failed to update TOC.yml: {e}")
-        
-        # Update result flags
-        if result.generation_results:
-            result.generation_results['applied'] = True
-        if hasattr(result, 'toc_results') and result.toc_results:
-            result.toc_results['applied'] = True
-        
-        # Show summary
         if self.console_display:
-            self.console_display.show_separator()
-            self.console_display.show_metric("Total files applied", str(applied_count))
-            self.console_display.show_status("All changes applied to repository", "success")
+            self.console_display.show_error(str(error), "Phase 2 Failed")
         
-        logger.info(f"Applied {applied_count} changes to repository") 
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 3 execution errors"""
+        logger.error(f"Phase 3 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 3 Failed")
+        
+        result.generation_results = None
+        result.generation_ready = False
+    
+    def _handle_phase4_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 4 execution errors"""
+        logger.error(f"Phase 4 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 4 Failed")
+        
+        result.remediation_results = None
+        result.remediation_ready = False
+    
+    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 5 execution errors"""
+        logger.error(f"Phase 5 failed: {error}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 5 Failed")
+        
+        result.toc_results = None
+        result.toc_ready = False
+    
+    def _handle_phase2_error(self, result: Result, error: Exception) -> None:
+        """Handle Phase 2 execution errors"""
+        import traceback
+        logger.error(f"Phase 2 failed with exception: {type(error).__name__}: {error}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        
+        if self.console_display:
+            self.console_display.show_error(str(error), "Phase 2 Failed")
+        
+        error_strategy = self.strategy_confirmator.confirm(None, True, str(error))
+        result.content_strategy = error_strategy
+        result.strategy_ready = False
+    
+    def _handle_phase3_error(self, result: Result, error: Exception) -> None:
+        result.content
