@@ -28,7 +28,9 @@ class SEOProcessor(LLMNativeProcessor):
             Tuple of (optimized_content, metadata)
         """
         if self.console_display:
-            self.console_display.show_operation(f"SEO optimization: {file_info.get('filename', 'unknown')}")
+            # Extract just the filename for display
+            display_name = Path(file_info.get('filename', 'unknown')).name
+            self.console_display.show_operation(f"SEO optimization: {display_name}")
         
         # Create the SEO remediation prompt
         prompt = get_seo_remediation_prompt(content, file_info, config.service_area)

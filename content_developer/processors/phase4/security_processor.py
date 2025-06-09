@@ -28,7 +28,9 @@ class SecurityProcessor(LLMNativeProcessor):
             Tuple of (remediated_content, metadata)
         """
         if self.console_display:
-            self.console_display.show_operation(f"Security review: {file_info.get('filename', 'unknown')}")
+            # Extract just the filename for display
+            display_name = Path(file_info.get('filename', 'unknown')).name
+            self.console_display.show_operation(f"Security review: {display_name}")
         
         # Create the security remediation prompt
         prompt = get_security_remediation_prompt(content, file_info, config.service_area)

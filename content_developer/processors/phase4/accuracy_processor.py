@@ -30,8 +30,10 @@ class AccuracyProcessor(LLMNativeProcessor):
             Tuple of (validated_content, metadata)
         """
         if self.console_display:
+            # Extract just the filename for display
+            display_name = Path(file_info.get('filename', 'unknown')).name
             self.console_display.show_operation(
-                f"Technical validation: {file_info.get('filename', 'unknown')}"
+                f"Technical validation: {display_name}"
             )
         
         # Create the accuracy validation prompt

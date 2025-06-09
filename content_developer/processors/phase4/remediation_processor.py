@@ -83,9 +83,11 @@ class ContentRemediationProcessor(SmartProcessor):
         for i, file_info in enumerate(files_to_process, 1):
             if self.console_display:
                 self.console_display.show_separator()
+                # Extract just the filename for display
+                display_filename = Path(file_info['filename']).name
                 self.console_display.show_metric(
                     "Processing", 
-                    f"File {i}/{len(files_to_process)}: {file_info['filename']}"
+                    f"File {i}/{len(files_to_process)}: {display_filename} (from preview)"
                 )
             
             try:
@@ -231,7 +233,7 @@ class ContentRemediationProcessor(SmartProcessor):
         
         logger.info(f"Writing to preview ({step}): {preview_path}")
         if self.console_display:
-            self.console_display.show_status(f"Writing to preview: {filename} ({step})", "info")
+            self.console_display.show_status(f"Writing to preview: {action_type}/{filename_only} ({step})", "info")
         return str(preview_path)
     
     def _create_summary(self, results: Dict) -> Dict:

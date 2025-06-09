@@ -390,10 +390,10 @@ class ContentDeveloperOrchestrator:
                 update_count = sum(1 for r in generation_results.get('update_results', []) if r.get('success'))
                 skip_count = sum(1 for r in generation_results.get('skip_results', []))
                 self.console_display.show_phase_summary("3: Content Generation", {
-                    "Files Created": create_count,
-                    "Files Updated": update_count,
+                    "Files Created (Preview)": create_count,
+                    "Files Updated (Preview)": update_count,
                     "Files Skipped": skip_count,
-                    "Saved to Preview": True
+                    "Status": "All content saved to preview directory"
                 })
             
             # Log summary
@@ -496,7 +496,7 @@ class ContentDeveloperOrchestrator:
             # Always set to preview mode - actual application happens at the end
             result.generation_results['applied'] = False
             if self.console_display:
-                self.console_display.show_status("Remediated content saved to preview", "success")
+                self.console_display.show_status("Preview files updated with remediated content", "success")
             
             # Show phase summary
             if self.console_display:
@@ -580,6 +580,9 @@ class ContentDeveloperOrchestrator:
                     # Always save to preview - actual application happens at the end
                     progress.update_func(description="Saving TOC preview")
                     toc_results['applied'] = False
+                    # Add info about which files were created vs updated
+                    toc_results['created_files'] = result.generation_results.get('created_files', [])
+                    toc_results['updated_files'] = result.generation_results.get('updated_files', [])
                     if toc_results.get('success') and not toc_results.get('changes_made'):
                         self.console_display.show_status("No TOC changes needed", "info")
                     elif toc_results.get('success'):
@@ -597,6 +600,9 @@ class ContentDeveloperOrchestrator:
                 
                 # Always save to preview - actual application happens at the end
                 toc_results['applied'] = False
+                # Add info about which files were created vs updated
+                toc_results['created_files'] = result.generation_results.get('created_files', [])
+                toc_results['updated_files'] = result.generation_results.get('updated_files', [])
             
             # Update result
             result.toc_results = toc_results
@@ -605,11 +611,19 @@ class ContentDeveloperOrchestrator:
             # Show phase summary
             if self.console_display:
                 entries_added = len(toc_results.get('entries_added', []))
-                self.console_display.show_phase_summary("5: TOC Management", {
-                    "Entries Added": entries_added,
-                    "Saved to Preview": toc_results.get('changes_made', False),
-                    "Status": toc_results.get('message', 'Completed')
-                })
+                # Count actual new entries (from created files)
+                new_entries = sum(1 for entry in toc_results.get('entries_added', []) 
+                                 if entry in toc_results.get('created_files', []))
+                verified_entries = entries_added - new_entries
+                
+                summary_data = {
+                    "New Entries Added": new_entries,
+                    "Existing Entries Verified": verified_entries,
+                    "Preview Status": "TOC saved to preview" if toc_results.get('changes_made') else "No changes needed",
+                    "Result": toc_results.get('message', 'Completed')
+                }
+                
+                self.console_display.show_phase_summary("5: TOC Management", summary_data)
             
             logger.info(f"Phase 5 completed: {toc_results.get('message', 'No message')}")
             

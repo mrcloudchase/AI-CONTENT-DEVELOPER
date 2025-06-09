@@ -162,8 +162,20 @@ def _display_successful_result(res: Dict, filename: str):
     """Display a successful file result"""
     if not res.get('preview_path'):
         return
-        
-    print(f"  • {filename}")
+    
+    # Clean up filename to show relative path only
+    # Remove any absolute path components
+    display_filename = filename
+    if '/' in display_filename:
+        # If it contains the working directory path, extract relative part
+        parts = display_filename.split('/')
+        # Look for common directory names that indicate start of relative path
+        for i, part in enumerate(parts):
+            if part in ['articles', 'docs', 'content']:
+                display_filename = '/'.join(parts[i:])
+                break
+    
+    print(f"  • {display_filename}")
     print(f"    Preview: {res['preview_path']}")
 
 
@@ -254,12 +266,14 @@ def _display_apply_reminder(result: Result):
                    not result.toc_results.get('applied', False))
     
     if generation_preview or toc_preview:
-        print(f"\n⚠️  Generated content is in preview mode!")
+        print(f"\n⚠️  All changes are in preview mode!")
+        print(f"   • Generated content saved to: ./llm_outputs/preview/")
         if generation_preview:
-            print(f"   • New/updated files are not applied")
+            print(f"   • Repository files: NOT modified")
         if toc_preview:
-            print(f"   • TOC changes are not applied")
-        print(f"   To apply changes to the repository, run with --apply-changes flag")
+            print(f"   • TOC.yml: NOT modified")
+        print(f"\n   ✅ To apply ALL changes to the repository:")
+        print(f"      Run with --apply-changes flag")
 
 
 def _display_skipped_results(skip_results: List[Dict]):
@@ -323,17 +337,27 @@ def _display_toc_results(toc_results: Dict):
         else:
             print(f"  • Applied to Repository: ❌ No (preview mode)")
         
-        # Show entries added
-        if entries_added := toc_results.get('entries_added', []):
-            print(f"  • Entries Added ({len(entries_added)}):")
-            for entry in entries_added[:5]:  # Show first 5
-                print(f"    - {entry}")
-            if len(entries_added) > 5:
-                print(f"    ... and {len(entries_added) - 5} more")
+        # Show TOC modifications
+        entries_added = toc_results.get('entries_added', [])
+        created_files = toc_results.get('created_files', [])
         
-        # Show entries verified
-        if entries_verified := toc_results.get('entries_verified', []):
-            print(f"  • Entries Verified: {len(entries_verified)}")
+        # Separate new entries from verified ones
+        new_entries = [e for e in entries_added if e in created_files]
+        verified_entries = [e for e in entries_added if e not in created_files]
+        
+        if new_entries:
+            print(f"  • New TOC Entries ({len(new_entries)}):")
+            for entry in new_entries[:3]:  # Show first 3
+                print(f"    - {entry}")
+            if len(new_entries) > 3:
+                print(f"    ... and {len(new_entries) - 3} more")
+        
+        if verified_entries:
+            print(f"  • Verified Entries ({len(verified_entries)}):")
+            for entry in verified_entries[:2]:  # Show first 2
+                print(f"    - {entry}")
+            if len(verified_entries) > 2:
+                print(f"    ... and {len(verified_entries) - 2} more")
         
         # Show preview path
         if preview_path := toc_results.get('preview_path'):
@@ -370,10 +394,46 @@ def _display_remediation_results(rem_results: Dict):
         print(f"\n  Details:")
         for res in rem_results['remediation_results'][:5]:  # Show first 5
             filename = res.get('filename', 'Unknown')
-            seo_ok = "✅" if res.get('seo_success') else "❌"
-            sec_ok = "✅" if res.get('security_success') else "❌"
-            acc_ok = "✅" if res.get('accuracy_success') else "❌"
-            print(f"    • {filename}: SEO {seo_ok} | Security {sec_ok} | Accuracy {acc_ok}")
+            # Clean up filename display
+            if '/' in filename:
+                parts = filename.split('/')
+                for i, part in enumerate(parts):
+                    if part in ['articles', 'docs', 'content']:
+                        filename = '/'.join(parts[i:])
+                        break
+            
+            print(f"    • {filename}:")
+            
+            # Show SEO improvements
+            if res.get('seo_success'):
+                seo_improvements = res.get('seo_metadata', {}).get('seo_improvements', [])
+                if seo_improvements:
+                    print(f"      - SEO: {len(seo_improvements)} improvements applied")
+                else:
+                    print(f"      - SEO: ✅ Already optimized")
+            else:
+                print(f"      - SEO: ❌ Failed")
+            
+            # Show security status
+            if res.get('security_success'):
+                security_issues = res.get('security_metadata', {}).get('security_issues_found', [])
+                if security_issues:
+                    print(f"      - Security: {len(security_issues)} issues remediated")
+                else:
+                    print(f"      - Security: ✅ No issues found")
+            else:
+                print(f"      - Security: ❌ Failed")
+            
+            # Show accuracy status
+            if res.get('accuracy_success'):
+                accuracy_score = res.get('accuracy_metadata', {}).get('accuracy_score', 0)
+                accuracy_issues = res.get('accuracy_metadata', {}).get('accuracy_issues', [])
+                if accuracy_issues:
+                    print(f"      - Accuracy: ✅ Validated ({accuracy_score*100:.0f}%) - {len(accuracy_issues)} corrections made")
+                else:
+                    print(f"      - Accuracy: ✅ Validated ({accuracy_score*100:.0f}%)")
+            else:
+                print(f"      - Accuracy: ❌ Failed")
         
         if len(rem_results['remediation_results']) > 5:
             print(f"    ... and {len(rem_results['remediation_results']) - 5} more files") 
