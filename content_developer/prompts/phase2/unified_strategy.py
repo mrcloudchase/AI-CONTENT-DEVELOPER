@@ -52,9 +52,20 @@ IMPORTANT GUIDELINES:
 
 DECISION TYPES:
 - CREATE: Create new file when no suitable content exists
+    - Use descriptive filenames following the patterns below
     - If creating content, use the content standards to determine the content type
 - UPDATE: Enhance existing file when it partially addresses the goal
+    - Must use the exact filename from the existing file
 - SKIP: Skip when existing content already excellently addresses the goal
+    - Must use the exact filename from the existing file
+
+FILE NAMING PATTERNS FOR CREATE ACTIONS:
+For CREATE actions, use descriptive filenames (no path components) following these patterns based on content type:
+- Concepts: "concepts-{{feature-name}}.md" (e.g., "concepts-cilium-endpoint-slices.md")
+- How-to guides: "how-to-{{task-name}}.md" (e.g., "how-to-configure-network-policies.md")
+- Tutorials: "tutorial-{{scenario}}.md" (e.g., "tutorial-deploy-microservices.md")
+- Overview: "overview-{{topic}}.md" (e.g., "overview-networking-features.md")
+- Quickstart: "quickstart-{{feature}}.md" (e.g., "quickstart-azure-cni.md")
 
 CONTENT STANDARDS:
 {content_types_info}
@@ -66,7 +77,7 @@ Return your response as valid JSON matching this structure:
   "decisions": [
     {{
       "action": "CREATE|UPDATE|SKIP",
-      "target_file": "path/to/file.md or null for SKIP",
+      "target_file": "REQUIRED: For CREATE use descriptive filename (no paths). For UPDATE/SKIP use exact filename from existing files",
       "file_title": "Title for the file",
       "content_type": "the content type from the content standards",
       "sections": ["Main sections to include/update"],
@@ -81,7 +92,12 @@ Return your response as valid JSON matching this structure:
   "confidence": 0.0-1.0,
   
   "summary": "Brief summary of the overall strategy and key decisions"
-}}"""
+}}
+
+CRITICAL: The target_file field is REQUIRED for all actions and must NEVER be null:
+- CREATE: Use a descriptive filename following the patterns above (no directory paths)
+- UPDATE: Use the exact filename from the existing file being updated
+- SKIP: Use the exact filename from the existing file being skipped"""
 
 
 def _format_files_for_display(relevant_files):
@@ -144,11 +160,18 @@ Your role is to:
 2. Analyze existing documentation comprehensively
 3. Make strategic decisions about content creation, updates, or skipping
 4. Ensure all decisions align with the stated goal
+5. ALWAYS provide a valid target_file for every decision (never null or empty)
 
 Key principles:
 - Quality over quantity - don't create content unless it adds genuine value
 - Reuse and enhance existing content when possible
 - Skip when excellent content already exists
 - Every decision must clearly support the user's specific goal
+- Target files must follow proper naming conventions without directory paths
+
+File naming requirements:
+- CREATE actions: Use descriptive filenames like "concepts-feature-name.md" 
+- UPDATE/SKIP actions: Use the exact filename from the existing file
+- NEVER use null, empty, or path-containing values for target_file
 
 Be strategic, thoughtful, and focused on delivering maximum value with minimum redundancy.""" 

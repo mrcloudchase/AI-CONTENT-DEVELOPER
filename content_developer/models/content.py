@@ -21,7 +21,7 @@ class ContentStrategy:
 class ContentDecision:
     """Represents a strategic decision about content to create or update"""
     action: str  # CREATE, UPDATE, or SKIP
-    target_file: Optional[str]  # Can be None for SKIP actions
+    target_file: str  # Required for all actions - never null
     file_title: str
     content_type: str
     sections: List[str]
@@ -44,6 +44,10 @@ class ContentDecision:
     specific_sections: Optional[List[str]] = None
     
     def __post_init__(self):
+        # Validate target_file
+        if not self.target_file or self.target_file.strip() == "":
+            raise ValueError(f"target_file is required for {self.action} action")
+            
         # Map new fields to legacy fields for compatibility
         if self.target_file and not self.filename:
             self.filename = self.target_file

@@ -75,7 +75,7 @@ class ContentGenerator(SmartProcessor):
                 if content:
                     preview_dir = Path("./llm_outputs/preview/create")
                     mkdir(preview_dir)
-                    filename = getattr(decision, 'filename', getattr(decision, 'target_file', f'file_{i}.md'))
+                    filename = decision.target_file  # Now guaranteed to be non-null
                     preview_path = preview_dir / Path(filename).name
                     write(preview_path, content)
                     preview_path = str(preview_path)
@@ -91,14 +91,14 @@ class ContentGenerator(SmartProcessor):
                 }
                 results['create_results'].append(result)
                 if result['success']:
-                    results['created_files'].append(getattr(decision, 'filename', getattr(decision, 'target_file', '')))
+                    results['created_files'].append(decision.target_file)
             elif decision.action == "UPDATE":
                 # Save preview file for UPDATE
                 preview_path = None
                 if content:
                     preview_dir = Path("./llm_outputs/preview/update")
                     mkdir(preview_dir)
-                    filename = getattr(decision, 'filename', getattr(decision, 'target_file', f'file_{i}.md'))
+                    filename = decision.target_file  # Now guaranteed to be non-null
                     preview_path = preview_dir / Path(filename).name
                     write(preview_path, content)
                     preview_path = str(preview_path)
@@ -114,7 +114,7 @@ class ContentGenerator(SmartProcessor):
                 }
                 results['update_results'].append(result)
                 if result['success']:
-                    results['updated_files'].append(getattr(decision, 'filename', getattr(decision, 'target_file', '')))
+                    results['updated_files'].append(decision.target_file)
         
         # Add summary
         results['summary'] = self._create_summary(results)

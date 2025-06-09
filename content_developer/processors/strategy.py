@@ -388,11 +388,17 @@ class ContentStrategyProcessor(LLMNativeProcessor):
         
         # Parse decisions with new format
         parsed_decisions = []
-        for decision_data in result.get('decisions', []):
+        for i, decision_data in enumerate(result.get('decisions', [])):
+            # Validate target_file is present and not null
+            target_file = decision_data.get('target_file')
+            if not target_file or target_file.strip() == "":
+                logger.error(f"Decision {i+1} has null or empty target_file: {decision_data}")
+                raise ValueError(f"Decision {i+1} is missing required target_file field. Action: {decision_data.get('action')}")
+            
             # Create ContentDecision with new format
             decision = ContentDecision(
                 action=decision_data.get('action', 'CREATE'),
-                target_file=decision_data.get('target_file'),
+                target_file=target_file.strip(),
                 file_title=decision_data.get('file_title', ''),
                 content_type=decision_data.get('content_type', 'concept'),
                 sections=decision_data.get('sections', []),
