@@ -115,17 +115,17 @@ Examples:
     --service "AKS" --audience "developers new to Kubernetes" \\
     --audience-level beginner -m tutorial.md
   
-  # Run specific phases only
+  # Run phases 1-3 only (analysis, strategy, generation)
   python main.py --repo https://github.com/user/repo --goal "Update networking guides" \\
-    --service "AKS" --phases 12 -m material.docx
+    --service "AKS" --phases 3 -m material.docx
   
   # Auto-confirm selections and apply changes
   python main.py --repo https://github.com/user/repo --goal "Create tutorials" \\
     --service "AKS" --auto-confirm --apply-changes -m tutorial.md
   
-  # Apply generated content and update TOC (phases 3-4)
+  # Run all phases (1-5) and apply generated content
   python main.py --repo https://github.com/user/repo --goal "Update docs" \\
-    --service "AKS" --phases 34 --apply-changes -m guide.pdf
+    --service "AKS" --apply-changes -m guide.pdf
 
 Environment Variables:
   AZURE_OPENAI_ENDPOINT              - Azure OpenAI endpoint URL
@@ -205,7 +205,7 @@ def add_workflow_arguments(parser: argparse.ArgumentParser):
     workflow.add_argument(
         "--phases", 
         default="all", 
-        help=f"Phases to run: 1-{MAX_PHASES}, combinations (e.g., '12', '34'), or 'all' (default: all)"
+        help=f"Run phases from 1 up to specified phase (1-{MAX_PHASES}) or 'all' (default: all)"
     )
     
     workflow.add_argument(
@@ -272,9 +272,8 @@ def add_debug_arguments(parser: argparse.ArgumentParser):
 def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace):
     """Validate parsed arguments"""
     # Validate phases
-    valid_phases = "".join(str(i) for i in range(1, MAX_PHASES + 1))
-    if args.phases != "all" and not all(phase in valid_phases for phase in args.phases):
-        parser.error(f"--phases must be a combination of {', '.join(valid_phases)}, or 'all'")
+    if args.phases != "all" and not (args.phases.isdigit() and 1 <= int(args.phases) <= MAX_PHASES):
+        parser.error(f"--phases must be a number between 1 and {MAX_PHASES}, or 'all'")
     
     # Validate repository URL
     if not is_valid_url(args.repo_url):

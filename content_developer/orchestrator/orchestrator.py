@@ -88,11 +88,12 @@ class ContentDeveloperOrchestrator:
         """Parse the maximum phase to execute from config"""
         if self.config.phases == "all":
             max_phase = MAX_PHASES
-        elif self.config.phases.isdigit():
+        elif self.config.phases.isdigit() and 1 <= int(self.config.phases) <= MAX_PHASES:
             max_phase = int(self.config.phases)
         else:
-            # Handle combinations like "123", "34", etc.
-            max_phase = max(int(p) for p in self.config.phases if p.isdigit()) if any(p.isdigit() for p in self.config.phases) else 1
+            # Invalid phase specification, default to all phases
+            logger.warning(f"Invalid phases value '{self.config.phases}', defaulting to all phases")
+            max_phase = MAX_PHASES
         
         logger.info(f"Phases parsing: config.phases='{self.config.phases}' -> max_phase={max_phase}")
         return max_phase
