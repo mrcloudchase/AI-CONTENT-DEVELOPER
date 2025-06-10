@@ -274,8 +274,25 @@ class ContentDeveloperOrchestrator:
                             return
             else:
                 # Original flow
-                chunks = self._discover_content(working_dir_path, result.working_directory)
-                strategy = self._generate_strategy(chunks, result.material_summaries, result.working_directory)
+                # Discover content chunks
+                discovery_processor = ContentDiscoveryProcessor(self.client, self.config, self.console_display)
+                discovery_processor.set_phase_step(2, 1)
+                chunks = discovery_processor.process(
+                    working_dir_path,
+                    self.repo_manager.extract_name(self.config.repo_url),
+                    result.working_directory
+                )
+                logger.info(f"ContentDiscoveryProcessor returned {len(chunks)} chunks")
+                
+                # Generate content strategy
+                strategy_processor = ContentStrategyProcessor(self.client, self.config, self.console_display)
+                strategy_processor.set_phase_step(2, 2)
+                strategy = strategy_processor.process(
+                    chunks, result.material_summaries, self.config,
+                    self.repo_manager.extract_name(self.config.repo_url),
+                    result.working_directory
+                )
+                logger.info(f"ContentStrategyProcessor returned strategy: {strategy.summary[:50]}...")
             
             # Update result
             result.content_strategy = strategy
@@ -299,30 +316,7 @@ class ContentDeveloperOrchestrator:
         except Exception as e:
             self._handle_phase2_error(result, e)
     
-    def _discover_content(self, working_dir_path: Path, working_directory: str) -> list:
-        """Discover and chunk content in the working directory"""
-        processor = ContentDiscoveryProcessor(self.client, self.config, self.console_display)
-        processor.set_phase_step(2, 1)
-        chunks = processor.process(
-            working_dir_path,
-            self.repo_manager.extract_name(self.config.repo_url),
-            working_directory
-        )
-        logger.info(f"ContentDiscoveryProcessor returned {len(chunks)} chunks")
-        return chunks
-    
-    def _generate_strategy(self, chunks: list, materials: list, 
-                          working_directory: str) -> 'ContentStrategy':
-        """Generate content strategy based on discovered chunks"""
-        processor = ContentStrategyProcessor(self.client, self.config, self.console_display)
-        processor.set_phase_step(2, 2)
-        strategy = processor.process(
-            chunks, materials, self.config,
-            self.repo_manager.extract_name(self.config.repo_url),
-            working_directory
-        )
-        logger.info(f"ContentStrategyProcessor returned strategy: {strategy.summary[:50]}...")
-        return strategy
+
     
     def _handle_phase2_error(self, result: Result, error: Exception) -> None:
         """Handle Phase 2 execution errors"""
@@ -373,8 +367,14 @@ class ContentDeveloperOrchestrator:
                     )
             else:
                 # Original flow
-                generation_results = self._generate_content(
-                    result, working_dir_path, result.working_directory
+                generator = ContentGenerator(self.client, self.config, self.console_display)
+                generator.set_phase_step(3, 1)  # Phase 3, Step 1: Main generation
+                generation_results = generator.process(
+                    result.content_strategy,
+                    result.material_summaries,
+                    working_dir_path,
+                    self.repo_manager.extract_name(self.config.repo_url),
+                    result.working_directory
                 )
             
             # Store results
@@ -403,18 +403,7 @@ class ContentDeveloperOrchestrator:
         except Exception as e:
             self._handle_phase3_error(result, e)
     
-    def _generate_content(self, result: Result, working_dir_path: Path, 
-                         working_directory: str) -> Dict:
-        """Generate content using ContentGenerator"""
-        generator = ContentGenerator(self.client, self.config, self.console_display)
-        generator.set_phase_step(3, 1)  # Phase 3, Step 1: Main generation
-        return generator.process(
-            result.content_strategy,
-            result.material_summaries,
-            working_dir_path,
-            self.repo_manager.extract_name(self.config.repo_url),
-            working_directory
-        )
+
     
     def _log_generation_summary(self, generation_results: Dict) -> None:
         """Log content generation summary"""
@@ -782,47 +771,7 @@ class ContentDeveloperOrchestrator:
         # If no console display, just return true
         return True
     
-    def _extract_service_keywords(self, service_area: str) -> List[str]:
-        """Extract keywords from service area string for directory matching"""
-        if not service_area:
-            return []
-        
-        # Common service mappings
-        service_mappings = {
-            'azure kubernetes service': ['aks', 'kubernetes'],
-            'aks': ['aks', 'kubernetes'],
-            'azure machine learning': ['ml', 'machine-learning', 'aml'],
-            'azure cognitive services': ['cognitive', 'ai'],
-            'azure storage': ['storage', 'blob', 'files'],
-            'azure app service': ['app-service', 'webapp'],
-            'azure functions': ['functions', 'serverless'],
-            'azure sql': ['sql', 'database'],
-            'cosmos db': ['cosmos', 'cosmosdb'],
-            'azure devops': ['devops', 'pipelines'],
-            'azure monitor': ['monitor', 'monitoring', 'logs'],
-            'azure networking': ['network', 'vnet', 'networking'],
-            'azure compute': ['compute', 'vm', 'virtual-machines'],
-        }
-        
-        # Normalize service area
-        service_lower = service_area.lower().strip()
-        
-        # Check if we have a known mapping
-        for key, keywords in service_mappings.items():
-            if key in service_lower:
-                return keywords
-        
-        # Otherwise, extract meaningful words
-        # Remove common words and split
-        stop_words = {'azure', 'service', 'services', 'the', 'and', 'or', 'for'}
-        words = service_lower.split()
-        keywords = [w for w in words if w not in stop_words and len(w) > 2]
-        
-        # Add hyphenated versions
-        if len(keywords) > 1:
-            keywords.append('-'.join(keywords))
-        
-        return keywords[:5]  # Limit to 5 keywords
+
     
     def _run_toc_phase(self, working_dir_path: Path, created_files: list, updated_files: list, 
                       strategy: 'ContentStrategy') -> Dict:
@@ -839,28 +788,7 @@ class ContentDeveloperOrchestrator:
             }
         )
     
-    def _apply_toc_changes(self, toc_results: Dict, working_dir_path: Path) -> None:
-        """DEPRECATED: No longer used - all application happens in _apply_all_changes()
-        Apply TOC changes to the repository"""
-        logger.info("Applying TOC changes to repository...")
-        
-        toc_path = working_dir_path / "TOC.yml"
-        
-        # The LLM should have returned the complete updated TOC content
-        updated_content = toc_results.get('content', '')
-        
-        if not updated_content:
-            logger.error("No TOC content to apply")
-            return
-        
-        # Write the updated TOC
-        write(toc_path, updated_content)
-        logger.info(f"Updated: TOC.yml")
-        
-        # Log which entries were added
-        entries_added = toc_results.get('entries_added', [])
-        if entries_added:
-            logger.info(f"Added {len(entries_added)} entries to TOC: {', '.join(entries_added)}")
+
     
     def _setup_directory(self, repo_path: Path, working_dir: str) -> Dict:
         """Setup and validate working directory"""

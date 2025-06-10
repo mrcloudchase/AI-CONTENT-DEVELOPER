@@ -5,7 +5,6 @@ import hashlib
 from functools import wraps
 from typing import Callable
 import logging
-import re
 import shutil
 from pathlib import Path
 
@@ -33,24 +32,4 @@ def error_handler(func: Callable) -> Callable:
             return None
     return wrapper
 
-def extract_from_markdown_block(content: str) -> str:
-    """Extract content from markdown code blocks.
-    
-    Simply removes the most common markdown fence patterns.
-    For complex cases, the LLM will handle it naturally.
-    """
-    if not content:
-        return content
-    
-    content = content.strip()
-    
-    # Check for common fence patterns
-    if content.startswith('```') and content.endswith('```'):
-        # Find first newline after opening fence
-        first_newline = content.find('\n')
-        if first_newline > 0:
-            # Remove opening fence and closing fence
-            return content[first_newline + 1:-3].strip()
-    
-    # Return as-is if no fence found
-    return content 
+ 

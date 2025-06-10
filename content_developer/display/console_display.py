@@ -1,5 +1,5 @@
 """
-Console display manager using Rich for beautiful output
+Console display module for AI Content Developer
 """
 from typing import Dict, List, Optional, Any, Union
 from contextlib import contextmanager
@@ -10,9 +10,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 from rich.panel import Panel
 from rich.table import Table
 from rich.syntax import Syntax
-from rich.layout import Layout
 from rich.live import Live
-from rich.columns import Columns
 from rich.text import Text
 from rich.markdown import Markdown
 from rich import box

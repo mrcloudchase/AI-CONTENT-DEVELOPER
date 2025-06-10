@@ -4,7 +4,6 @@ Content generation processor that orchestrates creation and update operations
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import logging
-import re
 import json
 
 from ..models import Config, ContentDecision, DocumentChunk
@@ -238,13 +237,16 @@ class ContentGenerationProcessor(LLMNativeProcessor):
         chunk_context = "No additional chunk context available."
         
         # Get content type info from existing content
-        frontmatter_match = re.match(r'^---\n(.*?)\n---', existing_content, re.DOTALL)
         ms_topic = 'how-to'  # default
-        if frontmatter_match:
-            frontmatter = frontmatter_match.group(1)
-            ms_topic_match = re.search(r'ms\.topic:\s*(\S+)', frontmatter)
-            if ms_topic_match:
-                ms_topic = ms_topic_match.group(1)
+        if existing_content.startswith('---\n'):
+            # Find the end of frontmatter
+            end_fm_pos = existing_content.find('\n---\n', 4)
+            if end_fm_pos > 0:
+                frontmatter = existing_content[4:end_fm_pos]
+                # Look for ms.topic in frontmatter
+                for line in frontmatter.split('\n'):
+                    if line.strip().startswith('ms.topic:'):
+                        ms_topic = line.split(':', 1)[1].strip()
         
         # Map ms.topic to content type
         ms_topic_to_content_type = {

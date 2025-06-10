@@ -2,7 +2,6 @@
 Base processor class for AI Content Developer
 """
 import json
-import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -58,11 +57,6 @@ class SmartProcessor:
         
         result = json.loads(response.choices[0].message.content)
         
-        # Extract and display thinking if present
-        # COMMENTED OUT to prevent duplicate thinking displays
-        # The individual processors will handle thinking display themselves
-        # self._display_thinking(result, operation_name)
-        
         # Automatically save ALL LLM interactions for complete observability
         if operation_name:
             # Use phase/step directory structure
@@ -99,11 +93,6 @@ class SmartProcessor:
         response = self.client.chat.completions.create(**kwargs)
         
         result = self._parse_llm_response(response, response_format)
-        
-        # Extract and display thinking if present
-        # COMMENTED OUT to prevent duplicate thinking displays
-        # The individual processors will handle thinking display themselves
-        # self._display_thinking(result, operation_name)
         
         # Automatically save ALL LLM interactions for complete observability
         if operation_name:
@@ -154,72 +143,7 @@ class SmartProcessor:
         
         return "\n".join(prompt_parts)
     
-    def _display_thinking(self, result: Dict, operation_name: str = None) -> None:
-        """Extract and display thinking from LLM response"""
-        if not self.console_display:
-            return
-            
-        # Look for thinking in various places it might appear
-        thinking = None
-        
-        # Check direct thinking field
-        if isinstance(result, dict):
-            thinking = result.get('thinking') or result.get('reasoning') or result.get('analysis')
-            
-            # Check for thinking in nested structures
-            if not thinking and 'data' in result:
-                data = result['data']
-                if isinstance(data, dict):
-                    thinking = data.get('thinking') or data.get('reasoning')
-        
-        # Display thinking if found
-        if thinking:
-            title = f"🤔 AI Thinking"
-            if operation_name:
-                title += f" - {operation_name}"
-            
-            # Format numbered steps if present
-            formatted_thinking = self._format_numbered_thinking(thinking)
-            self.console_display.show_thinking(formatted_thinking, title)
-    
-    def _format_numbered_thinking(self, thinking) -> str:
-        """Format thinking with proper numbered step formatting"""
-        if not thinking:
-            return ""
-            
-        # Handle different input types defensively
-        is_array_input = isinstance(thinking, list)
-        
-        if is_array_input:
-            # For array inputs, format each item as a separate line
-            formatted_lines = []
-            for i, item in enumerate(thinking, 1):
-                # Add bullet or number prefix for clarity
-                formatted_lines.append(f"[bold]{i}.[/bold] {str(item).strip()}")
-            return '\n'.join(formatted_lines)
-        elif not isinstance(thinking, str):
-            # Convert any other type to string
-            thinking = str(thinking)
-            
-        # For string inputs, handle as before
-        lines = thinking.split('\n')
-        formatted_lines = []
-        
-        for line in lines:
-            line = line.strip()
-            if line:
-                # Check if line starts with number pattern (1., 2., etc.)
-                if line and len(line) > 2 and line[0].isdigit() and line[1] == '.':
-                    # This is a numbered step - make it bold
-                    formatted_lines.append(f"[bold]{line}[/bold]")
-                else:
-                    # Regular line - indent if it follows a numbered line
-                    if formatted_lines and formatted_lines[-1].startswith("[bold]"):
-                        formatted_lines.append(f"   {line}")
-                    else:
-                        formatted_lines.append(line)
-        
-        return '\n'.join(formatted_lines)
+
     
     def _build_llm_kwargs(self, messages: List[Dict[str, str]], model: str, 
                          response_format: Optional[str]) -> Dict:
@@ -280,7 +204,9 @@ class SmartProcessor:
             return fallback
         
         # Remove unsafe characters and limit length
-        safe_name = re.sub(r'[^\w\s-]', '_', source)
+        # Simple character replacement instead of regex
+        safe_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_- '
+        safe_name = ''.join(c if c in safe_chars else '_' for c in source)
         return safe_name[:50]
     
     def _save_prompt_to_file(self, base_path: Path, prompt: str, operation: str) -> None:

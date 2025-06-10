@@ -39,10 +39,10 @@ class Result:
     generation_results: Optional[Dict] = None
     generation_ready: bool = False
     
-    # Phase 4 results
-    toc_results: Optional[Dict] = None
-    toc_ready: bool = False
-    
-    # Phase 5 results
+    # Phase 4 results (remediation)
     remediation_results: Optional[Dict] = None
-    remediation_ready: bool = False 
+    remediation_ready: bool = False
+    
+    # Phase 5 results (TOC management)
+    toc_results: Optional[Dict] = None
+    toc_ready: bool = False 

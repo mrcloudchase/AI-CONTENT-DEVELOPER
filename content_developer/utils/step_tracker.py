@@ -19,9 +19,7 @@ class StepTracker:
         """Reset step counter for a phase (optional)"""
         self.phase_steps[phase] = 0
     
-    def get_current_step(self, phase: int) -> int:
-        """Get the current step number without incrementing"""
-        return self.phase_steps[phase]
+
 
 
 # Global instance

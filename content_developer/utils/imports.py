@@ -26,8 +26,6 @@ HAS_RICH = False
 HAS_DOCX = False
 HAS_PDF = False
 HAS_WEB = False
-HAS_TENACITY = False
-HAS_PROGRESS = False
 
 # Store imported modules
 imported_modules = {}
@@ -64,7 +62,7 @@ def safe_import(module: str, items: Optional[List[str]] = None,
 
 def initialize_imports():
     """Initialize all dynamic imports and set availability flags"""
-    global HAS_OPENAI, HAS_RICH, HAS_DOCX, HAS_PDF, HAS_WEB, HAS_TENACITY, HAS_PROGRESS
+    global HAS_OPENAI, HAS_RICH, HAS_DOCX, HAS_PDF, HAS_WEB
     
     for module, items, required, msg in IMPORTS:
         if items:
@@ -83,8 +81,6 @@ def initialize_imports():
     HAS_DOCX = 'Document' in imported_modules
     HAS_PDF = 'PdfReader' in imported_modules
     HAS_WEB = 'requests' in imported_modules and 'BeautifulSoup' in imported_modules
-    HAS_TENACITY = 'retry' in imported_modules
-    HAS_PROGRESS = 'Progress' in imported_modules
     
     return imported_modules
 

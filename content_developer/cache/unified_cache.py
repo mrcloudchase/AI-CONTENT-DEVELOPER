@@ -273,20 +273,4 @@ class UnifiedCache:
         logger.info(f"Cleaned up manifest: {len(entries_to_remove)} file entries, "
                    f"{len(chunks_to_remove)} chunk entries")
     
-    def get_cache_stats(self) -> Dict[str, Any]:
-        """Get statistics about the cache"""
-        total_files = len(list(self.path.glob("*.json"))) - 1  # Exclude manifest
-        total_size = sum(f.stat().st_size for f in self.path.glob("*.json"))
-        
-        # Count file entries vs chunk entries in manifest
-        file_entries = sum(1 for entry in self.manifest.values() if 'chunk_ids' in entry)
-        chunk_entries = sum(1 for entry in self.manifest.values() if 'meta' in entry)
-        
-        return {
-            'total_entries': len(self.manifest),
-            'file_entries': file_entries,
-            'chunk_entries': chunk_entries,
-            'total_files': total_files,
-            'total_size_mb': round(total_size / (1024 * 1024), 2),
-            'cache_path': str(self.path)
-        }
+
