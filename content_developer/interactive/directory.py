@@ -86,34 +86,60 @@ class DirectoryConfirmation(GenericInteractive):
     
     def _extract_directories(self, structure: str) -> List[str]:
         """Extract directory paths from repository structure"""
-        directories = []
-        
         if not structure:
-            return directories
+            return []
         
-        # Parse structure to find directories containing documentation
+        # Extract all potential directory paths
+        all_directories = self._extract_all_directory_paths(structure)
+        
+        # Filter to documentation directories only
+        doc_directories = self._filter_documentation_directories(all_directories)
+        
+        return sorted(set(doc_directories))
+    
+    def _extract_all_directory_paths(self, structure: str) -> List[str]:
+        """Extract all directory paths from structure text"""
+        directories = []
         lines = structure.split('\n')
+        
         for line in lines:
-            # Look for lines that represent directories
-            if '/' in line and not line.strip().startswith('.'):
-                # Extract the directory path
-                parts = line.split('/')
-                if len(parts) >= 2 and 'articles' in parts[0]:
-                    # Reconstruct the path
-                    path = '/'.join(parts).strip()
-                    # Remove any trailing characters or tree symbols
-                    path = path.split(' ')[0].rstrip('/')
-                    if path and path not in directories and not path.endswith('.md'):
-                        directories.append(path)
+            directory = self._extract_directory_from_line(line)
+            if directory and directory not in directories:
+                directories.append(directory)
         
-        # Filter to only include actual documentation directories
+        return directories
+    
+    def _extract_directory_from_line(self, line: str) -> Optional[str]:
+        """Extract directory path from a single line"""
+        # Skip lines that don't represent directories
+        if '/' not in line or line.strip().startswith('.'):
+            return None
+        
+        # Extract the directory path
+        parts = line.split('/')
+        if len(parts) < 2 or 'articles' not in parts[0]:
+            return None
+        
+        # Reconstruct and clean the path
+        path = '/'.join(parts).strip()
+        path = path.split(' ')[0].rstrip('/')
+        
+        # Skip if it's a file, not a directory
+        if not path or path.endswith('.md'):
+            return None
+        
+        return path
+    
+    def _filter_documentation_directories(self, directories: List[str]) -> List[str]:
+        """Filter to only include actual documentation directories"""
         doc_dirs = []
-        for d in directories:
-            # Skip media/includes directories
-            if not any(skip in d for skip in ['media', 'includes', 'images']):
-                doc_dirs.append(d)
+        excluded_keywords = ['media', 'includes', 'images']
         
-        return sorted(set(doc_dirs))
+        for directory in directories:
+            if not any(keyword in directory for keyword in excluded_keywords):
+                doc_dirs.append(directory)
+        
+        return doc_dirs
     
     def prompt_user(self, config: Config, directories: List[str]) -> Optional[str]:
         """Prompt user to select the correct working directory

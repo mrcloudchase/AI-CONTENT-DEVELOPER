@@ -84,8 +84,22 @@ class ContentExtractor:
         Document = get_import('Document')
         if not Document:
             return None
+        
+        try:
+            doc = Document(path)
+        except Exception as e:
+            error_msg = str(e).lower()
+            if "file is not a zip file" in error_msg or "bad zip file" in error_msg:
+                logger.error(
+                    f"Cannot read {path.name}: This appears to be an encrypted or "
+                    f"password-protected Word document. Please remove the password "
+                    f"protection in Word and save the file before using it with this tool."
+                )
+                return None
+            else:
+                logger.error(f"Failed to open DOCX file {path.name}: {e}")
+                return None
             
-        doc = Document(path)
         parts = [paragraph.text.strip() for paragraph in doc.paragraphs if paragraph.text.strip()]
         
         # Extract table content
