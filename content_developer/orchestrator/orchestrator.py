@@ -856,13 +856,3 @@ class ContentDeveloperOrchestrator:
         
         result.remediation_results = None
         result.remediation_ready = False
-    
-    def _handle_phase5_error(self, result: Result, error: Exception) -> None:
-        """Handle Phase 5 execution errors"""
-        logger.error(f"Phase 5 failed: {error}")
-        
-        if self.console_display:
-            self.console_display.show_error(str(error), "Phase 5 Failed")
-        
-        result.toc_results = None
-        result.toc_ready = False
