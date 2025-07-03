@@ -47,7 +47,8 @@ class ContentDeveloperOrchestrator:
             api_version=config.api_version,
         )
         
-        self.repo_manager = RepositoryManager()
+        # Initialize repository manager with GitHub token if available
+        self.repo_manager = RepositoryManager(github_token=config.github_token)
         self.dir_confirmator = DirectoryConfirmation(config, self.client)
         self.strategy_confirmator = StrategyConfirmation(config)
         
@@ -153,11 +154,15 @@ class ContentDeveloperOrchestrator:
     
     def _setup_directory(self, repo_path: Path, working_dir: str) -> Dict:
         """Setup and validate working directory"""
-        # Strip repository name if included
-        working_dir = self._normalize_working_directory(repo_path, working_dir)
-        
-        # Get full path
-        full_path = repo_path / working_dir
+        # Handle empty string as repository root
+        if working_dir == '':
+            full_path = repo_path
+            logger.info("Using repository root as working directory")
+        else:
+            # Strip repository name if included
+            working_dir = self._normalize_working_directory(repo_path, working_dir)
+            # Get full path
+            full_path = repo_path / working_dir
         
         # Validate directory
         validation_result = self._validate_directory(full_path, working_dir)

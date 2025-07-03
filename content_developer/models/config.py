@@ -4,7 +4,8 @@ Configuration model for AI Content Developer
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
+from typing import List, Optional
+import logging
 
 # Load environment variables from .env file if it exists
 from dotenv import load_dotenv
@@ -12,6 +13,8 @@ load_dotenv()
 
 from ..utils import mkdir
 from ..constants import DEFAULT_COMPLETION_MODEL, DEFAULT_EMBEDDING_MODEL
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -38,6 +41,9 @@ class Config:
     skip_toc: bool = False
     check_material_sufficiency: bool = True
     
+    # GitHub configuration (optional)
+    github_token: Optional[str] = None
+    
     # Azure OpenAI configuration
     azure_endpoint: str = ""
     api_version: str = "2024-08-01-preview"
@@ -59,6 +65,7 @@ class Config:
         """Post-initialization setup"""
         self._validate_azure_config()
         self._load_deployment_config()
+        self._load_github_config()
         self._create_output_directories()
     
     def _validate_azure_config(self):
@@ -84,6 +91,26 @@ class Config:
         # Temperature settings
         self.temperature = float(os.getenv("AZURE_OPENAI_TEMPERATURE", "0.3"))
         self.creative_temperature = float(os.getenv("AZURE_OPENAI_CREATIVE_TEMPERATURE", "0.7"))
+    
+    def _load_github_config(self):
+        """Load optional GitHub configuration from environment"""
+        # Load GitHub token if available
+        self.github_token = os.getenv("GITHUB_TOKEN", "").strip()
+        
+        # Convert empty string to None for cleaner checks
+        if not self.github_token:
+            self.github_token = None
+        
+        # Log configuration status (without revealing token)
+        if self.github_token:
+            # Mask token for logging - show only first/last 4 chars
+            if len(self.github_token) > 8:
+                masked = f"{self.github_token[:4]}...{self.github_token[-4:]}"
+            else:
+                masked = "****"
+            logger.info(f"GitHub token loaded: {masked}")
+        else:
+            logger.info("No GitHub token configured - only public repositories accessible")
     
     def _create_output_directories(self):
         """Create all necessary output directories"""

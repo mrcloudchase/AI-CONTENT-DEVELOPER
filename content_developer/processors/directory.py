@@ -50,9 +50,23 @@ class DirectoryDetector(LLMNativeProcessor):
         """Validate the LLM result format and directory existence"""
         working_dir = result.get('working_directory', '')
         
-        if not working_dir:
+        # Handle special case where empty string means repository root
+        if working_dir == '':
+            # Empty string is valid - it means use the repository root
+            result['working_directory'] = ''  # Keep it as empty string
+            # Verify the repo root has .md files
+            md_files = list(repo_path.glob('*.md'))
+            if not md_files:
+                result['confidence'] = result.get('confidence', 0.5) * 0.7  # Reduce confidence
+                logger.warning("Repository root selected but contains no .md files")
+            return result
+        
+        # Check for the invalid "Repository Root" string
+        if working_dir.lower() in ['repository root', '[repository root]']:
+            logger.error(f"Invalid directory name returned: {working_dir}")
+            result['working_directory'] = ''
             result['confidence'] = 0.0
-            result['error'] = 'No directory selected'
+            result['error'] = 'Invalid directory selection - LLM returned label instead of path'
             return result
         
         # Check if validation was performed by the LLM
@@ -78,7 +92,7 @@ class DirectoryDetector(LLMNativeProcessor):
         if validation_notes := validation.get('validation_notes'):
             logger.info(f"Directory validation notes: {validation_notes}")
         
-        # Final check: verify directory exists
+        # Final check: verify directory exists (only for non-empty paths)
         if result.get('working_directory'):
             full_path = repo_path / result['working_directory']
             if not full_path.exists():

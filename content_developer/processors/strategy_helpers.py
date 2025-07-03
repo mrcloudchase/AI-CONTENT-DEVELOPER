@@ -2,6 +2,7 @@
 Helper classes for content strategy processing.
 """
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
@@ -44,17 +45,58 @@ class EmbeddingHelper:
     def get_chunk_embedding(self, chunk: DocumentChunk, cache: UnifiedCache) -> List[float]:
         """Get or compute embedding for a chunk"""
         if chunk.embedding:
+            logger.debug(f"Using embedding from chunk object for {chunk.chunk_id}")
             return self._ensure_float_list(chunk.embedding)
         
         # Try to get from cache
         cache_key = f"chunk_{chunk.chunk_id}"
         if cached_data := cache.get(cache_key):
-            if embedding := cached_data.get('data'):
-                return self._ensure_float_list(embedding)
+            # For chunk data, embedding is nested inside the data object
+            if data := cached_data.get('data'):
+                if isinstance(data, dict) and 'embedding' in data:
+                    # This is a chunk with nested structure
+                    if embedding := data.get('embedding'):
+                        logger.debug(f"Found cached embedding for chunk {chunk.chunk_id}")
+                        return self._ensure_float_list(embedding)
+                elif isinstance(data, list):
+                    # This is a direct embedding array (shouldn't happen for chunks)
+                    logger.warning(f"Found direct embedding array for chunk {chunk.chunk_id} - this shouldn't happen")
+                    return self._ensure_float_list(data)
         
         # Generate embedding
+        logger.info(f"Generating new embedding for chunk {chunk.chunk_id}")
         embedding_text = self.create_chunk_embedding_text(chunk)
-        return self.get_embedding(embedding_text, cache, "chunk")
+        
+        # Generate the embedding
+        try:
+            response = self.client.embeddings.create(
+                model=self.config.embedding_model,
+                input=embedding_text
+            )
+            embedding = response.data[0].embedding
+            
+            # For chunks, we need to update the existing chunk data in cache
+            cache_key = f"chunk_{chunk.chunk_id}"
+            if cached_data := cache.get(cache_key):
+                if data := cached_data.get('data'):
+                    if isinstance(data, dict):
+                        # Update the existing chunk data with the embedding
+                        data['embedding'] = embedding
+                        data['embedding_model'] = self.config.embedding_model
+                        data['embedding_generated_at'] = datetime.now().isoformat()
+                        
+                        # Save the updated chunk data back to cache
+                        cache.put(cache_key, data, cached_data.get('meta', {}))
+                        
+                        return self._ensure_float_list(embedding)
+            
+            # If no existing chunk data, just return the embedding
+            # (This shouldn't normally happen for chunks)
+            return embedding
+            
+        except Exception as e:
+            logger.error(f"Failed to create embedding for chunk: {e}")
+            return []
     
     @staticmethod
     def create_chunk_embedding_text(chunk: DocumentChunk) -> str:

@@ -468,7 +468,75 @@ AZURE_OPENAI_API_VERSION=2024-08-01-preview
 # Optional: Temperature settings
 AZURE_OPENAI_TEMPERATURE=0.3
 AZURE_OPENAI_CREATIVE_TEMPERATURE=0.7
+
+# GitHub Configuration (Optional - only needed for private repositories)
+# To create a token: https://github.com/settings/personal-access-tokens
+# Required scopes for classic token: repo (full control of private repositories)
+# For fine-grained token: Contents (Read access)
+GITHUB_TOKEN=
 ```
+
+### Step 8: Configure GitHub Access (Optional - for Private Repositories)
+
+If you need to work with private GitHub repositories, you'll need to create a GitHub personal access token:
+
+#### Option 1: Fine-Grained Personal Access Token (Recommended)
+
+1. Go to [GitHub Settings → Personal access tokens → Fine-grained tokens](https://github.com/settings/personal-access-tokens
+2. Click **Generate new token**
+3. Configure the token:
+   - **Token name**: `AI Content Developer`
+   - **Expiration**: Choose an appropriate expiration (e.g., 90 days)
+   - **Repository access**: 
+     - Select **Only select repositories**
+     - Choose the specific private repositories you need to access from this tool
+   - **Permissions**:
+     - **Repository permissions → Contents**: Read
+     - **Repository permissions → Metadata**: Read (automatically selected)
+4. Click **Generate token**
+5. Copy the token (starts with `github_pat_`)
+6. Add it to your `.env` file:
+   ```bash
+   GITHUB_TOKEN=github_pat_xxxxxxxxxxxxxxxxxxxx
+   ```
+
+#### Option 2: Classic Personal Access Token
+
+1. Go to [GitHub Settings → Personal access tokens → Tokens (classic)](https://github.com/settings/tokens)
+2. Click **Generate new token** → **Generate new token (classic)**
+3. Configure the token:
+   - **Note**: `AI Content Developer`
+   - **Expiration**: Choose an appropriate expiration
+   - **Scopes**: Select `repo` (Full control of private repositories)
+4. Click **Generate token**
+5. Copy the token (starts with `ghp_`)
+6. Add it to your `.env` file:
+   ```bash
+   GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
+   ```
+
+#### Security Best Practices
+
+- **Use fine-grained tokens** when possible - they provide more granular control
+- **Set short expiration dates** and rotate tokens regularly
+- **Never commit tokens** to version control
+- **Use minimum required permissions** - for read-only access, fine-grained tokens are ideal
+- **Store tokens securely** - the `.env` file is gitignored by default
+
+#### Testing GitHub Access
+
+To verify your token works:
+```bash
+# Test with a private repository
+python main.py \
+  --repo https://github.com/yourorg/private-repo \
+  --goal "Test access" \
+  --service "Test" \
+  --phases 1 \
+  -m test.md
+```
+
+If the token is not configured or invalid, you'll see a helpful error message guiding you through the setup process.
 
 If successful, you should see the tool analyzing the repository structure.
 
@@ -555,6 +623,12 @@ chmod +x setup_venv.sh
 python main.py --repo <repo_url> --goal "<content_goal>" --service "<service_area>" -m [materials...]
 ```
 
+**Materials** can be:
+- File paths: `guide.pdf`, `spec.docx`, `notes.md`
+- URLs: `https://docs.azure.com/guide`
+- Raw text: `"Your documentation content directly in quotes"`
+- Any combination: `-m guide.pdf "Key feature: X" https://example.com/api`
+
 ### Examples
 
 #### Example 1: Create New Azure Kubernetes Service Documentation
@@ -616,6 +690,35 @@ python main.py \
     --audience "database administrators" \
     --audience-level intermediate \
     --apply-changes
+```
+
+#### Example 6: Using Raw Text as Material
+```bash
+# Quick documentation from raw text input
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-aks-docs \
+    --goal "Document the new cluster autoscaler configuration" \
+    --service "Azure Kubernetes Service" \
+    -m "The cluster autoscaler automatically adjusts the number of nodes in your AKS cluster based on pod resource requests and available capacity. Key settings include: min-nodes: 1, max-nodes: 10, scale-down-delay: 10m"
+
+# Combine raw text with files
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-monitor-docs \
+    --goal "Create alert configuration guide" \
+    --service "Azure Monitor" \
+    -m alerts-overview.pdf \
+       "Alert rules should follow naming convention: {resource}-{metric}-{severity}" \
+       "Critical alerts require immediate response within 5 minutes"
+
+# Multiple raw text inputs for comprehensive context
+python main.py \
+    --repo https://github.com/MicrosoftDocs/azure-security-docs \
+    --goal "Document security scanning requirements" \
+    --service "Azure Security Center" \
+    -m "All container images must be scanned before deployment" \
+       "Vulnerability severity levels: Critical (patch within 24h), High (72h), Medium (7 days)" \
+       "Security policies are enforced via Azure Policy at the subscription level" \
+    --phases 3
 ```
 
 ### Phase-Specific Examples
@@ -805,7 +908,7 @@ python main.py \
 | `--repo` | Repository URL to analyze | Required |
 | `--goal` | Goal for content creation/update | Required |
 | `--service` | Service area (e.g., 'Azure Kubernetes Service') | Required |
-| `-m`, `--materials` | Support material files/URLs | Required |
+| `-m`, `--materials` | Support materials: files, URLs, or raw text | Required |
 | `--audience` | Target audience for the content | "technical professionals" |
 | `--audience-level` | Technical level (beginner, intermediate, advanced) | "intermediate" |
 | `--auto-confirm`, `-y` | Auto-confirm all prompts | False |
@@ -862,6 +965,7 @@ For more details, see the [DefaultAzureCredential documentation](https://learn.m
   - Markdown files (.md)
   - Web URLs (http://, https://)
   - Plain text files (.txt)
+  - Raw text input (passed directly as arguments)
 
 - **Intelligent Directory Detection**: Uses LLM to analyze repository structure and select the most appropriate working directory based on:
   - Content goal alignment
@@ -1195,6 +1299,27 @@ Clean up outputs or perform reset operations:
 # Full reset (removes all outputs)
 ./scripts/reset.sh full
 ```
+
+#### Prime Embeddings (Speed Optimization)
+
+Pre-generate embeddings for all documentation directories to speed up future runs:
+
+```bash
+# Generate embeddings for all directories with 3+ markdown files
+./scripts/prime_embeddings.sh https://github.com/Azure/azure-docs
+
+# Process only directories with 10+ files, skip existing embeddings
+./scripts/prime_embeddings.sh https://github.com/Azure/azure-docs --min-files 10 --skip-existing
+
+# Test with first 5 directories only
+./scripts/prime_embeddings.sh https://github.com/Azure/azure-docs --max-dirs 5
+```
+
+**Benefits:**
+- Significantly speeds up Phase 2 (Content Strategy) by pre-computing embeddings
+- Embeddings are cached and reused across runs
+- Can process entire repositories overnight for faster daily usage
+- Skip existing embeddings to incrementally update cache
 
 ### Getting Help
 

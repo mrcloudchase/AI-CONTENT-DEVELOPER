@@ -29,6 +29,11 @@ TASK:
 
 If multiple valid directories exist, choose the most relevant one.
 
+IMPORTANT NOTES:
+- "[Repository Root]" in the structure is just a label, NOT a directory name
+- To select the repository root, use an empty string "" for working_directory
+- Only use actual directory names from the tree (e.g., "articles", "docs/services/storage")
+
 REQUIRED OUTPUT:
 Return a JSON object with these exact fields:
 
@@ -47,7 +52,7 @@ Return a JSON object with these exact fields:
 
 FIELD REQUIREMENTS:
 - thinking: Array of your actual analysis steps
-- working_directory: Path without leading/trailing slashes
+- working_directory: Path without leading/trailing slashes (use "" for repository root)
 - justification: Clear explanation of why this directory was selected (min 50 chars)
 - confidence: Number between 0.0 and 1.0 based on match quality
 - pattern: File structure pattern (e.g. service-based, topic-based, technology-based, hybrid, flat, unknown)
@@ -57,11 +62,10 @@ FIELD REQUIREMENTS:
   - alternative_considered: Another directory path if current choice is suboptimal, else null
   - validation_notes: Brief notes about the validation
 
-IMPORTANT:
-- Select the directory most relevant to '{config.service_area}'
-- If no directory matches the service area, select the main docs directory
-- Set confidence based on how well it matches the service area
-- If confidence < 0.7, suggest an alternative_considered if one exists"""
+CRITICAL:
+- NEVER use "Repository Root" as a directory name
+- Use "" (empty string) to select the repository root directory
+- Only use actual directory paths that appear in the tree structure"""
 
 
 DIRECTORY_SELECTION_SYSTEM = """You are an expert at selecting the correct documentation directory for a specific service area.

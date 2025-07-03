@@ -101,6 +101,14 @@ Examples:
   python main.py --repo https://github.com/user/repo --goal "Create CNI docs" \\
     --service "Azure Kubernetes Service" -m material1.pdf material2.md
   
+  # Using raw text as material
+  python main.py --repo https://github.com/user/repo --goal "Create docs" \\
+    --service "AKS" -m "Azure CNI enables native Azure networking for pods"
+  
+  # Mixing files, URLs, and raw text
+  python main.py --repo https://github.com/user/repo --goal "Update guide" \\
+    --service "AKS" -m guide.pdf https://docs.azure.com/aks "Additional context here"
+  
   # Clean previous runs and start fresh
   python main.py --repo https://github.com/user/repo --goal "Create tutorial" \\
     --service "AKS" --clean -m tutorial.md
@@ -164,7 +172,7 @@ def add_required_arguments(parser: argparse.ArgumentParser):
         "-m", "--materials", 
         nargs="+", 
         required=True,
-        help="Support material files or URLs (PDFs, Word docs, Markdown, etc.)"
+        help="Support materials: files, URLs, or raw text (e.g., file.pdf, https://example.com, or 'your raw text')"
     )
 
 
@@ -279,10 +287,12 @@ def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace
     if not is_valid_url(args.repo_url):
         parser.error(f"Invalid repository URL: {args.repo_url}")
     
-    # Validate materials exist
+    # Validate materials - allow raw text, files, or URLs
     for material in args.materials:
+        # If it's not a URL and not an existing file, treat it as raw text
         if not is_valid_url(material) and not Path(material).exists():
-            parser.error(f"Material not found: {material}")
+            # Will be treated as raw text input by ContentExtractor
+            pass
     
     # Validate work directory
     try:
@@ -293,6 +303,12 @@ def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace
     # Check Azure OpenAI configuration
     if not os.getenv("AZURE_OPENAI_ENDPOINT"):
         parser.error("AZURE_OPENAI_ENDPOINT environment variable not set. See --help for details.")
+    
+    # Check if accessing GitHub without token (informational only)
+    if 'github.com' in args.repo_url and not os.getenv("GITHUB_TOKEN"):
+        print("ℹ️  No GitHub token configured. Only public repositories will be accessible.")
+        print("   For private repositories, add GITHUB_TOKEN to your .env file.")
+        print("   See README.md for instructions on creating a token.\n")
 
 
 def is_valid_url(url: str) -> bool:
@@ -339,6 +355,91 @@ def execute_workflow(config: Config, console_display: ConsoleDisplay):
         console_display.print_separator()
         display_results(result)
         
+    except RuntimeError as e:
+        # Handle specific runtime errors with clean messaging
+        error_msg = str(e)
+        
+        if "Auto-confirm enabled but" in error_msg and "confidence too low" in error_msg:
+            console_display.show_error(
+                "The AI couldn't confidently select an appropriate directory for your goal.",
+                "Directory Selection Failed"
+            )
+            console_display.show_status(
+                "💡 Suggestions:",
+                "info"
+            )
+            console_display.show_status(
+                "   1. Try again with a more specific goal and service name", 
+                "info"
+            )
+            console_display.show_status(
+                "   2. Remove --auto-confirm to manually select a directory",
+                "info"
+            )
+            console_display.show_status(
+                f"   3. The AI had low confidence ({error_msg.split(':')[-1].strip()}) in its selection",
+                "warning"
+            )
+            sys.exit(1)
+        elif "Auto-confirm enabled but directory selection failed" in error_msg:
+            console_display.show_error(
+                "The AI failed to select a valid directory.",
+                "Directory Selection Error"
+            )
+            console_display.show_status(
+                "💡 This can happen when:",
+                "info"
+            )
+            console_display.show_status(
+                "   1. The service name doesn't match any directories in the repository", 
+                "info"
+            )
+            console_display.show_status(
+                "   2. The repository has an unusual structure",
+                "info"
+            )
+            console_display.show_status(
+                "\n💡 Try:",
+                "info"
+            )
+            console_display.show_status(
+                "   1. Using a real Azure service name (e.g., 'Azure Storage', 'AKS', 'App Service')", 
+                "info"
+            )
+            console_display.show_status(
+                "   2. Remove --auto-confirm to browse and manually select a directory",
+                "info"
+            )
+            sys.exit(1)
+        elif "No valid directories found in repository" in error_msg:
+            console_display.show_error(
+                "Unable to extract directories from the repository structure.",
+                "Directory Extraction Failed"
+            )
+            console_display.show_status(
+                "This might be due to:",
+                "info"
+            )
+            console_display.show_status(
+                "   1. The repository has an unusual structure", 
+                "info"
+            )
+            console_display.show_status(
+                "   2. The repository contains no documentation directories",
+                "info"
+            )
+            console_display.show_status(
+                "   3. A parsing error occurred while reading the structure",
+                "warning"
+            )
+            console_display.show_status(
+                "\n💡 Try running with --phases 1 to see the repository structure",
+                "info"
+            )
+            sys.exit(1)
+        else:
+            # Re-raise other runtime errors
+            raise
     except KeyboardInterrupt:
         handle_keyboard_interrupt(console_display)
     except Exception as e:

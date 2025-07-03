@@ -19,19 +19,28 @@ class ContentExtractor:
     
     @error_handler
     def extract(self, source: str, repo_path: Optional[Path] = None) -> Optional[str]:
-        """Extract content from a source (file or URL)"""
+        """Extract content from a source (file, URL, or raw text)"""
         logger.info(f"ContentExtractor.extract called with source: {source}")
         
+        # Check if it's a URL
         if source.startswith(('http://', 'https://')):
             logger.info(f"Attempting URL extraction for: {source}")
             result = self._extract_url(source)
             logger.info(f"URL extraction result: {'Success' if result else 'Failed'}")
             return result
         
-        logger.info(f"Attempting file extraction for: {source}")
-        result = self._extract_file(source)
-        logger.info(f"File extraction result: {'Success' if result else 'Failed'}")
-        return result
+        # Check if it's an existing file
+        path = Path(source)
+        if path.exists():
+            logger.info(f"Attempting file extraction for: {source}")
+            result = self._extract_file(source)
+            logger.info(f"File extraction result: {'Success' if result else 'Failed'}")
+            return result
+        
+        # If it's neither a URL nor an existing file, treat it as raw text
+        logger.info(f"Treating input as raw text: {source[:100]}...")
+        # Apply content limit to raw text
+        return source[:self.config.content_limit]
     
     def _extract_file(self, source: str) -> Optional[str]:
         """Extract content from a file"""
