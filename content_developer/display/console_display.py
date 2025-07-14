@@ -4,6 +4,7 @@ Console display module for AI Content Developer
 from typing import Dict, List, Optional, Any, Union
 from contextlib import contextmanager
 import time
+import difflib
 
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
@@ -307,4 +308,75 @@ class ConsoleDisplay:
     
     def show_warning(self, message: str) -> None:
         """Show a warning message"""
-        self.show_status(message, "warning") 
+        self.show_status(message, "warning")
+    
+    def show_content_diff(self, original: str, modified: str, 
+                         title: str = "Content Changes",
+                         context_lines: int = 3) -> None:
+        """Show a unified diff view of content changes
+        
+        Args:
+            original: Original content
+            modified: Modified content
+            title: Title for the diff panel
+            context_lines: Number of context lines to show around changes
+        """
+        # Generate unified diff
+        diff_lines = list(difflib.unified_diff(
+            original.splitlines(keepends=True),
+            modified.splitlines(keepends=True),
+            fromfile="Original",
+            tofile="After Remediation",
+            n=context_lines
+        ))
+        
+        if not diff_lines:
+            self.console.print("[yellow]No changes detected[/yellow]")
+            return
+        
+        # Color the diff lines
+        colored_diff = []
+        for line in diff_lines:
+            line = line.rstrip()
+            if line.startswith('+') and not line.startswith('+++'):
+                # Added lines in green
+                colored_diff.append(f"[green]{line}[/green]")
+            elif line.startswith('-') and not line.startswith('---'):
+                # Removed lines in red
+                colored_diff.append(f"[red]{line}[/red]")
+            elif line.startswith('@'):
+                # Line numbers in blue
+                colored_diff.append(f"[blue bold]{line}[/blue bold]")
+            elif line.startswith('+++') or line.startswith('---'):
+                # File headers in cyan
+                colored_diff.append(f"[cyan]{line}[/cyan]")
+            else:
+                # Context lines in default color
+                colored_diff.append(line)
+        
+        # Join all lines
+        diff_text = '\n'.join(colored_diff)
+        
+        # Create panel with scrollable content if too long
+        max_height = min(30, self.console.height - 10)  # Leave room for prompts
+        
+        panel = Panel(
+            diff_text,
+            title=f"📝 {title}",
+            title_align="left",
+            border_style="yellow",
+            box=box.ROUNDED,
+            padding=(1, 2),
+            height=max_height if len(colored_diff) > max_height else None,
+            overflow="auto"
+        )
+        
+        self.console.print()
+        self.console.print(panel)
+        self.console.print()
+        
+        # Show summary of changes
+        added_lines = sum(1 for line in diff_lines if line.startswith('+') and not line.startswith('+++'))
+        removed_lines = sum(1 for line in diff_lines if line.startswith('-') and not line.startswith('---'))
+        
+        self.show_metric("Changes", f"+{added_lines} lines, -{removed_lines} lines") 

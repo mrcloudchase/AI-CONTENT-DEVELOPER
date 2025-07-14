@@ -196,14 +196,32 @@ class PhaseSummaryDisplay:
             return
         
         summary = remediation_results.get('summary', {})
+        success_rate = summary.get('success_rate', {})
+        rejection_rate = summary.get('rejection_rate', {})
         
-        self.console_display.show_phase_summary("4: Content Remediation", {
+        # Build summary dict
+        summary_dict = {
             "Files Processed": summary.get('total_files', 0),
-            "SEO Optimized": f"{summary.get('success_rate', {}).get('seo', 0) * 100:.0f}%",
-            "Security Checked": f"{summary.get('success_rate', {}).get('security', 0) * 100:.0f}%",
-            "Accuracy Validated": f"{summary.get('success_rate', {}).get('accuracy', 0) * 100:.0f}%",
-            "All Steps Complete": summary.get('all_steps_completed', 0)
-        })
+            "SEO Optimized": f"{success_rate.get('seo', 0) * 100:.0f}%",
+            "Security Checked": f"{success_rate.get('security', 0) * 100:.0f}%",
+            "Accuracy Validated": f"{success_rate.get('accuracy', 0) * 100:.0f}%",
+            "All Steps Complete": summary.get('all_steps_completed', 0),
+        }
+        
+        # Add rejection info if any steps were rejected
+        files_with_rejections = summary.get('files_with_rejections', 0)
+        if files_with_rejections > 0:
+            summary_dict["Files with Rejections"] = files_with_rejections
+            
+            # Show rejection rates if any
+            if rejection_rate.get('seo', 0) > 0:
+                summary_dict["SEO Rejected"] = f"{rejection_rate.get('seo', 0) * 100:.0f}%"
+            if rejection_rate.get('security', 0) > 0:
+                summary_dict["Security Rejected"] = f"{rejection_rate.get('security', 0) * 100:.0f}%"
+            if rejection_rate.get('accuracy', 0) > 0:
+                summary_dict["Accuracy Rejected"] = f"{rejection_rate.get('accuracy', 0) * 100:.0f}%"
+        
+        self.console_display.show_phase_summary("4: Content Remediation", summary_dict)
     
     def show_phase5_summary(self, toc_results: Dict) -> None:
         """Show phase 5 summary"""

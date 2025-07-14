@@ -8,6 +8,7 @@ from typing import Dict, List, Optional
 
 from ...models import Config, Result
 from ...utils import write, mkdir, read, get_step_tracker
+from ...interactive import RemediationConfirmation
 from ..smart_processor import SmartProcessor
 from .seo_processor import SEOProcessor
 from .security_processor import SecurityProcessor
@@ -18,6 +19,12 @@ logger = logging.getLogger(__name__)
 
 class ContentRemediationProcessor(SmartProcessor):
     """Main processor for Phase 5 content remediation"""
+    
+    def __init__(self, client, config, console_display=None):
+        """Initialize processor"""
+        super().__init__(client, config, console_display)
+        # Initialize remediation confirmation handler
+        self.remediation_confirmator = RemediationConfirmation(config, console_display)
     
     def _process(self, generation_results: Dict, materials: List[Dict], 
                  config: Config, working_dir_path: Path) -> Dict:
@@ -81,6 +88,9 @@ class ContentRemediationProcessor(SmartProcessor):
         # Process each file through all three steps
         step_tracker = get_step_tracker()
         for i, file_info in enumerate(files_to_process, 1):
+            # Reset interactive flags for each new file
+            self.remediation_confirmator.reset_for_new_file()
+            
             if self.console_display:
                 self.console_display.show_separator()
                 # Extract just the filename for display
@@ -123,7 +133,8 @@ class ContentRemediationProcessor(SmartProcessor):
         result = {
             'filename': file_info['filename'],
             'action_type': file_info['action_type'],
-            'steps_completed': []
+            'steps_completed': [],
+            'steps_rejected': []  # Track rejected steps
         }
         
         current_content = file_info['content']
@@ -140,17 +151,31 @@ class ContentRemediationProcessor(SmartProcessor):
                 current_content, file_info, config
             )
             
-            # Save SEO optimized version
-            seo_path = self._save_remediated_content(
-                seo_content, file_info['filename'], 'seo', 
-                file_info['action_type'], working_dir_path
+            # Interactive confirmation
+            approved, final_seo_content = self.remediation_confirmator.confirm_step_result(
+                original_content=current_content,
+                remediated_content=seo_content,
+                step_name="SEO Optimization",
+                metadata=seo_metadata,
+                file_info=file_info
             )
             
-            result['seo_success'] = True
-            result['seo_metadata'] = seo_metadata
-            result['seo_path'] = seo_path
-            result['steps_completed'].append('seo')
-            current_content = seo_content  # Use for next step
+            if approved:
+                # Save SEO optimized version
+                seo_path = self._save_remediated_content(
+                    final_seo_content, file_info['filename'], 'seo', 
+                    file_info['action_type'], working_dir_path
+                )
+                
+                result['seo_success'] = True
+                result['seo_metadata'] = seo_metadata
+                result['seo_path'] = seo_path
+                result['steps_completed'].append('seo')
+                current_content = final_seo_content  # Use for next step
+            else:
+                result['seo_success'] = False
+                result['steps_rejected'].append('seo')
+                result['seo_rejection_reason'] = "User rejected changes"
             
         except Exception as e:
             logger.error(f"SEO remediation failed for {file_info['filename']}: {e}")
@@ -169,17 +194,31 @@ class ContentRemediationProcessor(SmartProcessor):
                 current_content, file_info, config
             )
             
-            # Save security remediated version
-            security_path = self._save_remediated_content(
-                security_content, file_info['filename'], 'security',
-                file_info['action_type'], working_dir_path
+            # Interactive confirmation
+            approved, final_security_content = self.remediation_confirmator.confirm_step_result(
+                original_content=current_content,
+                remediated_content=security_content,
+                step_name="Security Remediation",
+                metadata=security_metadata,
+                file_info=file_info
             )
             
-            result['security_success'] = True
-            result['security_metadata'] = security_metadata
-            result['security_path'] = security_path
-            result['steps_completed'].append('security')
-            current_content = security_content  # Use for next step
+            if approved:
+                # Save security remediated version
+                security_path = self._save_remediated_content(
+                    final_security_content, file_info['filename'], 'security',
+                    file_info['action_type'], working_dir_path
+                )
+                
+                result['security_success'] = True
+                result['security_metadata'] = security_metadata
+                result['security_path'] = security_path
+                result['steps_completed'].append('security')
+                current_content = final_security_content  # Use for next step
+            else:
+                result['security_success'] = False
+                result['steps_rejected'].append('security')
+                result['security_rejection_reason'] = "User rejected changes"
             
         except Exception as e:
             logger.error(f"Security remediation failed for {file_info['filename']}: {e}")
@@ -198,22 +237,39 @@ class ContentRemediationProcessor(SmartProcessor):
                 current_content, file_info, materials, config
             )
             
-            # Save final validated version
-            final_path = self._save_remediated_content(
-                validated_content, file_info['filename'], 'final',
-                file_info['action_type'], working_dir_path
+            # Interactive confirmation
+            approved, final_validated_content = self.remediation_confirmator.confirm_step_result(
+                original_content=current_content,
+                remediated_content=validated_content,
+                step_name="Technical Accuracy",
+                metadata=accuracy_metadata,
+                file_info=file_info
             )
             
-            result['accuracy_success'] = True
-            result['accuracy_metadata'] = accuracy_metadata
-            result['final_path'] = final_path
-            result['steps_completed'].append('accuracy')
-            result['final_content'] = validated_content
+            if approved:
+                # Save final validated version
+                final_path = self._save_remediated_content(
+                    final_validated_content, file_info['filename'], 'final',
+                    file_info['action_type'], working_dir_path
+                )
+                
+                result['accuracy_success'] = True
+                result['accuracy_metadata'] = accuracy_metadata
+                result['final_path'] = final_path
+                result['steps_completed'].append('accuracy')
+                result['final_content'] = final_validated_content
+            else:
+                result['accuracy_success'] = False
+                result['steps_rejected'].append('accuracy')
+                result['accuracy_rejection_reason'] = "User rejected changes"
+                # If accuracy is rejected, use the last approved content as final
+                result['final_content'] = current_content
             
         except Exception as e:
             logger.error(f"Accuracy validation failed for {file_info['filename']}: {e}")
             result['accuracy_success'] = False
             result['accuracy_error'] = str(e)
+            result['final_content'] = current_content  # Use last good content
         
         return result
     
@@ -240,16 +296,37 @@ class ContentRemediationProcessor(SmartProcessor):
         """Create summary of remediation results"""
         total = results['total_processed']
         
+        # Count rejected steps
+        rejected_steps = {
+            'seo': 0,
+            'security': 0,
+            'accuracy': 0
+        }
+        
+        for r in results['remediation_results']:
+            for step in r.get('steps_rejected', []):
+                if step in rejected_steps:
+                    rejected_steps[step] += 1
+        
         return {
             'success_rate': {
                 'seo': results['seo_optimized'] / total if total > 0 else 0,
                 'security': results['security_remediated'] / total if total > 0 else 0,
                 'accuracy': results['accuracy_validated'] / total if total > 0 else 0
             },
+            'rejection_rate': {
+                'seo': rejected_steps['seo'] / total if total > 0 else 0,
+                'security': rejected_steps['security'] / total if total > 0 else 0,
+                'accuracy': rejected_steps['accuracy'] / total if total > 0 else 0
+            },
             'total_files': total,
             'all_steps_completed': sum(
                 1 for r in results['remediation_results'] 
                 if len(r.get('steps_completed', [])) == 3
+            ),
+            'files_with_rejections': sum(
+                1 for r in results['remediation_results']
+                if len(r.get('steps_rejected', [])) > 0
             ),
             'issues_found': {
                 'seo': sum(
