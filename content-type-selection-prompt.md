@@ -2,18 +2,23 @@
 
 <input_examples>
   <example_request>
-    <user_request>Document how to set up Azure Storage encryption for sensitive data</user_request>
-    <materials>Storage account creation steps, encryption options (Microsoft-managed keys, customer-managed keys), key vault integration, compliance requirements</materials>
+    <user_request>We need documentation for Azure Private Endpoints in our organization</user_request>
+    <materials>Private endpoint concepts, DNS configuration, network isolation benefits, setup procedures for storage accounts, approval workflows, troubleshooting connectivity issues</materials>
   </example_request>
   
   <example_request>
-    <user_request>Help users understand the architecture of Azure Event Hubs</user_request>
-    <materials>Event Hubs components (namespaces, event hubs, partitions, consumer groups), throughput units, capture feature, availability zones, comparison with Service Bus</materials>
+    <user_request>Document the new Azure Container Apps feature for our team</user_request>
+    <materials>Container Apps overview, comparison with AKS and Container Instances, KEDA scaling, Dapr integration, deployment from GitHub Actions, revision management</materials>
   </example_request>
   
   <example_request>
-    <user_request>Create a tutorial for building a real-time dashboard with Azure Stream Analytics</user_request>
-    <materials>Complete scenario from data ingestion to visualization, Event Hubs setup, Stream Analytics query language, Power BI integration, sample data, estimated 45-minute implementation</materials>
+    <user_request>Show developers working with our new Azure OpenAI implementation</user_request>
+    <materials>API authentication, prompt engineering basics, token limits, model selection (GPT-4 vs GPT-3.5), sample Python code, rate limiting, estimated 15-minute basic implementation, 2-hour advanced scenarios</materials>
+  </example_request>
+  
+  <example_request>
+    <user_request>Need something for Azure Cognitive Search</user_request>
+    <materials>Search index concepts, relevance scoring, analyzers, indexers, some API examples, pricing tiers, use cases</materials>
   </example_request>
 </input_examples>
 
@@ -172,7 +177,7 @@ Analyze the provided user request and materials to select the most appropriate d
         "selected_type": {
           "type": "string",
           "description": "The selected content type",
-          "enum": ["overview", "concept", "quickstart", "howto", "tutorial"]
+          "enum": ["overview", "concept", "quickstart", "howto", "tutorial", "unable_to_determine"]
         },
         "confidence": {
           "type": "number",
@@ -204,6 +209,13 @@ Analyze the provided user request and materials to select the most appropriate d
               "type": "string",
               "description": "Time estimate or 'not applicable'",
               "pattern": "^(\\d+(-\\d+)? minutes?|not applicable)$"
+            },
+            "missing_information": {
+              "type": "array",
+              "description": "Information needed for selection (only when unable_to_determine)",
+              "items": {
+                "type": "string"
+              }
             }
           }
         }
@@ -213,12 +225,13 @@ Analyze the provided user request and materials to select the most appropriate d
   
   <output_rules>
     - chain_of_thought: Array of strings, minimum 3 items, maximum 10 items
-    - selected_type: Must be exactly one of: "overview", "concept", "quickstart", "howto", "tutorial" (lowercase only)
+    - selected_type: Must be exactly one of: "overview", "concept", "quickstart", "howto", "tutorial", "unable_to_determine"
     - confidence: Decimal number between 0.0 and 1.0 (e.g., 0.85, not 85%)
-    - detected_intent: String describing user's goal
+    - detected_intent: String describing user's goal (or "unclear" if ambiguous)
     - material_classification: Must be exactly one of: "procedural", "conceptual", "mixed"
-    - matching_indicators: Array of strings, minimum 1 item
+    - matching_indicators: Array of strings, minimum 1 item (can be empty array if unable_to_determine)
     - estimated_time: Either "X minutes", "X-Y minutes", or exactly "not applicable"
+    - missing_information: Array of strings explaining what's needed (only include when selected_type is "unable_to_determine")
   </output_rules>
 </required_output_format>
 
@@ -305,6 +318,40 @@ Analyze the provided user request and materials to select the most appropriate d
       }
     </correct_output>
   </example>
+  
+  <example id="4">
+    <scenario>
+      <user_request>Need something for Azure Cognitive Search</user_request>
+      <materials>Search index concepts, relevance scoring, analyzers, indexers, some API examples, pricing tiers, use cases</materials>
+    </scenario>
+    <correct_output>
+      {
+        "chain_of_thought": [
+          "User request 'Need something' is extremely vague - no clear intent",
+          "Could mean: overview for new users, how to implement, understanding architecture, or quick setup",
+          "Materials are mixed: concepts (relevance scoring, analyzers) and 'some API examples' (procedural)",
+          "No audience specified - could be for beginners or advanced users",
+          "No time constraints or scope indicators provided",
+          "Unable to determine if this should be understanding-focused or task-focused",
+          "Cannot confidently select any content type without more context"
+        ],
+        "selected_type": "unable_to_determine",
+        "confidence": 0.0,
+        "reasoning": {
+          "detected_intent": "unclear",
+          "material_classification": "mixed",
+          "matching_indicators": [],
+          "estimated_time": "not applicable",
+          "missing_information": [
+            "What is the specific goal? (e.g., 'understand how it works', 'implement search', 'get started quickly')",
+            "Who is the target audience? (new users, developers with search experience, etc.)",
+            "What scope is needed? (high-level overview, specific feature like analyzers, end-to-end implementation)",
+            "If implementation-focused, what's the complexity? (basic search, advanced features with custom analyzers)"
+          ]
+        }
+      }
+    </correct_output>
+  </example>
 </selection_examples>
 
 <special_cases>
@@ -320,7 +367,36 @@ Analyze the provided user request and materials to select the most appropriate d
   
   <case name="no_clear_match">
     <condition>No content type clearly matches</condition>
-    <action>Default to "howto" for procedural or "concept" for explanatory</action>
+    <action>
+      Return a response explaining:
+      1. Why no content type could be confidently selected
+      2. What specific information is missing or unclear
+      3. What clarification would help make a selection
+      
+      Example output:
+      {
+        "selected_type": "unable_to_determine",
+        "confidence": 0.0,
+        "chain_of_thought": [
+          "User request lacks clear intent indicators",
+          "Materials contain both conceptual and procedural content equally",
+          "No time estimates provided to distinguish quickstart vs full procedures",
+          "Unable to determine if learning journey or task completion is desired"
+        ],
+        "reasoning": {
+          "detected_intent": "unclear",
+          "material_classification": "mixed",
+          "matching_indicators": [],
+          "estimated_time": "not applicable",
+          "missing_information": [
+            "Clear user intent: Is this for understanding or task completion?",
+            "Target audience: New users or experienced developers?",
+            "Scope: Quick introduction or comprehensive coverage?",
+            "If procedural: How long should the task take to complete?"
+          ]
+        }
+      }
+    </action>
   </case>
 </special_cases>
 
