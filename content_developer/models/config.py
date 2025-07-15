@@ -40,6 +40,7 @@ class Config:
     apply_changes: bool = False
     skip_toc: bool = False
     check_material_sufficiency: bool = True
+    multi_agent: bool = False  # Use multi-agent Azure AI Foundry system
     
     # GitHub configuration (optional)
     github_token: Optional[str] = None

@@ -901,6 +901,71 @@ python main.py \
     --audience-level advanced
 ```
 
+## Multi-Agent Mode (Azure AI Foundry)
+
+AI Content Developer now supports a multi-agent architecture powered by Azure AI Foundry, where specialized agents collaborate to create high-quality documentation.
+
+### Overview
+
+The multi-agent system uses:
+- **Documentation Orchestrator**: Central coordinator managing the workflow
+- **Specialized Agents**: Expert agents for specific tasks (analysis, writing, optimization)
+- **Azure AI Foundry**: Enterprise-grade AI agent platform
+
+### Prerequisites
+
+1. **Azure AI Foundry Project**
+   - Create a project at [Azure AI Foundry](https://ai.azure.com)
+   - Deploy a GPT-4 model
+   - Note your endpoint and deployment name
+
+2. **Additional Dependencies**
+   ```bash
+   pip install -r requirements-multi-agent.txt
+   ```
+
+### Configuration
+
+Add to your `.env` file:
+```env
+# Azure AI Foundry
+PROJECT_ENDPOINT=https://your-project.azureai.io
+MODEL_DEPLOYMENT_NAME=gpt-4-deployment
+```
+
+### Usage
+
+Use the `--multi-agent` flag to enable multi-agent mode:
+
+```bash
+python main.py https://github.com/Azure/azure-docs \
+  "Create AKS networking guide" \
+  "aks" \
+  materials/networking.pdf \
+  --multi-agent \
+  --auto-confirm
+```
+
+### Testing
+
+Test your multi-agent setup:
+```bash
+# Run test suite
+python test_multi_agent.py
+
+# Run demo
+./scripts/test_multi_agent_demo.sh
+```
+
+### Benefits
+
+- **Parallel Processing**: Multiple agents work simultaneously
+- **Specialized Expertise**: Each agent excels in its domain
+- **Better Quality**: Multiple validation and optimization passes
+- **Scalability**: Easy to add new specialized agents
+
+For detailed setup instructions, see [Multi-Agent Setup Guide](docs/MULTI_AGENT_SETUP.md).
+
 ## Command Line Options
 
 | Option | Description | Default |

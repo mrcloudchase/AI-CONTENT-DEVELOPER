@@ -159,3 +159,4 @@ logs/
 # App specific directories
 llm_outputs/
 work/
+test_materials/

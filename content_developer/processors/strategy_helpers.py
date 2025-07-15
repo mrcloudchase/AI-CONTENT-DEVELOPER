@@ -48,8 +48,8 @@ class EmbeddingHelper:
             logger.debug(f"Using embedding from chunk object for {chunk.chunk_id}")
             return self._ensure_float_list(chunk.embedding)
         
-        # Try to get from cache
-        cache_key = f"chunk_{chunk.chunk_id}"
+        # Try to get from cache - use chunk_id directly without prefix
+        cache_key = chunk.chunk_id
         if cached_data := cache.get(cache_key):
             # For chunk data, embedding is nested inside the data object
             if data := cached_data.get('data'):
@@ -76,7 +76,7 @@ class EmbeddingHelper:
             embedding = response.data[0].embedding
             
             # For chunks, we need to update the existing chunk data in cache
-            cache_key = f"chunk_{chunk.chunk_id}"
+            cache_key = chunk.chunk_id
             if cached_data := cache.get(cache_key):
                 if data := cached_data.get('data'):
                     if isinstance(data, dict):

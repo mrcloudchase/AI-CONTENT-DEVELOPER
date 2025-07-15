@@ -19,6 +19,13 @@ from content_developer.display.console_display import ConsoleDisplay
 from content_developer.utils.logging_config import setup_dual_logging, get_console
 from content_developer.constants import MAX_PHASES
 
+# Import multi-agent system if available
+try:
+    from multi_agent_content_developer import MultiAgentContentDeveloper
+    MULTI_AGENT_AVAILABLE = True
+except ImportError:
+    MULTI_AGENT_AVAILABLE = False
+
 
 def perform_cleanup(console_display: ConsoleDisplay, work_dir: Path):
     """Clean up llm_outputs and work directory"""
@@ -208,37 +215,48 @@ def add_audience_arguments(parser: argparse.ArgumentParser):
 
 def add_workflow_arguments(parser: argparse.ArgumentParser):
     """Add workflow control arguments"""
-    workflow = parser.add_argument_group('workflow control')
-    
-    workflow.add_argument(
-        "--phases", 
-        default="all", 
-        help=f"Run phases from 1 up to specified phase (1-{MAX_PHASES}) or 'all' (default: all)"
+    workflow_group = parser.add_argument_group(
+        'Workflow Control',
+        'Control the documentation workflow'
     )
     
-    workflow.add_argument(
-        "--auto-confirm", "-y", 
-        action="store_true", 
-        help="Auto-confirm all prompts (useful for automation)"
+    workflow_group.add_argument(
+        '--phases', '-p',
+        type=str,
+        default=str(MAX_PHASES),
+        help=f'Phases to execute (e.g., "1", "1-2", "3"). Default: "{MAX_PHASES}"'
     )
     
-    workflow.add_argument(
-        "--apply-changes", 
-        action="store_true", 
-        help="Apply generated content to repository (otherwise preview only)"
+    workflow_group.add_argument(
+        '--auto-confirm', '-y',
+        action='store_true',
+        help='Skip all confirmation prompts (useful for automation)'
     )
     
-    workflow.add_argument(
-        "--skip-toc", 
-        action="store_true", 
-        help="Skip TOC.yml management in Phase 4 (useful if TOC is invalid)"
+    workflow_group.add_argument(
+        '--apply-changes', '-a',
+        action='store_true',
+        help='Apply generated changes to the repository'
     )
     
-    workflow.add_argument(
-        "--clean", 
-        action="store_true", 
-        help="Clear llm_outputs and work directory before starting (fresh run)"
+    workflow_group.add_argument(
+        '--skip-toc',
+        action='store_true',
+        help='Skip updating the table of contents (toc.yml)'
     )
+    
+    workflow_group.add_argument(
+        '--no-material-check',
+        action='store_true',
+        help='Skip material sufficiency check before content generation'
+    )
+    
+    if MULTI_AGENT_AVAILABLE:
+        workflow_group.add_argument(
+            '--multi-agent',
+            action='store_true',
+            help='Use the multi-agent Azure AI Foundry system (requires Azure AI configuration)'
+        )
 
 
 def add_output_arguments(parser: argparse.ArgumentParser):
@@ -336,114 +354,60 @@ def create_config_from_args(args: argparse.Namespace) -> Config:
         phases=args.phases,
         debug_similarity=args.debug_similarity,
         apply_changes=args.apply_changes,
-        skip_toc=args.skip_toc
+        skip_toc=args.skip_toc,
+        check_material_sufficiency=not args.no_material_check,
+        multi_agent=getattr(args, 'multi_agent', False)
     )
 
 
 def execute_workflow(config: Config, console_display: ConsoleDisplay):
     """Execute the content development workflow"""
     try:
-        # Show header
-        repo_name = config.repo_url.split('/')[-1].replace('.git', '')
-        console_display.show_header(repo_name, config.content_goal, config.service_area)
-        
-        # Create orchestrator with console display
-        orchestrator = ContentDeveloperOrchestrator(config, console_display)
-        result = orchestrator.execute()
-        
-        # Display final results
-        console_display.print_separator()
-        display_results(result)
-        
-    except RuntimeError as e:
-        # Handle specific runtime errors with clean messaging
-        error_msg = str(e)
-        
-        if "Auto-confirm enabled but" in error_msg and "confidence too low" in error_msg:
-            console_display.show_error(
-                "The AI couldn't confidently select an appropriate directory for your goal.",
-                "Directory Selection Failed"
-            )
-            console_display.show_status(
-                "💡 Suggestions:",
-                "info"
-            )
-            console_display.show_status(
-                "   1. Try again with a more specific goal and service name", 
-                "info"
-            )
-            console_display.show_status(
-                "   2. Remove --auto-confirm to manually select a directory",
-                "info"
-            )
-            console_display.show_status(
-                f"   3. The AI had low confidence ({error_msg.split(':')[-1].strip()}) in its selection",
-                "warning"
-            )
-            sys.exit(1)
-        elif "Auto-confirm enabled but directory selection failed" in error_msg:
-            console_display.show_error(
-                "The AI failed to select a valid directory.",
-                "Directory Selection Error"
-            )
-            console_display.show_status(
-                "💡 This can happen when:",
-                "info"
-            )
-            console_display.show_status(
-                "   1. The service name doesn't match any directories in the repository", 
-                "info"
-            )
-            console_display.show_status(
-                "   2. The repository has an unusual structure",
-                "info"
-            )
-            console_display.show_status(
-                "\n💡 Try:",
-                "info"
-            )
-            console_display.show_status(
-                "   1. Using a real Azure service name (e.g., 'Azure Storage', 'AKS', 'App Service')", 
-                "info"
-            )
-            console_display.show_status(
-                "   2. Remove --auto-confirm to browse and manually select a directory",
-                "info"
-            )
-            sys.exit(1)
-        elif "No valid directories found in repository" in error_msg:
-            console_display.show_error(
-                "Unable to extract directories from the repository structure.",
-                "Directory Extraction Failed"
-            )
-            console_display.show_status(
-                "This might be due to:",
-                "info"
-            )
-            console_display.show_status(
-                "   1. The repository has an unusual structure", 
-                "info"
-            )
-            console_display.show_status(
-                "   2. The repository contains no documentation directories",
-                "info"
-            )
-            console_display.show_status(
-                "   3. A parsing error occurred while reading the structure",
-                "warning"
-            )
-            console_display.show_status(
-                "\n💡 Try running with --phases 1 to see the repository structure",
-                "info"
-            )
-            sys.exit(1)
+        # Check if multi-agent mode is requested
+        if hasattr(config, 'multi_agent') and config.multi_agent and MULTI_AGENT_AVAILABLE:
+            repo_name = config.repo_url.split('/')[-1].replace('.git', '')
+            console_display.show_header(f"{repo_name} (Multi-Agent)", config.content_goal, config.service_area)
+            console_display.show_status("Using Azure AI Foundry multi-agent system", "info")
+            
+            # Use multi-agent system
+            developer = MultiAgentContentDeveloper(config)
+            try:
+                result = developer.process_documentation_request()
+                
+                # Display results
+                if result.success:
+                    console_display.show_status(result.message, "success")
+                else:
+                    console_display.show_error(result.message, "Workflow Failed")
+                    
+            finally:
+                # Clean up agents
+                developer.cleanup()
         else:
-            # Re-raise other runtime errors
-            raise
+            # Use traditional orchestrator
+            repo_name = config.repo_url.split('/')[-1].replace('.git', '')
+            console_display.show_header(repo_name, config.content_goal, config.service_area)
+            
+            # Initialize orchestrator
+            orchestrator = ContentDeveloperOrchestrator(config, console_display)
+            
+            # Execute workflow
+            result = orchestrator.execute()
+            
+            # Display results
+            if result.success:
+                display_results(result)
+            else:
+                console_display.show_error(result.message, "Workflow Failed")
+        
+        return result.success
+        
     except KeyboardInterrupt:
-        handle_keyboard_interrupt(console_display)
+        raise  # Re-raise to be handled by main
     except Exception as e:
-        handle_error(e, console_display)
+        console_display.show_error(str(e), "Workflow Error")
+        logging.exception("Workflow execution failed")
+        return False
 
 
 def handle_keyboard_interrupt(console_display: ConsoleDisplay):
