@@ -1,5 +1,22 @@
 <content_type_selection_instructions>
 
+<input_examples>
+  <example_request>
+    <user_request>Document how to set up Azure Storage encryption for sensitive data</user_request>
+    <materials>Storage account creation steps, encryption options (Microsoft-managed keys, customer-managed keys), key vault integration, compliance requirements</materials>
+  </example_request>
+  
+  <example_request>
+    <user_request>Help users understand the architecture of Azure Event Hubs</user_request>
+    <materials>Event Hubs components (namespaces, event hubs, partitions, consumer groups), throughput units, capture feature, availability zones, comparison with Service Bus</materials>
+  </example_request>
+  
+  <example_request>
+    <user_request>Create a tutorial for building a real-time dashboard with Azure Stream Analytics</user_request>
+    <materials>Complete scenario from data ingestion to visualization, Event Hubs setup, Stream Analytics query language, Power BI integration, sample data, estimated 45-minute implementation</materials>
+  </example_request>
+</input_examples>
+
 <task>
 Analyze the provided user request and materials to select the most appropriate documentation content type from these options: overview, concept, quickstart, howto, tutorial.
 </task>
